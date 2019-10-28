@@ -1,9 +1,12 @@
 package com.imra.mynews.di.modules;
 
+import java.util.concurrent.TimeUnit;
+
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import okhttp3.OkHttpClient;
 import retrofit2.Converter;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
@@ -28,10 +31,11 @@ public class RetrofitModule {
 
     @Provides
     @Singleton
-    public Retrofit.Builder provideRetrofitBuilder (Converter.Factory converterFactory) {
+    public Retrofit.Builder provideRetrofitBuilder (Converter.Factory converterFactory, OkHttpClient.Builder httpClient) {
         return new Retrofit.Builder()
                 .addCallAdapterFactory(RxJavaCallAdapterFactory.createWithScheduler(Schedulers.io()))
-                .addConverterFactory(converterFactory);
+                .addConverterFactory(converterFactory)
+                .client(httpClient.build());
     }
 
     @Provides
@@ -40,10 +44,12 @@ public class RetrofitModule {
         return SimpleXmlConverterFactory.create();
     }
 
-//    @Provides
-//    @Singleton
-//    Persister providePersister () {
-//        return new Persister(new AnnotationStrategy());
-//    }
+    @Provides
+    @Singleton
+    public OkHttpClient.Builder provideHttpClient() {
+        return new OkHttpClient.Builder()
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS);
+    }
 
 }

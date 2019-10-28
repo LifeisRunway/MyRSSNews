@@ -6,17 +6,65 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-
-
-    <ScrollView
+    <com.imra.mynews.ui.views.FrameSwipeRefreshLayout
+        android:id="@+id/activity_home_swipe_refresh_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-        <ListView
-            android:id="@+id/list_view"
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </ScrollView>
+            android:layout_height="match_parent"
+            android:fillViewport="true">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:ignore="ScrollViewSize">
+
+                <ListView
+                    android:id="@+id/activity_home_list_view_repositories"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:choiceMode="singleChoice"
+                    android:dividerHeight="1dp"
+                    tools:ignore="NestedScrolling" />
+
+                <TextView
+                    android:id="@+id/activity_home_text_view_no_repositories"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="No repositories"
+                    android:visibility="gone" />
+
+                <ProgressBar
+                    android:id="@+id/activity_home_progress_bar_repositories"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:visibility="gone" />
+
+            </FrameLayout>
+
+        </ScrollView>
+
+    </com.imra.mynews.ui.views.FrameSwipeRefreshLayout>
+
+    <FrameLayout
+        android:id="@+id/activity_home_frame_layout_details"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:animateLayoutChanges="true"
+        android:visibility="gone">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_gravity="top"
+            android:background="?android:attr/listDivider" />
+
+    </FrameLayout>
 
 </LinearLayout>

@@ -1,5 +1,7 @@
 package com.imra.mynews.mvp.views;
 
+import android.view.View;
+
 import com.arellomobile.mvp.MvpView;
 import com.arellomobile.mvp.viewstate.strategy.AddToEndSingleStrategy;
 import com.arellomobile.mvp.viewstate.strategy.OneExecutionStateStrategy;
@@ -18,6 +20,8 @@ import com.imra.mynews.mvp.models.RSSFeed;
 public interface MainInterface extends MvpView {
 
     void setSelection(int position);
+
+    void showDetailsContainer(int position);
 
     @StateStrategyType(OneExecutionStateStrategy.class)
     void showDetails(int position, Article article);

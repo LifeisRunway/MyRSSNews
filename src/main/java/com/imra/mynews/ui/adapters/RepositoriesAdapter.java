@@ -1,8 +1,11 @@
 package com.imra.mynews.ui.adapters;
 
+import android.support.annotation.NonNull;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -26,25 +29,28 @@ import butterknife.ButterKnife;
  * Time: 14:28
  *
  * @author IMRA027
+ *
+ * 
  */
 public class RepositoriesAdapter extends MvpBaseAdapter  {
 
     private int mSelection = -1;
-    private RSSFeed mRSSFeed;
     private List<Article> mArticles;
 
     private OnScrollToBottomListener mScrollToBottomListener;
 
     public RepositoriesAdapter(MvpDelegate<?> parentDelegate, OnScrollToBottomListener scrollToBottomListener) {
         super(parentDelegate, String.valueOf(0));
-
         mScrollToBottomListener = scrollToBottomListener;
         mArticles = new ArrayList<>();
+    }
 
+    public void setRepositories(RSSFeed rssFeeds) {
+        mArticles = new ArrayList<>(rssFeeds.getArticleList());
+        notifyDataSetChanged();
     }
 
     public void addRepositories (RSSFeed rssFeeds) {
-        mRSSFeed = rssFeeds;
         mArticles.addAll(rssFeeds.getArticleList());
         notifyDataSetChanged();
     }
@@ -66,7 +72,7 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
 
     @Override
     public int getCount() {
-        return mArticles.size() + 1;
+        return mArticles.size();
     }
 
     @Override
@@ -76,8 +82,12 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
 
     @Override
     public long getItemId(int position) {
-        if (mArticles.get(position) != null) return position;
-        else return 0;
+        return position;
+    }
+
+    @Override
+    public int getViewTypeCount() {
+        return 2;
     }
 
     @Override
@@ -99,7 +109,7 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
             convertView.setTag(holder);
         }
 
-        final Article item = getItem(position);
+        Article item = getItem(position);
 
         holder.bind(position, item);
 
@@ -113,9 +123,13 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
         RepositoryPresenter mRepositoryPresenter;
 
         private Article mArticle;
+        private int mPosition;
 
         @BindView(R.id.item_title)
         TextView titleTextView;
+
+        @BindView(R.id.item_image_button)
+        ImageButton imageButton;
 
         View view;
 
@@ -123,7 +137,7 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
 
         @ProvidePresenter
         RepositoryPresenter provideRepositoryPresenter() {
-            return new RepositoryPresenter(mArticle);
+            return new RepositoryPresenter(mPosition, mArticle);
         }
 
         RepositoryHolder(View view) {
@@ -133,6 +147,9 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
         }
 
         void bind(int position, Article article) {
+
+            mPosition = position;
+
             if (getMvpDelegate() != null) {
                 getMvpDelegate().onSaveInstanceState();
                 getMvpDelegate().onDetach();
@@ -142,27 +159,32 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
 
             mArticle = article;
 
+
+
             getMvpDelegate().onCreate();
             getMvpDelegate().onAttach();
 
-            view.setBackgroundResource(position == -1 ? R.color.colorAccent : android.R.color.transparent);
+            view.setBackgroundResource(position == mSelection ? R.color.colorAccent : android.R.color.transparent);
+
+            //Сохранить в Room
+            //imageButton.setOnClickListener(v -> );
         }
 
         @Override
-        public void showRepository(Article article) {
+        public void showRepository(int position, Article article) {
             titleTextView.setText(article.getTitle());
+            //Log.e("onLoad", article.getTitle());
         }
 
 
         MvpDelegate getMvpDelegate() {
-            if (mRSSFeed == null) {
+            if (mArticle == null) {
                 return null;
             }
 
             if (mMvpDelegate == null) {
                 mMvpDelegate = new MvpDelegate<>(this);
-                mMvpDelegate.setParentDelegate(RepositoriesAdapter.this.getMvpDelegate(), String.valueOf(1));
-
+                mMvpDelegate.setParentDelegate(RepositoriesAdapter.this.getMvpDelegate(), String.valueOf(mPosition));
             }
             return mMvpDelegate;
         }

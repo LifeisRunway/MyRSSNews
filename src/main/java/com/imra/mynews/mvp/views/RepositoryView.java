@@ -12,6 +12,6 @@ import com.imra.mynews.mvp.models.RSSFeed;
  */
 public interface RepositoryView extends MvpView {
 
-    void showRepository(Article article);
+    void showRepository(int position, Article article);
 
 }

@@ -17,18 +17,22 @@ import com.imra.mynews.mvp.views.RepositoryView;
 public class RepositoryPresenter extends MvpPresenter <RepositoryView> {
 
     private Article mArticle;
+    private int mPos;
 
-    public RepositoryPresenter (Article article) {
+    public RepositoryPresenter (int position, Article article) {
         super();
 
         mArticle = article;
+        mPos = position;
     }
 
     @Override
     protected void onFirstViewAttach() {
         super.onFirstViewAttach();
-        getViewState().showRepository(mArticle);
+        getViewState().showRepository(mPos, mArticle);
     }
 
-
+    public void onRefreshChange() {
+        getViewState().showRepository(mPos, mArticle);
+    }
 }

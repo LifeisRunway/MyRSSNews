@@ -21,6 +21,17 @@ public class Article implements Serializable {
     @Element (name = "link")
     private String link;
 
+    @Element (name = "description")
+    private String description;
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     public String getTitle() {
         return title;
     }

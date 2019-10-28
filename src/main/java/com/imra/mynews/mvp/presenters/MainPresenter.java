@@ -1,5 +1,7 @@
 package com.imra.mynews.mvp.presenters;
 
+import android.view.View;
+
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.imra.mynews.mvp.models.Article;
@@ -19,6 +21,13 @@ public class MainPresenter  extends MvpPresenter<MainInterface> {
         getViewState().setSelection(position);
 
         getViewState().showDetails(position, article);
+
+        getViewState().showDetailsContainer(position);
     }
+
+//    public void showInfo (View view) {
+//        getViewState().showDetailsContainer(view);
+//    }
+
 
 }

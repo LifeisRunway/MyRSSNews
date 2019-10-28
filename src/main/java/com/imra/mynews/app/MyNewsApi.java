@@ -2,9 +2,8 @@ package com.imra.mynews.app;
 
 import com.imra.mynews.mvp.models.RSSFeed;
 
-import java.util.List;
-
 import retrofit2.http.GET;
+import retrofit2.http.POST;
 import rx.Observable;
 
 /**
@@ -15,8 +14,6 @@ import rx.Observable;
  */
 
 public interface MyNewsApi {
-
     @GET("rss")
     Observable<RSSFeed> getRSSFeed();
-
 }

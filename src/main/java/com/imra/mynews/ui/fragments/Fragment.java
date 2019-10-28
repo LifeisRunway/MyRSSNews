@@ -6,7 +6,7 @@ import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
+import android.widget.ImageButton;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
@@ -14,8 +14,7 @@ import com.arellomobile.mvp.presenter.ProvidePresenter;
 
 import com.imra.mynews.R;
 import com.imra.mynews.mvp.models.Article;
-import com.imra.mynews.mvp.presenters.FragmentPresenter;
-import com.imra.mynews.mvp.views.FragmentInterface;
+import com.imra.mynews.mvp.presenters.RepositoryPresenter;
 import com.imra.mynews.mvp.views.RepositoryView;
 import com.imra.mynews.ui.views.RepositoryWidget;
 
@@ -29,30 +28,36 @@ import butterknife.Unbinder;
  *
  * @author IMRA027
  */
-public class Fragment extends MvpAppCompatFragment implements FragmentInterface, RepositoryView {
+public class Fragment extends MvpAppCompatFragment implements RepositoryView {
     public static final String ARGS_REPOSITORY = "argsRepository";
+    public static final String ARGS_POSITION = "argsPosition";
 
     @InjectPresenter
-    FragmentPresenter mFragmentPresenter;
+    RepositoryPresenter mFragmentPresenter;
 
     @BindView(R.id.textView)
     RepositoryWidget textView;
 
+    @BindView(R.id.image_button_like)
+    ImageButton mImageButton;
+
     private Unbinder unbinder;
 
     private Article mArticle;
+    private int mPosition;
 
     @ProvidePresenter
-    FragmentPresenter provideFragmentPresenter() {
+    RepositoryPresenter provideFragmentPresenter() {
         mArticle = (Article) getArguments().get(ARGS_REPOSITORY);
-
-        return new FragmentPresenter(mArticle);
+        mPosition = (int) getArguments().get(ARGS_POSITION);
+        return new RepositoryPresenter(mPosition,mArticle);
     }
 
-    public static Fragment getInstance(Article article) {
+    public static Fragment getInstance(int position, Article article) {
         Fragment fragment = new Fragment();
         Bundle args = new Bundle();
         args.putSerializable(ARGS_REPOSITORY, article);
+        args.putInt(ARGS_POSITION, position);
         fragment.setArguments(args);
         return fragment;
     }
@@ -70,6 +75,11 @@ public class Fragment extends MvpAppCompatFragment implements FragmentInterface,
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         unbinder = ButterKnife.bind(this, view);
+
+//        mImageButton.setOnClickListener((View likeImageButton) -> {
+//
+//        });
+
         //mFragmentPresenter.setTitleText();
     }
 
@@ -80,13 +90,9 @@ public class Fragment extends MvpAppCompatFragment implements FragmentInterface,
     }
 
     @Override
-    public void setTitle() {
-     //pass
-    }
-
-    @Override
-    public void showRepository(Article article) {
+    public void showRepository(int position, Article article) {
         mArticle = article;
-        textView.initWidget(getMvpDelegate(), article);
+        mPosition = position;
+        textView.initWidget(getMvpDelegate(), article, position);
     }
 }

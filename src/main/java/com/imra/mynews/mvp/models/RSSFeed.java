@@ -16,7 +16,7 @@ import java.util.List;
  */
 
 @Root(name = "rss", strict = false)
-public class RSSFeed implements Serializable {
+public class RSSFeed {
 
     @Element(name="title")
     @Path("channel")

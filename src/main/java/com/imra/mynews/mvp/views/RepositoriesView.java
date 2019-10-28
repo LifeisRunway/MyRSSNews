@@ -20,11 +20,21 @@ public interface RepositoriesView extends MvpView {
 
     void onStartLoading();
 
-    void setRepositories(RSSFeed repositories);
+    void onFinishLoading();
+
+    void showRefreshing();
+
+    void hideRefreshing();
+
+    void showListProgress();
+
+    void hideListProgress();
 
     void showError(String message);
 
     void hideError();
+
+    void setRepositories(RSSFeed repositories);
 
     @StateStrategyType(AddToEndStrategy.class)
     void addRepositories(RSSFeed repositories);

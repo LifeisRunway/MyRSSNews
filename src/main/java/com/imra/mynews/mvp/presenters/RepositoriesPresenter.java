@@ -1,5 +1,7 @@
 package com.imra.mynews.mvp.presenters;
 
+import android.util.Log;
+
 import com.arellomobile.mvp.InjectViewState;
 import com.imra.mynews.app.MyNewsApp;
 import com.imra.mynews.mvp.MyNewsService;
@@ -28,6 +30,8 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     @Inject
     MyNewsService myNewsService;
 
+    private boolean mIsInLoading;
+
     public RepositoriesPresenter() {
         MyNewsApp.getAppComponent().inject(this);
     }
@@ -35,19 +39,27 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     @Override
     protected void onFirstViewAttach () {
         super.onFirstViewAttach();
-        loadRepositories();
+        loadRepositories(false);
     }
 
-    public void loadNextRepositories (int count) {
-        int page = count/20 + 1;
-
+    public void loadNextRepositories () {
+        loadData(true, false);
     }
 
-    public void loadRepositories () {
-        loadData();
+    public void loadRepositories (boolean isRefreshing) {
+        loadData(false, isRefreshing);
     }
 
-    private void loadData () {
+    private void loadData (boolean isPageLoading, boolean isRefreshing) {
+
+        if (mIsInLoading) {
+            return;
+        }
+        mIsInLoading = true;
+
+        getViewState().onStartLoading();
+
+        showProgress(isPageLoading, isRefreshing);
 
         final Observable<RSSFeed> observable = myNewsService.getRSSFeed();
 
@@ -55,16 +67,31 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(rssFeed -> {
-                    onLoadingSuccess(rssFeed);
-                }, error -> onLoadingFailed(error));
+                    onLoadingFinish(isPageLoading, isRefreshing);
+                    onLoadingSuccess(isPageLoading, rssFeed);
+                }, error -> {
+                    onLoadingFinish(isPageLoading, isRefreshing);
+                    onLoadingFailed(error);
+                });
         unsubscribeOnDestroy(subscription);
-
-
 
     }
 
-    private void onLoadingSuccess (RSSFeed rssFeeds) {
-        getViewState().addRepositories(rssFeeds);
+    private void onLoadingFinish(boolean isPageLoading, boolean isRefreshing) {
+        mIsInLoading = false;
+
+        getViewState().onFinishLoading();
+
+        hideProgress(isPageLoading, isRefreshing);
+    }
+
+    private void onLoadingSuccess (boolean isPageLoading, RSSFeed rssFeeds) {
+
+        if (isPageLoading) {
+            getViewState().addRepositories(rssFeeds);
+        } else {
+            getViewState().setRepositories(rssFeeds);
+        }
     }
 
     private void onLoadingFailed(Throwable error) {
@@ -73,5 +100,29 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
     public void onErrorCancel() {
         getViewState().hideError();
+    }
+
+    private void showProgress(boolean isPageLoading, boolean isRefreshing) {
+        if (isPageLoading) {
+            return;
+        }
+
+        if (isRefreshing) {
+            getViewState().showRefreshing();
+        } else {
+            getViewState().showListProgress();
+        }
+    }
+
+    private void hideProgress(boolean isPageLoading, boolean isRefreshing) {
+        if (isPageLoading) {
+            return;
+        }
+
+        if (isRefreshing) {
+            getViewState().hideRefreshing();
+        } else {
+            getViewState().hideListProgress();
+        }
     }
 }
