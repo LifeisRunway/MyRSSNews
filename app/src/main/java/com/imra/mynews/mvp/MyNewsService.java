@@ -7,6 +7,9 @@ import com.imra.mynews.mvp.models.RSSFeed;
 import java.util.List;
 
 import io.reactivex.Observable;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Response;
 
 /**
  * Date: 27.07.2019
@@ -25,7 +28,7 @@ public class MyNewsService {
         return myNewsApi.getRSSFeed(mUrl);
     }
 
-    public Observable<List<ItemHtml>> findRSSFeeds (String mUrl) {
+    public Observable<Response<String>> findRSSFeeds (String mUrl) {
         return myNewsApi.findRSSFeeds(mUrl);
     }
 

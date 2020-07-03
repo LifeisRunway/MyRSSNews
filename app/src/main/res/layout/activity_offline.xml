@@ -8,7 +8,7 @@
     android:orientation="vertical">
 
     <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
+        android:id="@+id/toolbar2"
         android:layout_width="match_parent"
         android:layout_height="35dp"
         android:background="?attr/colorPrimary"
@@ -18,48 +18,33 @@
         app:titleTextColor="@color/colorText" />
 
     <FrameLayout
-        android:id="@+id/v_toolbar_extension"
+        android:id="@+id/v_toolbar_extension2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/toolbar"
+        android:layout_below="@+id/toolbar2"
         android:background="?attr/colorPrimary"
         android:elevation="0dp"
         tools:targetApi="lollipop">
 
         <TextView
-            android:id="@+id/tvChanTitle"
+            android:id="@+id/tvChanTitle2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
             android:textColor="@color/colorText"
             android:textSize="16sp"
-            tools:text="Название канала"
+            tools:text="Сохраненные новости"
             android:maxLines="1"
             android:ellipsize="end"
             android:layout_marginStart="18dp"
             android:layout_marginEnd="18dp" />
-
-        <TextView
-            android:id="@+id/tvChanDesc"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="18dp"
-            android:layout_marginEnd="18dp"
-            android:layout_marginLeft="18dp"
-            android:layout_marginTop="26dp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:layout_marginBottom="4dp"
-            android:textColor="@color/colorText"
-            android:textSize="12sp"
-            tools:text="Дополнительное название канала" />
     </FrameLayout>
 
     <com.imra.mynews.ui.views.FrameSwipeRefreshLayout
-        android:id="@+id/activity_home_swipe_refresh_layout"
+        android:id="@+id/activity_home_swipe_refresh_layout2"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/v_toolbar_extension">
+        android:layout_below="@+id/v_toolbar_extension2">
 
         <ScrollView
             android:layout_width="match_parent"
@@ -72,7 +57,7 @@
                 tools:ignore="ScrollViewSize">
 
                 <ListView
-                    android:id="@+id/activity_home_list_view_repositories"
+                    android:id="@+id/activity_home_list_view_repositories2"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:choiceMode="singleChoice"
@@ -80,7 +65,7 @@
                     tools:ignore="NestedScrolling" />
 
                 <TextView
-                    android:id="@+id/activity_home_text_view_no_repositories"
+                    android:id="@+id/activity_home_text_view_no_repositories2"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:gravity="center"
@@ -88,7 +73,7 @@
                     android:visibility="gone" />
 
                 <ProgressBar
-                    android:id="@+id/activity_home_progress_bar_repositories"
+                    android:id="@+id/activity_home_progress_bar_repositories2"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -101,10 +86,10 @@
     </com.imra.mynews.ui.views.FrameSwipeRefreshLayout>
 
     <FrameLayout
-        android:id="@+id/activity_home_frame_layout_details"
+        android:id="@+id/activity_home_frame_layout_details2"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/v_toolbar_extension"
+        android:layout_below="@+id/v_toolbar_extension2"
         android:layout_centerHorizontal="true"
         android:animateLayoutChanges="true"
         android:elevation="2dp"

@@ -12,17 +12,20 @@ import java.util.List;
  */
 
 public class ItemHtml {
-    @SerializedName("title")
+
     private String title;
 
-    @SerializedName("type")
-    private String type;
-
-    @SerializedName("rel")
-    private String rel;
-
-    @SerializedName("href")
     private String href;
+
+    private String icon_url;
+
+    public String getIcon_url() {
+        return icon_url;
+    }
+
+    public void setIcon_url(String icon_url) {
+        this.icon_url = icon_url;
+    }
 
     public String getHref() {
         return href;
@@ -38,21 +41,5 @@ public class ItemHtml {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getRel() {
-        return rel;
-    }
-
-    public void setRel(String rel) {
-        this.rel = rel;
     }
 }

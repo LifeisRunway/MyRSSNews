@@ -2,11 +2,13 @@ package com.imra.mynews.ui.adapters;
 
 import android.annotation.TargetApi;
 import android.os.Build;
+import android.text.Html;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -14,7 +16,9 @@ import com.arellomobile.mvp.MvpDelegate;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.PresenterType;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.imra.mynews.R;
+import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.presenters.RepositoryLikesPresenter;
@@ -28,9 +32,13 @@ import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+
+import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
 
 /**
  * Date: 28.07.2019
@@ -51,6 +59,9 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
     private int mSelection = -1;
     private List<Article> mArticles;
 
+    private String checkRssTitle = "";
+    private String checkRssTitle2 = "";
+
     private OnScrollToBottomListener mScrollToBottomListener;
 
     public RepositoriesAdapter(MvpDelegate<?> parentDelegate, OnScrollToBottomListener scrollToBottomListener) {
@@ -60,13 +71,25 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
     }
 
     public void setRepositories(RSSFeed rssFeeds) {
-        mArticles = new ArrayList<>(rssFeeds.getArticleList());
+       // if (rssFeeds.getChannelTitle() != null) {
+            mArticles = new ArrayList<>(rssFeeds.getArticleList());
+            if(checkRssTitle.equals("")) {checkRssTitle = rssFeeds.getChannelTitle();}
+            checkRssTitle2 = rssFeeds.getChannelTitle();
+        //}
         notifyDataSetChanged();
     }
 
     public void addRepositories (RSSFeed rssFeeds) {
-        mArticles.addAll(rssFeeds.getArticleList());
+        //if (rssFeeds.getChannelTitle() != null) {
+            mArticles.addAll(rssFeeds.getArticleList());
+            if(checkRssTitle.equals("")) {checkRssTitle = rssFeeds.getChannelTitle();}
+            checkRssTitle2 = rssFeeds.getChannelTitle();
+        //}
         notifyDataSetChanged();
+    }
+
+    private boolean oldRssTit () {
+        return checkRssTitle.equals(checkRssTitle2);
     }
 
     public void setSelection(int selection) {
@@ -109,6 +132,8 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
+        if(mArticles.isEmpty()) return null;
+
         if (getItemViewType(position) == PROGRESS_VIEW_TYPE) {
             if (mScrollToBottomListener != null) {
                 mScrollToBottomListener.onScrollToBottom();
@@ -117,6 +142,7 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
         }
 
         RepositoryHolder holder;
+
         if (convertView != null) {
             holder = (RepositoryHolder) convertView.getTag();
         } else {
@@ -151,8 +177,8 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
         TextView mPubDate;
 
 
-        @BindView(R.id.item_image_button)
-        ImageButton imageButton;
+        @BindView(R.id.item_view_main)
+        ImageView imageView;
 
         View view;
 
@@ -182,12 +208,10 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
 
             mArticle = article;
 
-
-
             getMvpDelegate().onCreate();
             getMvpDelegate().onAttach();
 
-            view.setBackgroundResource(position == mSelection ? R.color.colorAccent : android.R.color.transparent);
+            view.setBackgroundResource(position == mSelection ? R.color.colorAppMyNews : android.R.color.transparent);
 
             //Сохранить в Room
             //imageButton.setOnClickListener(v -> );
@@ -196,20 +220,62 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
         @TargetApi(Build.VERSION_CODES.O)
         @Override
         public void showRepository(int position, Article article) {
-            titleTextView.setText(mArticle.getTitle());
 
-//            if(mArticle.getPubDate() != null) {
-//                DateTimeFormatter fmt = DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss 'GMT'", Locale.US).withZone(ZoneOffset.UTC);
-//                TemporalAccessor date = fmt.parse(mArticle.getPubDate());
-//                Instant time = Instant.from(date);
-//
-//                DateTimeFormatter fmtOut = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneOffset.UTC);
-//                DateTimeFormatter fmtOut2 = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.getDefault()).withZone(ZoneOffset.UTC);
-//
-//                mTimeTextView.setText(fmtOut.format(time));
-//                mPubDate.setText(fmtOut2.format(time));
-//
-//            }
+            if(mArticle.getEnclosure() == null) {
+                if (mArticle.getDescription() != null) {
+                    Pattern p2 = Pattern.compile("https*://[^\"']+\\.(png|jpg|jpeg|gif)");
+                    //Pattern p3 = Pattern.compile("https*://coub[^\"']+");
+
+                    Matcher m2 = p2.matcher(mArticle.getDescription());
+
+                    if(m2.find()) {
+                        GlideApp
+                                .with(view)
+                                .asBitmap()
+                                .load(m2.group())
+                                //.transition(withCrossFade())
+                                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                                .centerCrop()
+                                .override(480,360)
+                                //.thumbnail(0.5f)
+                                .into(imageView);
+                        if(imageView.getVisibility() == View.GONE) imageView.setVisibility(View.VISIBLE);
+                    } else imageView.setVisibility(View.GONE);
+                } else imageView.setVisibility(View.GONE);
+            } else {
+                GlideApp
+                        .with(view)
+                        .asBitmap()
+                        .load(mArticle.getEnclosure().getUrl())
+                        //.transition(withCrossFade())
+                        .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                        .centerCrop()
+                        .override(480,360)
+                        //.thumbnail(0.5f)
+
+                        .into(imageView);
+                if(imageView.getVisibility() == View.GONE) imageView.setVisibility(View.VISIBLE);
+            }
+
+            titleTextView.setText(Html.fromHtml(mArticle.getTitle()));
+            DateTimeFormatter fmt;
+            if(mArticle.getPubDate() != null) {
+                String temp = mArticle.getPubDate();
+                if(temp.substring(temp.length()-3, temp.length()).equals("GMT")) {
+                    fmt = DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss 'GMT'", Locale.US).withZone(ZoneOffset.UTC);
+                } else {
+                    fmt = DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US).withZone(ZoneOffset.UTC);
+                }
+
+                TemporalAccessor date = fmt.parse(temp);
+                Instant time = Instant.from(date);
+
+                DateTimeFormatter fmtOut = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneOffset.UTC);
+                DateTimeFormatter fmtOut2 = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.getDefault()).withZone(ZoneOffset.UTC);
+
+                mTimeTextView.setText(fmtOut.format(time));
+                mPubDate.setText(fmtOut2.format(time));
+            }
 
         }
 

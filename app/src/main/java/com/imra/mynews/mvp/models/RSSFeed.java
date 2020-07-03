@@ -1,5 +1,7 @@
 package com.imra.mynews.mvp.models;
 
+import com.imra.mynews.di.common.Xml;
+
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.ElementList;
 import org.simpleframework.xml.Path;
@@ -21,6 +23,10 @@ public class RSSFeed {
     @Path("channel")
     private String channelTitle;
 
+    @Element(name="description", required = false)
+    @Path("channel")
+    private String channelDescription;
+
     @ElementList(name="item", inline=true)
     @Path("channel")
     private List<Article> articleList;
@@ -41,6 +47,11 @@ public class RSSFeed {
         this.articleList = articleList;
     }
 
+    public String getChannelDescription() {
+        return channelDescription;
+    }
 
-
+    public void setChannelDescription(String channelDescription) {
+        this.channelDescription = channelDescription;
+    }
 }

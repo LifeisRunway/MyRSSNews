@@ -7,6 +7,7 @@ import android.widget.FrameLayout;
 import com.arellomobile.mvp.InjectViewState;
 import com.arellomobile.mvp.MvpPresenter;
 import com.imra.mynews.mvp.models.Article;
+import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.views.MainInterface;
 
@@ -28,10 +29,10 @@ public class MainPresenter extends MvpPresenter<MainInterface> {
         getViewState().showDetailsContainer(position);
     }
 
-    public void onRSSSelection (int position, RSSFeed rssFeed) {
+    public void onRSSSelection (int position, ItemHtml itemHtml) {
         getViewState().setSelection(position);
 
-        getViewState().showDetailsContainer(position);
+        getViewState().showDetailsContainer(position, itemHtml);
     }
 
 }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -20,33 +21,72 @@
             android:minHeight="100dp">
 
             <ImageButton
+                android:id="@+id/image_button_save"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.85"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@android:drawable/ic_menu_save"
+                tools:ignore="ContentDescription" />
+
+            <ImageButton
                 android:id="@+id/image_button_like"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.975"
+                app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@android:drawable/ic_delete"
                 tools:ignore="ContentDescription" />
+
+            <TextView
+                android:id="@+id/tv_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:textColor="@color/md_black_1000"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:fontFamily="serif"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/image_button_like"
+                tools:text="Заголовок новости" />
 
             <ImageView
                 android:id="@+id/imageView2"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
                 android:contentDescription="@string/todo"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.526"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/tv_title"
                 tools:srcCompat="@drawable/test_image"
-                tools:visibility="gone" />
+                tools:visibility="visible" />
 
             <com.imra.mynews.ui.views.LinkWidget
                 android:id="@+id/tvLink"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="10dp"
                 android:layout_marginLeft="10dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginRight="10dp"
+                android:paddingBottom="10dp"
                 android:autoLink="web"
                 android:linksClickable="true"
+                android:textColor="@color/md_black_1000"
+                android:textSize="16sp"
+                android:typeface="serif"
+                app:fontFamily="serif"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/textView"
@@ -56,20 +96,22 @@
                 android:id="@+id/textView"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:breakStrategy="balanced"
                 android:layout_marginLeft="10dp"
-                android:layout_marginTop="40dp"
+                android:layout_marginTop="5dp"
                 android:layout_marginRight="10dp"
                 android:autoLink="web"
+                android:breakStrategy="balanced"
                 android:gravity="fill"
                 android:linksClickable="true"
-                android:autoSizeTextType="uniform"
-                android:typeface="serif"
+                android:textColor="@color/md_black_1000"
+                android:textSize="16sp"
+                android:typeface="normal"
+                app:fontFamily="serif"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/imageView2"
-                tools:text="Test text Test text Test text Test text Test text Test text Test text Test text Test text Test text Test text Test textTest text Test text"
-                tools:targetApi="o" />
+                tools:targetApi="o"
+                tools:text="Текст простой\nОчень простой\nНаипростейший текст\nТакого простого текста в мире не сыскать" />
         </android.support.constraint.ConstraintLayout>
     </ScrollView>
 

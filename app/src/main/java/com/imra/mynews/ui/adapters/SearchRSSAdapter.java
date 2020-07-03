@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -13,6 +14,7 @@ import com.arellomobile.mvp.MvpDelegate;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.imra.mynews.R;
+import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
@@ -89,6 +91,7 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        if(mItemHtml.isEmpty()) {return null;}
 
         if (getItemViewType(position) == PROGRESS_VIEW_TYPE) {
             return new ProgressBar(parent.getContext());
@@ -98,7 +101,7 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
         if (convertView != null) {
             holder = (RepositoryHolder) convertView.getTag();
         } else {
-            convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_layout, parent, false);
+            convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.find_rss_item_layout, parent, false);
             holder = new RepositoryHolder(convertView);
             convertView.setTag(holder);
         }
@@ -123,8 +126,11 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
         @BindView(R.id.item_title)
         TextView titleTextView;
 
-        @BindView(R.id.item_image_button)
-        ImageButton imageButton;
+        @BindView(R.id.tvPubDate)
+        TextView urlTextView;
+
+        @BindView(R.id.item_image_view)
+        ImageView imageView;
 
         View view;
 
@@ -166,7 +172,13 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
         @TargetApi(Build.VERSION_CODES.O)
         @Override
         public void showRepository(int position, Article article) {
-            titleTextView.setText(mItemHtml.getHref());
+            titleTextView.setText(mItemHtml.getTitle());
+            urlTextView.setText(mItemHtml.getHref());
+            GlideApp
+                    .with(view)
+                    .load(mItemHtml.getIcon_url())
+                    .fitCenter()
+                    .into(imageView);
         }
 
 

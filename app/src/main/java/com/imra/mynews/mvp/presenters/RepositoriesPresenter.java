@@ -1,20 +1,39 @@
 package com.imra.mynews.mvp.presenters;
 
+import android.util.Log;
+
 import com.arellomobile.mvp.InjectViewState;
 import com.imra.mynews.app.MyNewsApp;
+import com.imra.mynews.di.common.ArticleDao;
+import com.imra.mynews.di.common.OfflineDB;
 import com.imra.mynews.mvp.MyNewsService;
+import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.views.RepositoriesView;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.annotations.Nullable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import okhttp3.ResponseBody;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * Date: 28.07.2019
@@ -29,9 +48,15 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     @Inject
     MyNewsService myNewsService;
 
+    @Inject
+    ArticleDao mAD;
+
+    private List<ItemHtml> mTest;
+    private String Tag = "Тэгушка";
+
     private boolean mIsInLoading;
     private boolean mIsInLoading2;
-    //private String APP_PREFERENCES_URL = "https://habr.com/rss";
+    private boolean mIsInLoading3;
 
     public RepositoriesPresenter() {
         MyNewsApp.getAppComponent().inject(this);
@@ -55,6 +80,10 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         findRSSFeeds(false, isRefreshing, url);
     }
 
+    public void offlineNews (boolean isRefreshing) {
+        loadOfflineNews(false, isRefreshing);
+    }
+
     private void loadData (boolean isPageLoading, boolean isRefreshing, String url) {
 
         if (mIsInLoading) {
@@ -65,20 +94,24 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         getViewState().onStartLoading();
 
         showProgress(isPageLoading, isRefreshing);
+        if(!url.equals("")) {
+            Observable<RSSFeed> observable = myNewsService.getRSSFeed(url);
 
-        Observable<RSSFeed> observable = myNewsService.getRSSFeed(url);
-
-        Disposable disposable = observable
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe((RSSFeed rssFeed) -> {
-                    onLoadingFinish(isPageLoading, isRefreshing);
-                    onLoadingSuccess(isPageLoading, rssFeed);
-                }, error -> {
-                    onLoadingFinish(isPageLoading, isRefreshing);
-                    onLoadingFailed(error);
-                });
-        unsubscribeOnDestroy(disposable);
+            Disposable disposable = observable
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe((RSSFeed rssFeed) -> {
+                        onLoadingFinish(isPageLoading, isRefreshing);
+                        onLoadingSuccess(isPageLoading, rssFeed);
+                    }, error -> {
+                        onLoadingFinish(isPageLoading, isRefreshing);
+                        onLoadingFailed(error, url);
+                    });
+            unsubscribeOnDestroy(disposable);
+        } else {
+            onLoadingFinish(isPageLoading, isRefreshing);
+            onLoadingSuccess(isPageLoading, new RSSFeed());
+        }
 
     }
 
@@ -93,24 +126,109 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
         showProgress(isPageLoading, isRefreshing);
 
-        Observable<List<ItemHtml>> observables = myNewsService.findRSSFeeds(url);
+        Observable<Response<String>> observables = myNewsService.findRSSFeeds(url);
 
         Disposable disposable = observables
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe((List<ItemHtml> html) -> {
+                .subscribe((stringResponse) -> {
                     onLoadingFinish(isPageLoading, isRefreshing);
-                    onLoadingSuccess(isPageLoading, html);
+                    onLoadingSuccess(isPageLoading, findRssUrl(stringResponse.body(),url));
                 }, error -> {
                     onLoadingFinish(isPageLoading, isRefreshing);
-                    onLoadingFailed(error);
+                    onLoadingFailed(error, url);
                 });
         unsubscribeOnDestroy(disposable);
 
     }
 
+    private void loadOfflineNews (boolean isPageLoading, boolean isRefreshing) {
+        if (mIsInLoading3) { return; }
+        mIsInLoading3 = true;
+        getViewState().onStartLoading();
+
+        showProgress(isPageLoading, isRefreshing);
+
+        RSSFeed tempRssFeed = new RSSFeed();
+        tempRssFeed.setArticleList(mAD.getAll());
+        System.out.println(mAD.getAll().size());
+
+        Observable<RSSFeed> obs = Observable.just(tempRssFeed);
+
+        Disposable disposable = obs
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe((rssFeed) -> {
+                    onLoadingFinish(isPageLoading, isRefreshing);
+                    onLoadingSuccess(isPageLoading, rssFeed);
+                }, error -> {
+                    onLoadingFinish(isPageLoading, isRefreshing);
+                    onLoadingFailed(error, "");
+                });
+        unsubscribeOnDestroy(disposable);
+
+    }
+
+
+    private List<ItemHtml> findRssUrl (String stringHtml, String url) {
+        String mRegex = "<\\s*link\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*/*>";
+        String mRegex2 = "<\\s*link[^>]+(type\\s*=\\s*['\"]*image[^'\"]['\"]*[^>]+href\\s*=(\\s*['\"]*[^\"']+['\"]*)|href\\s*=(\\s*['\"]*[^\"']+['\"]*)[^>]+type\\s*=\\s*['\"]*image[^'\"]['\"]*)[^>]+";
+        Map<String, String> map = new HashMap<>();
+        List<ItemHtml> itemHtmls = new ArrayList<>();
+        Pattern pattern = Pattern.compile(mRegex);
+        Matcher matcher = pattern.matcher(stringHtml);
+        while (matcher.find()) {
+            for (int i = 0; i < 7; i+=2) {
+                String name = matcher.group(i + 1).replace("\"","");
+                String value = matcher.group(i + 2).replace("\"","");
+                map.put(name, value);
+            }
+
+            if (map.get("rel").equals("alternate")) {
+                if(map.get("type").equals("application/atom+xml") || map.get("type").equals("application/rss+xml")){
+                    ItemHtml itemHtml = new ItemHtml();
+                    if(map.get("href").substring(0,1).equals("/")) itemHtml.setHref(url + map.get("href"));
+                    else itemHtml.setHref(map.get("href"));
+                    itemHtml.setTitle(map.get("title"));
+                    itemHtmls.add(itemHtml);
+                }
+            }
+
+            map.clear();
+        }
+
+        if(!itemHtmls.isEmpty()) {
+            pattern = Pattern.compile(mRegex2);
+            matcher = pattern.matcher(stringHtml);
+            if(matcher.find()) {
+                String group2 = "";
+                String group3 = "";
+                if(matcher.group(2) != null) {
+                    group2 = matcher.group(2).replace("\"", "");
+                    if(group2.substring(0, 1).equals("/")) {
+                        group2 = url + group2;
+                    }
+                }
+                if(matcher.group(3) != null) {
+                    group3 = matcher.group(3).replace("\"", "");
+                    if(group3.substring(0, 1).equals("/")) {
+                        group3 = url + group3;
+                    }
+                }
+
+                for(ItemHtml itemHtml : itemHtmls) {
+                    if(!group2.equals("")) itemHtml.setIcon_url(group2);
+                    if(!group3.equals("")) itemHtml.setIcon_url(group3);
+                }
+            }
+        }
+
+        return new ArrayList<>(itemHtmls);
+    }
+
     private void onLoadingFinish(boolean isPageLoading, boolean isRefreshing) {
         mIsInLoading = false;
+        mIsInLoading2 = false;
 
         getViewState().onFinishLoading();
 
@@ -136,8 +254,12 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         }
     }
 
-    private void onLoadingFailed(Throwable error) {
-        getViewState().showError(error.toString());
+    private void onLoadingFailed(Throwable error, String url) {
+        String fixError = error.toString();
+        if(error.getClass() == UnknownHostException.class) {
+            fixError = "Невозможно подключиться к:\n\"" + url + "\"\nПроверьте правильность адреса и доступ к интернету";
+        }
+        getViewState().showError(fixError);
     }
 
     public void onErrorCancel() {

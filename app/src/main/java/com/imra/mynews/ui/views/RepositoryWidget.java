@@ -3,7 +3,6 @@ package com.imra.mynews.ui.views;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.support.annotation.ColorInt;
@@ -13,15 +12,10 @@ import android.support.v7.widget.AppCompatTextView;
 import android.text.Html;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
-import android.text.Spanned;
 import android.text.TextPaint;
-import android.text.TextUtils;
 import android.text.method.LinkMovementMethod;
 import android.text.style.ClickableSpan;
-import android.text.style.StrikethroughSpan;
-import android.text.style.StyleSpan;
 import android.text.style.URLSpan;
-import android.text.style.UnderlineSpan;
 import android.util.AttributeSet;
 import android.view.View;
 
@@ -31,10 +25,7 @@ import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.presenters.RepositoryPresenter;
 import com.imra.mynews.mvp.views.RepositoryView;
-import com.imra.mynews.ui.utils.GlideImageGetter;
-
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.imra.mynews.ui.utils.GlideImageGifGetter;
 
 /**
  * Date: 29.07.2019
@@ -93,14 +84,18 @@ public class RepositoryWidget extends AppCompatTextView implements RepositoryVie
 
     @Override
     public void showRepository(int position, Article article) {
-        setText(clickableSpan(mArticle.getDescription(), Color.BLUE));
+        setText(clickableSpan(mArticle.getDescription(), Color.BLACK));
         setMovementMethod(LinkMovementMethod.getInstance());
     }
 
     @NonNull
     public SpannableString clickableSpan (@NonNull String description, @ColorInt int color) {
-        GlideImageGetter glideImageGetter = new GlideImageGetter(this);
-        CharSequence sequence = Html.fromHtml(description, glideImageGetter, null);
+        //GlideImageGetter glideImageGetter = new GlideImageGetter(this);
+        //GlideImageAllGetter glideImageGetter2 = new GlideImageAllGetter(getContext(),this);
+
+        GlideImageGifGetter glideImageGetter3 = new GlideImageGifGetter(this);
+
+        CharSequence sequence = Html.fromHtml(changeDesc(description),glideImageGetter3,null);
         SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
         URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
         for (URLSpan span : urls) {
@@ -116,7 +111,7 @@ public class RepositoryWidget extends AppCompatTextView implements RepositoryVie
                 public void updateDrawState(@NonNull TextPaint ds) {
                     super.updateDrawState(ds);
                     ds.setColor(color);
-                    ds.setUnderlineText(false);
+                    ds.setUnderlineText(true);
                 }
             };
             strBuilder.setSpan(clickable, start, end, flags);
@@ -125,4 +120,12 @@ public class RepositoryWidget extends AppCompatTextView implements RepositoryVie
         return new SpannableString(strBuilder);
     }
 
+    private String changeDesc (String description) {
+        return (description != null) ?
+                description
+                .replaceFirst("<[^>]+>\\s*Читать\\s*дальше[^>]+>", "")
+                .replaceAll("<iframe.*?(https*[^?\"']*).*?iframe>", "<div class=\"post_content\"><div><p></p><p><div class=\"image\"><a href=\"$1\" class=\"prettyPhotoLink\" rel=\"prettyPhoto\"> <img src=$1>")
+                .replaceAll("&nbsp;"," ")
+                .replaceAll("<\\s*script[^<]+\\s*</*script>","") : " ";
+    }
 }

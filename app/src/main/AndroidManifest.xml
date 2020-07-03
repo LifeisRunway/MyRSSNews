@@ -3,6 +3,8 @@
     package="com.imra.mynews">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
         android:name=".app.MyNewsApp"
@@ -19,6 +21,11 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.activities.SettingsActivity" />
+        <activity android:name=".ui.activities.OfflineActivity" />
+
+        <meta-data
+            android:name="preloaded_fonts"
+            android:resource="@array/preloaded_fonts" />
     </application>
 
 </manifest>

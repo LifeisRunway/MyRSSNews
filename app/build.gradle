@@ -52,7 +52,9 @@ dependencies {
     implementation "com.squareup.retrofit2:adapter-rxjava2:$retrofit"
     implementation "com.squareup.retrofit2:converter-simplexml:$retrofit"
     implementation "com.squareup.retrofit2:converter-gson:$retrofit"
+    implementation "com.squareup.retrofit2:converter-scalars:$retrofit"
 
+    implementation 'org.jsoup:jsoup:1.10.1'
 
 
     //OkHttp
@@ -86,8 +88,8 @@ dependencies {
     //annotationProcessor "android.arch.persistence.room:compiler:1.1.1"
 
     //Glide
-    implementation 'com.github.bumptech.glide:glide:4.4.0'
-    annotationProcessor 'com.github.bumptech.glide:compiler:4.4.0'
+    implementation 'com.github.bumptech.glide:glide:4.9.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.9.0'
 
     //Animation View
     implementation 'com.daimajia.easing:library:2.0@aar'
@@ -104,10 +106,15 @@ dependencies {
     //used to provide different itemAnimators for the RecyclerView
     //https://github.com/mikepenz/ItemAnimators
     implementation 'com.mikepenz:itemanimators:1.0.2@aar'
+    //youtube icon watermark
+    //implementation 'com.huangyz0918:androidwm:0.2.3'
 
+    implementation "android.arch.persistence.room:runtime:1.1.1"
+    annotationProcessor "android.arch.persistence.room:compiler:1.1.1"
 
 }
 repositories {
     mavenCentral()
     maven { url 'https://maven.google.com' }
+    google()
 }

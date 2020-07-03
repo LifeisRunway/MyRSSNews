@@ -7,11 +7,11 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Date: 23.05.2020
- * Time: 20:44
+ * Date: 26.05.2020
+ * Time: 22:44
  *
  * @author IMRA027
  */
 //@Target(METHOD)
 @Retention(RUNTIME)
-public @interface Xml {}
+public @interface Scalar {}

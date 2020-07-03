@@ -13,6 +13,7 @@ import dagger.Provides;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
+//import okhttp3.logging.HttpLoggingInterceptor;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Converter;
 import retrofit2.Retrofit;
@@ -57,36 +58,22 @@ public class RetrofitModule {
 
     @Provides
     @Singleton
-    public OkHttpClient.Builder provideHttpClient(Cache cache, HttpLoggingInterceptor logging) {
+    public OkHttpClient.Builder provideHttpClient(Cache cache) {
         OkHttpClient.Builder httpClient = new OkHttpClient.Builder()
                 .connectTimeout(60, TimeUnit.SECONDS)
                 .readTimeout(60, TimeUnit.SECONDS);
         httpClient
-                .addInterceptor(logging)
+                //.addInterceptor(logging)
                 .cache(cache);
         return httpClient;
     }
 
-    @Provides
-    @Singleton
-    public HttpLoggingInterceptor provideHttpLoggingInterceptor () {
-        return new HttpLoggingInterceptor()
-                .setLevel(HttpLoggingInterceptor.Level.BODY);
-    }
-
 //    @Provides
 //    @Singleton
-//    public Interceptor provideIntercepter () {
-//        Interceptor interceptor = new Interceptor() {
-//            @Override
-//            public Response intercept(Chain chain) throws IOException {
-//
-//
-//                return null;
-//            }
-//        }
+//    public HttpLoggingInterceptor provideHttpLoggingInterceptor () {
+//        return new HttpLoggingInterceptor()
+//                .setLevel(HttpLoggingInterceptor.Level.BODY);
 //    }
-
 
     @Provides
     @Singleton
@@ -94,11 +81,5 @@ public class RetrofitModule {
         int cacheSize = 1024*1024*10;
         return new Cache(context.getCacheDir(),cacheSize);
     }
-
-//    @Provides
-//    @Singleton
-//    public Request.Builder provideRequest () {
-//        return new Request.Builder();
-//    }
 
 }

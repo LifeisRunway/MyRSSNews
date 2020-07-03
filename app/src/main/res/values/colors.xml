@@ -5,4 +5,6 @@
     <color name="colorAccent">#D81B60</color>
     <color name="colorFon">#8FA1CE</color>
     <color name="colorText">#FFFFFF</color>
+    <color name="colorAppMyNews">#6DD8C2</color>
+    <color name="colorAppMyNews2">#2D4946</color>
 </resources>

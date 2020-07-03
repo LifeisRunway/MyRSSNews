@@ -19,7 +19,8 @@ public class MyNewsError extends Throwable {
     public MyNewsError (ResponseBody responseBody) {super(getMessage(responseBody));}
 
     public static String getMessage (ResponseBody responseBody) {
-        try {return new JSONObject(responseBody.string()).optString("message");
+        try {
+            return new JSONObject(responseBody.string()).optString("message");
         } catch (JSONException | IOException e) {
             e.printStackTrace();
         }

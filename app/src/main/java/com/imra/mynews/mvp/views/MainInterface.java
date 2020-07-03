@@ -7,6 +7,7 @@ import com.arellomobile.mvp.viewstate.strategy.AddToEndSingleStrategy;
 import com.arellomobile.mvp.viewstate.strategy.OneExecutionStateStrategy;
 import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
 import com.imra.mynews.mvp.models.Article;
+import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
 
 /**
@@ -22,6 +23,7 @@ public interface MainInterface extends MvpView {
     void setSelection(int position);
 
     void showDetailsContainer(int position);
+    void showDetailsContainer(int position, ItemHtml itemHtml);
 
     @StateStrategyType(OneExecutionStateStrategy.class)
     void showDetails(int position, Article article);
