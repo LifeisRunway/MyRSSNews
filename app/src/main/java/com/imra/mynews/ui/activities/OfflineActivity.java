@@ -90,7 +90,11 @@ public class OfflineActivity extends MvpAppCompatActivity implements Repositorie
 
     @Override
     public boolean onSupportNavigateUp() {
-        onBackPressed();
+        if(mDetailsFragmeLayout.getVisibility() == View.GONE) {
+            onBackPressed();
+        } else {
+            mDetailsFragmeLayout.setVisibility(View.GONE);
+        }
         return true;
     }
 
