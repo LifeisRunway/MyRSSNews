@@ -2,13 +2,16 @@ package com.imra.mynews.ui.adapters;
 
 import android.annotation.TargetApi;
 import android.os.Build;
+import android.support.annotation.NonNull;
 import android.text.Html;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -37,6 +40,10 @@ import java.util.regex.Pattern;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
 
@@ -58,6 +65,7 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
 
     private int mSelection = -1;
     private List<Article> mArticles;
+    private RSSFeed rssFeed;
 
     private String checkRssTitle = "";
     private String checkRssTitle2 = "";
@@ -70,21 +78,24 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
         mArticles = new ArrayList<>();
     }
 
-    public void setRepositories(RSSFeed rssFeeds) {
-       // if (rssFeeds.getChannelTitle() != null) {
-            mArticles = new ArrayList<>(rssFeeds.getArticleList());
-            if(checkRssTitle.equals("")) {checkRssTitle = rssFeeds.getChannelTitle();}
+    public void setRepositories(@NonNull RSSFeed rssFeeds) {
+        rssFeed = rssFeeds;
+        mArticles = new ArrayList<>(rssFeeds.getArticleList());
+         if (rssFeeds.getChannelTitle() != null) {
+            if(checkRssTitle.equals("")) {
+                checkRssTitle = rssFeeds.getChannelTitle();}
             checkRssTitle2 = rssFeeds.getChannelTitle();
-        //}
+         }
         notifyDataSetChanged();
     }
 
-    public void addRepositories (RSSFeed rssFeeds) {
-        //if (rssFeeds.getChannelTitle() != null) {
-            mArticles.addAll(rssFeeds.getArticleList());
+    public void addRepositories (@NonNull RSSFeed rssFeeds) {
+        rssFeed = rssFeeds;
+        mArticles.addAll(rssFeeds.getArticleList());
+        if (rssFeeds.getChannelTitle() != null) {
             if(checkRssTitle.equals("")) {checkRssTitle = rssFeeds.getChannelTitle();}
             checkRssTitle2 = rssFeeds.getChannelTitle();
-        //}
+        }
         notifyDataSetChanged();
     }
 
@@ -152,7 +163,7 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
         }
 
         final Article item = getItem(position);
-
+        //holder.setSize();
         holder.bind(position, item);
 
         return convertView;
@@ -176,13 +187,21 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
         @BindView(R.id.tvPubDate)
         TextView mPubDate;
 
-
         @BindView(R.id.item_view_main)
         ImageView imageView;
+
+        @BindView(R.id.llOne)
+        LinearLayout llOne;
 
         View view;
 
         private MvpDelegate mMvpDelegate;
+
+        int maxWidth;
+        int widthIV;
+        int heightIV;
+        LinearLayout.LayoutParams param;
+        Disposable disposable;
 
         @ProvidePresenter
         RepositoryPresenter provideRepositoryPresenter() {
@@ -193,6 +212,18 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
             this.view = view;
 
             ButterKnife.bind(this, view);
+            setSize();
+        }
+
+        void setSize() {
+            view.post(() -> {
+                param = (LinearLayout.LayoutParams) llOne.getLayoutParams();
+                maxWidth = view.getMeasuredWidth();
+                widthIV = (int) (maxWidth * 0.375);
+                heightIV = (int) (widthIV * 0.75);
+                param.height = heightIV;
+                param.width = widthIV;
+                llOne.setLayoutParams(param);});
         }
 
         void bind(int position, Article article) {
@@ -211,8 +242,11 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
             getMvpDelegate().onCreate();
             getMvpDelegate().onAttach();
 
-            view.setBackgroundResource(position == mSelection ? R.color.colorAppMyNews : android.R.color.transparent);
-
+            //Выделение выбранного элемента
+            //view.setBackgroundResource(position == mSelection ? R.color.colorAppMyNews : android.R.color.transparent);
+//            if(position == mSelection) {
+//                mRepositoryPresenter.testMyIdea(rssFeed, article);
+//            }
             //Сохранить в Room
             //imageButton.setOnClickListener(v -> );
         }
@@ -221,40 +255,70 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
         @Override
         public void showRepository(int position, Article article) {
 
+
             if(mArticle.getEnclosure() == null) {
-                if (mArticle.getDescription() != null) {
-                    Pattern p2 = Pattern.compile("https*://[^\"']+\\.(png|jpg|jpeg|gif)");
-                    //Pattern p3 = Pattern.compile("https*://coub[^\"']+");
 
-                    Matcher m2 = p2.matcher(mArticle.getDescription());
+                if(mArticle.getEclos() != null) {
+                    GlideApp
+                            .with(view)
+                            .asBitmap()
+                            .load(mArticle.getEclos())
+                            //.transition(withCrossFade())
+                            .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                            .centerCrop()
+                            .override(480,360)
+                            //.thumbnail(0.5f)
+                            .into(imageView);
+                } else {
+                    if(mArticle.getDescription() != null) {
+                        Pattern p2 = Pattern.compile("https*://[^\"']+\\.(png|jpg|jpeg|gif)");
+                        //Pattern p3 = Pattern.compile("https*://coub[^\"']+");
 
-                    if(m2.find()) {
-                        GlideApp
-                                .with(view)
-                                .asBitmap()
-                                .load(m2.group())
-                                //.transition(withCrossFade())
-                                .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
-                                .centerCrop()
-                                .override(480,360)
-                                //.thumbnail(0.5f)
-                                .into(imageView);
-                        if(imageView.getVisibility() == View.GONE) imageView.setVisibility(View.VISIBLE);
-                    } else imageView.setVisibility(View.GONE);
-                } else imageView.setVisibility(View.GONE);
+                        Matcher m2 = p2.matcher(mArticle.getDescription());
+
+                        if(m2.find()) {
+                            GlideApp
+                                    .with(view)
+                                    .asBitmap()
+                                    .load(m2.group())
+                                    //.transition(withCrossFade())
+                                    .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                                    .centerCrop()
+                                    .override(480,360)
+                                    //.thumbnail(0.5f)
+                                    .into(imageView);
+                            if(llOne.getVisibility() == View.GONE) llOne.setVisibility(View.VISIBLE);
+                        } else llOne.setVisibility(View.GONE);
+                    } else llOne.setVisibility(View.GONE);
+                }
             } else {
+                if(llOne.getVisibility() == View.GONE) llOne.setVisibility(View.VISIBLE);
+                if(mArticle.getEclos() == null) mArticle.setEclos(mArticle.getEnclosure().getUrl());
+
                 GlideApp
                         .with(view)
                         .asBitmap()
-                        .load(mArticle.getEnclosure().getUrl())
+                        .load(mArticle.getEclos())
                         //.transition(withCrossFade())
                         .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
                         .centerCrop()
                         .override(480,360)
                         //.thumbnail(0.5f)
-
                         .into(imageView);
-                if(imageView.getVisibility() == View.GONE) imageView.setVisibility(View.VISIBLE);
+
+//
+//
+//                GlideApp
+//                        .with(view)
+//                        .asBitmap()
+//                        .load(mArticle.getEnclosure().getUrl())
+//                        //.transition(withCrossFade())
+//                        .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+//                        .centerCrop()
+//                        .override(480,360)
+//                        //.thumbnail(0.5f)
+//                        .into(imageView);
+
             }
 
             titleTextView.setText(Html.fromHtml(mArticle.getTitle()));
@@ -278,6 +342,12 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
             }
 
         }
+
+        @Override
+        public void saveOrDelete(boolean isSave) {
+
+        }
+
 
 
         MvpDelegate getMvpDelegate() {

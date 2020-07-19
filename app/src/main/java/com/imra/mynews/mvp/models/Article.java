@@ -1,7 +1,10 @@
 package com.imra.mynews.mvp.models;
 
+import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.ForeignKey;
 import android.arch.persistence.room.Ignore;
+import android.arch.persistence.room.Index;
 import android.arch.persistence.room.PrimaryKey;
 import android.support.annotation.Nullable;
 
@@ -10,6 +13,8 @@ import org.simpleframework.xml.Root;
 
 import java.io.Serializable;
 
+import static android.arch.persistence.room.ForeignKey.CASCADE;
+
 /**
  * Date: 27.07.2019
  * Time: 20:03
@@ -17,14 +22,20 @@ import java.io.Serializable;
  * @author IMRA027
  */
 
-@Entity(tableName = "articles")
+@Entity(tableName = "articles",
+        foreignKeys = {@ForeignKey(entity = RSSFeed.class, parentColumns = "rssFeedId", childColumns = "rssId", onDelete = ForeignKey.CASCADE)},
+        indices = {@Index(value = "title", unique = true)})
 @Root (name = "item", strict = false)
 public class Article implements Serializable{
 
     @PrimaryKey(autoGenerate = true)
-    private long id;
+    private Integer articleId;
+
+    @ColumnInfo(name = "rssId")
+    private Integer rssId;
 
     @Nullable
+    @ColumnInfo(name = "title")
     @Element (name = "title")
     private String title;
 
@@ -36,10 +47,12 @@ public class Article implements Serializable{
     @Element (name = "description", required = false)
     private String description;
 
-    //@Nullable
     @Ignore
     @Element (name = "enclosure", required = false)
     private Enclosure enclosure;
+
+    @Nullable
+    private String eclos;
 
     @Nullable
     @Element (name = "pubDate", required = false)
@@ -85,8 +98,7 @@ public class Article implements Serializable{
         this.link = link;
     }
 
-    //@Nullable
-    @Ignore
+    @Nullable
     public Enclosure getEnclosure() {return enclosure;}
 
     public void setEnclosure(Enclosure enclosure) {
@@ -102,11 +114,28 @@ public class Article implements Serializable{
         this.creator = creator;
     }
 
-    public long getId() {
-        return id;
+    public Integer getArticleId() {
+        return articleId;
     }
 
-    public void setId(long id) {
-        this.id = id;
+    public void setArticleId(Integer articleId) {
+        this.articleId = articleId;
+    }
+
+    @Nullable
+    public String getEclos() {
+        return eclos;
+    }
+
+    public void setEclos(@Nullable String eclos) {
+        this.eclos = eclos;
+    }
+
+    public Integer getRssId() {
+        return rssId;
+    }
+
+    public void setRssId(Integer rssId) {
+        this.rssId = rssId;
     }
 }

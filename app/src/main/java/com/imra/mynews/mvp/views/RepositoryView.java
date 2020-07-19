@@ -14,4 +14,6 @@ public interface RepositoryView extends MvpView {
 
     void showRepository(int position, Article article);
 
+    void saveOrDelete(boolean isSave);
+
 }

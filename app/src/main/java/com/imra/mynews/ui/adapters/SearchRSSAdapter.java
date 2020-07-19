@@ -181,6 +181,11 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
                     .into(imageView);
         }
 
+        @Override
+        public void saveOrDelete(boolean isSave) {
+
+        }
+
 
         MvpDelegate getMvpDelegate() {
             if (mItemHtml == null) {

@@ -11,7 +11,9 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.arellomobile.mvp.MvpAppCompatFragment;
 import com.arellomobile.mvp.presenter.InjectPresenter;
@@ -55,9 +57,6 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
     public static final String ARGS_REPOSITORY = "argsRepository";
     public static final String ARGS_POSITION = "argsPosition";
 
-//    @Inject
-//    ArticleDao mAD;
-
     @InjectPresenter
     RepositoryPresenter mFragmentPresenter;
 
@@ -88,7 +87,6 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
     Disposable disposable2;
 
     private int duration = 500;
-    //private FrameLayout mFL;
     private View mVG;
 
     @ProvidePresenter
@@ -113,7 +111,6 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.activity_fragment, container, false);
         if(getActivity() != null) {
-            //mFL = (getActivity().findViewById(R.id.activity_home_frame_layout_details));
             mVG = (View) container;
         }
         return rootView;
@@ -124,16 +121,29 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
         super.onViewCreated(view, savedInstanceState);
         unbinder = ButterKnife.bind(this, view);
 
-        if(mArticle.getEnclosure() != null) {
-            GlideApp
-                    .with(view)
-                    .asBitmap()
-                    .load(mArticle.getEnclosure().getUrl())
-                    .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
-                    //.override(480,360)
-                    .fitCenter()
-                    .into(mImageView);
+        if(mArticle != null) {
+            if(mArticle.getEnclosure() != null) {
+                if(mArticle.getEclos() == null) mArticle.setEclos(mArticle.getEnclosure().getUrl());
+                GlideApp
+                        .with(view)
+                        .asBitmap()
+                        .load(mArticle.getEnclosure().getUrl())
+                        .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                        //.override(480,360)
+                        .fitCenter()
+                        .into(mImageView);
+            } else {
+                GlideApp
+                        .with(view)
+                        .asBitmap()
+                        .load(mArticle.getEclos())
+                        .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                        //.override(480,360)
+                        .fitCenter()
+                        .into(mImageView);
+            }
         }
+
 
         //mFL = (mActivity.findViewById(R.id.activity_home_frame_layout_details));
 
@@ -149,6 +159,8 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
                     .subscribe(mVG -> mVG.setVisibility(View.GONE));
         });
 
+
+
         mImageButtonSave.setOnClickListener(v -> {
 
             disposable2 = Observable.just(mFragmentPresenter)
@@ -160,8 +172,6 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
         });
 
     }
-
-
 
     @Override
     public void onDestroyView() {
@@ -178,6 +188,15 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
         mTitleTextView.setText(Html.fromHtml(mArticle.getTitle()));
         textView.initWidget(getMvpDelegate(), article, position);
         tvLink.initWidget(getMvpDelegate(), article, position);
+    }
+
+    @Override
+    public void saveOrDelete(boolean isSave) {
+        if(isSave) {
+            Toast.makeText(getContext(),"Сохранено",Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(getContext(),"Удалено",Toast.LENGTH_SHORT).show();
+        }
     }
 
 }

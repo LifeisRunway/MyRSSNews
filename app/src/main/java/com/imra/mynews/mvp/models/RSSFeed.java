@@ -1,6 +1,11 @@
 package com.imra.mynews.mvp.models;
 
-import com.imra.mynews.di.common.Xml;
+import android.arch.persistence.room.ColumnInfo;
+import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.Ignore;
+import android.arch.persistence.room.Index;
+import android.arch.persistence.room.PrimaryKey;
+import android.support.annotation.Nullable;
 
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.ElementList;
@@ -15,10 +20,15 @@ import java.util.List;
  *
  * @author IMRA027
  */
-
+@Entity(tableName = "rssfeeds", indices = {@Index(value = "title", unique = true)})
 @Root(name = "rss", strict = false)
 public class RSSFeed {
 
+    @PrimaryKey(autoGenerate = true)
+    private Integer rssFeedId;
+
+    @Nullable
+    @ColumnInfo(name = "title")
     @Element(name="title")
     @Path("channel")
     private String channelTitle;
@@ -27,22 +37,26 @@ public class RSSFeed {
     @Path("channel")
     private String channelDescription;
 
+    @Ignore
     @ElementList(name="item", inline=true)
     @Path("channel")
     private List<Article> articleList;
 
+    @Nullable
     public String getChannelTitle() {
         return channelTitle;
     }
 
-    public void setChannelTitle(String channelTitle) {
+    public void setChannelTitle(@Nullable String channelTitle) {
         this.channelTitle = channelTitle;
     }
 
+    @Ignore
     public List<Article> getArticleList() {
         return articleList;
     }
 
+    @Ignore
     public void setArticleList(List<Article> articleList) {
         this.articleList = articleList;
     }
@@ -53,5 +67,13 @@ public class RSSFeed {
 
     public void setChannelDescription(String channelDescription) {
         this.channelDescription = channelDescription;
+    }
+
+    public Integer getRssFeedId() {
+        return rssFeedId;
+    }
+
+    public void setRssFeedId(Integer rssFeedId) {
+        this.rssFeedId = rssFeedId;
     }
 }

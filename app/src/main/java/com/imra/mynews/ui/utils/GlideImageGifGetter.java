@@ -105,7 +105,7 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
                     .asDrawable()
                     .load(mSource)
                     .apply(RequestOptions.centerInsideTransform())
-                    .placeholder(R.drawable.load_animation)
+                    //.placeholder(R.drawable.load_animation)
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(drawable);
         });
@@ -187,15 +187,15 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
             int drawableWidth = (int) (drawable.getIntrinsicWidth() * density);
             int drawableHeight = (int) (drawable.getIntrinsicHeight() * density);
             int maxWidth = container.get().getMeasuredWidth();
-            if ((drawableWidth > maxWidth) || matchParentWidth) {
+            //if ((drawableWidth > maxWidth) || matchParentWidth) {
+//                int calculatedHeight = maxWidth * drawableHeight / drawableWidth;
+//                drawable.setBounds(0, 0, maxWidth, drawableHeight);
+//                setBounds(0, 0, maxWidth, calculatedHeight);
+            //} else {
                 int calculatedHeight = maxWidth * drawableHeight / drawableWidth;
-                drawable.setBounds(0, 0, maxWidth, drawableHeight);
+                drawable.setBounds(0, 0, maxWidth, calculatedHeight);
                 setBounds(0, 0, maxWidth, calculatedHeight);
-            } else {
-                int calculatedHeight = maxWidth * drawableHeight / drawableWidth;
-                drawable.setBounds(0, 0, maxWidth, drawableHeight);
-                setBounds(0, 0, maxWidth, calculatedHeight);
-            }
+            //}
 
 
             mDrawable.setDrawable(drawable);
@@ -269,7 +269,7 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
         @Override
         public void onLoadCleared(@Nullable Drawable placeholderDrawable) {
             if(placeholderDrawable != null) {
-                setDrawable(placeholderDrawable);
+                setDrawableOnLoadStart(placeholderDrawable);
             }
             System.out.println("Очистка");
         }

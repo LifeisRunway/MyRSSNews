@@ -29,9 +29,8 @@ public interface AppComponent {
     Context getContext();
     MyNewsService getMyNewsService();
     ArticleDao getAD();
+    //Integer mLocalDB();
 
     void inject(RepositoriesPresenter presenter);
     void inject2(RepositoryPresenter presenter);
-
-
 }

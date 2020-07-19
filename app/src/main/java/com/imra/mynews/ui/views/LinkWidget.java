@@ -88,6 +88,11 @@ public class LinkWidget extends AppCompatTextView implements RepositoryView {
         setMovementMethod(LinkMovementMethod.getInstance());
     }
 
+    @Override
+    public void saveOrDelete(boolean isSave) {
+
+    }
+
     //Пригодится
     /**@NonNull
     public CharSequence plus (@NonNull String one, @NonNull SpannableString two) {

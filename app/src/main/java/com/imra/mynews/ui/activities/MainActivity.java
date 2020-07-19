@@ -327,6 +327,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                         if((int)drawerItem.getIdentifier() > 2000) {
                             oldUrl = sp.getString(drawerItem.getTag().toString(), "");
                             mRepositoriesPresenter.loadRepositories(true, oldUrl);
+                            mListView.smoothScrollToPosition(0);
 
                             //oldUrl = sp.getString(drawerItem.getTag().toString(), "");
                         }

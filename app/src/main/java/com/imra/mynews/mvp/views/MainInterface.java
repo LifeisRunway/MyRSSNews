@@ -22,7 +22,10 @@ public interface MainInterface extends MvpView {
 
     void setSelection(int position);
 
+    @StateStrategyType(OneExecutionStateStrategy.class)
     void showDetailsContainer(int position);
+
+    @StateStrategyType(OneExecutionStateStrategy.class)
     void showDetailsContainer(int position, ItemHtml itemHtml);
 
     @StateStrategyType(OneExecutionStateStrategy.class)

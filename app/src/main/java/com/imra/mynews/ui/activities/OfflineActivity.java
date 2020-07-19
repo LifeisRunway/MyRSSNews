@@ -28,10 +28,15 @@ import com.imra.mynews.ui.views.FrameSwipeRefreshLayout;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 
 /**
  * Date: 28.06.2020
@@ -58,10 +63,14 @@ public class OfflineActivity extends MvpAppCompatActivity implements Repositorie
     @BindView (R.id.tvChanTitle2)
     TextView mChannelTitle;
 
+    @BindView(R.id.activity_home_swipe_refresh_layout2)
+    FrameSwipeRefreshLayout mSwipeRefreshLayout;
+
     @BindView(R.id.activity_home_frame_layout_details2)
     FrameLayout mDetailsFragmeLayout;
 
     Unbinder unbinder;
+    Disposable disposable;
     private RepositoriesAdapter mReposAdapter;
     private AlertDialog mErrorDialog;
 
@@ -76,6 +85,11 @@ public class OfflineActivity extends MvpAppCompatActivity implements Repositorie
         setSupportActionBar(mToolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
 
+        mSwipeRefreshLayout.setListViewChild(mListView);
+        mSwipeRefreshLayout.setOnRefreshListener(() -> {
+            mRepositoriesPresenter.offlineNews(true);
+        });
+
         mReposAdapter = new RepositoriesAdapter(getMvpDelegate(), this);
         mListView.setAdapter(mReposAdapter);
         mListView.setOnItemClickListener((AdapterView<?> parent, View view, int pos, long id) -> {
@@ -85,13 +99,37 @@ public class OfflineActivity extends MvpAppCompatActivity implements Repositorie
             mMainPresenter.onRepositorySelection(pos, mReposAdapter.getItem(pos));
         });
 
-        mRepositoriesPresenter.offlineNews(true);
+        mRepositoriesPresenter.offlineNews(false);
     }
 
     @Override
     public boolean onSupportNavigateUp() {
         onBackPressed();
         return true;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if(mDetailsFragmeLayout.getVisibility() == View.GONE) {
+            super.onBackPressed();
+        } else {
+            YoYo.with(Techniques.FadeOut)
+                    .duration(500)
+                    .playOn(mDetailsFragmeLayout);
+
+            disposable = Observable.just(mDetailsFragmeLayout)
+                    .subscribeOn(Schedulers.io())
+                    .delay(500, TimeUnit.MILLISECONDS)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(mDFL -> mDFL.setVisibility(View.GONE));
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        unbinder.unbind();
+        if(disposable != null) disposable.dispose();
     }
 
     @Override
@@ -122,22 +160,22 @@ public class OfflineActivity extends MvpAppCompatActivity implements Repositorie
 
     @Override
     public void onStartLoading() {
-
+        mSwipeRefreshLayout.setEnabled(false);
     }
 
     @Override
     public void onFinishLoading() {
-
+        mSwipeRefreshLayout.setEnabled(true);
     }
 
     @Override
     public void showRefreshing() {
-
+        mSwipeRefreshLayout.post(() -> mSwipeRefreshLayout.setRefreshing(true));
     }
 
     @Override
     public void hideRefreshing() {
-
+        mSwipeRefreshLayout.post(() -> mSwipeRefreshLayout.setRefreshing(false));
     }
 
     @Override
@@ -198,6 +236,6 @@ public class OfflineActivity extends MvpAppCompatActivity implements Repositorie
 
     @Override
     public void onScrollToBottom() {
-
+        //mRepositoriesPresenter.offlineNews(false);
     }
 }

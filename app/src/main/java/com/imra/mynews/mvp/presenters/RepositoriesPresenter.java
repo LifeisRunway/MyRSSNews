@@ -10,6 +10,7 @@ import com.imra.mynews.mvp.MyNewsService;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
+import com.imra.mynews.mvp.models.RssFeedArticlesDetail;
 import com.imra.mynews.mvp.views.RepositoriesView;
 
 import org.jsoup.Jsoup;
@@ -22,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.inject.Inject;
 
@@ -51,8 +54,8 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     @Inject
     ArticleDao mAD;
 
-    private List<ItemHtml> mTest;
-    private String Tag = "Тэгушка";
+    @Inject
+    Integer mLocalDB;
 
     private boolean mIsInLoading;
     private boolean mIsInLoading2;
@@ -145,13 +148,16 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     private void loadOfflineNews (boolean isPageLoading, boolean isRefreshing) {
         if (mIsInLoading3) { return; }
         mIsInLoading3 = true;
+
         getViewState().onStartLoading();
 
         showProgress(isPageLoading, isRefreshing);
 
         RSSFeed tempRssFeed = new RSSFeed();
-        tempRssFeed.setArticleList(mAD.getAll());
-        System.out.println(mAD.getAll().size());
+        RssFeedArticlesDetail tempRFAD = mAD.getRssFeedArticleDetail(mLocalDB);
+        tempRssFeed.setChannelTitle(tempRFAD.getRssFeed().getChannelTitle());
+        tempRssFeed.setArticleList(tempRFAD.getArticles());
+
 
         Observable<RSSFeed> obs = Observable.just(tempRssFeed);
 
@@ -229,6 +235,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     private void onLoadingFinish(boolean isPageLoading, boolean isRefreshing) {
         mIsInLoading = false;
         mIsInLoading2 = false;
+        mIsInLoading3 = false;
 
         getViewState().onFinishLoading();
 
@@ -256,6 +263,9 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
     private void onLoadingFailed(Throwable error, String url) {
         String fixError = error.toString();
+        //String si = Log.getStackTraceString(error);
+        //System.out.println(si);
+
         if(error.getClass() == UnknownHostException.class) {
             fixError = "Невозможно подключиться к:\n\"" + url + "\"\nПроверьте правильность адреса и доступ к интернету";
         }

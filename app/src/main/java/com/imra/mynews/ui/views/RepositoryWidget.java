@@ -88,6 +88,11 @@ public class RepositoryWidget extends AppCompatTextView implements RepositoryVie
         setMovementMethod(LinkMovementMethod.getInstance());
     }
 
+    @Override
+    public void saveOrDelete(boolean isSave) {
+
+    }
+
     @NonNull
     public SpannableString clickableSpan (@NonNull String description, @ColorInt int color) {
         //GlideImageGetter glideImageGetter = new GlideImageGetter(this);

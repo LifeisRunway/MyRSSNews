@@ -32,17 +32,4 @@ public class ContextModule {
         return mContext;
     }
 
-//    @Provides
-//    @Singleton
-//    public OfflineDB provideOfflineDB (Context context) {
-//        return Room.databaseBuilder(context, OfflineDB.class, OfflineDB.DATABASE_NAME).build();
-//    }
-//
-//    @Provides
-//    @Singleton
-//    public ArticleDao provideArticleDAO (OfflineDB offlineDB) {
-//        return offlineDB.articleDao();
-//    }
-
-
 }
