@@ -54,22 +54,6 @@ public class RepositoryPresenter extends MvpPresenter <RepositoryView> {
         }
     }
 
-//    public void testMyIdea (RSSFeed rssFeed, Article article) {
-//        mAD.insertRssFeed(rssFeed);
-//        mAD.insertArticles(article);
-//
-//    }
-
-
-//        if(mAD.getArticle(article.getTitle()) != null) {
-//            mAD.deleteArticle(article.getTitle());
-//            getViewState().saveOrDelete(false);
-//        } else {
-//            mAD.insert(article);
-//            getViewState().saveOrDelete(true);
-//        }
-
-
     @Override
     protected void onFirstViewAttach() {
         super.onFirstViewAttach();
