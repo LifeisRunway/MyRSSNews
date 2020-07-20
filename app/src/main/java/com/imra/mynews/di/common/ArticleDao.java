@@ -37,6 +37,10 @@ public interface ArticleDao {
     @Transaction
     @Query("SELECT * FROM rssfeeds WHERE rssFeedId = :rssFeedId")
     RssFeedArticlesDetail getRssFeedArticleDetail (Integer rssFeedId);
+    
+    @Transaction
+    @Query("SELECT * FROM rssfeeds")
+    List<RssFeedArticlesDetail>getRssFeedArticleDetails();
 
     @Transaction
     default void insertRssFeedArticles(RssFeedArticlesDetail rssFeedArticlesDetail) {
