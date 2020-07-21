@@ -39,8 +39,8 @@ public interface ArticleDao {
     RssFeedArticlesDetail getRssFeedArticleDetail (Integer rssFeedId);
 
     @Transaction
-    @Query("SELECT * FROM rssfeeds WHERE url = :rssFeedId")
-    RssFeedArticlesDetail getRssFeedArticleDetail2 (String rssFeedId);
+    @Query("SELECT * FROM rssfeeds WHERE url = :url")
+    RssFeedArticlesDetail getRssFeedArticleDetail2 (String url);
 
     @Transaction
     default void insertRssFeedArticles(RssFeedArticlesDetail rssFeedArticlesDetail) {
@@ -52,6 +52,9 @@ public interface ArticleDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     Long insertRssFeed (RSSFeed rssFeed);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    Long saveArticles (Article article);
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     Long insertArticles (Article article);

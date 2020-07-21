@@ -146,8 +146,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     private static final String MY_URL = "url";
     private static final String MY_SETTINGS = "settings";
 
-    ConnectivityManager cm;
-
     private int mCheck = -1;
 
     Disposable disposable;
@@ -220,10 +218,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     }
 
     private boolean isConnected () {
-        cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        assert cm != null;
-        NetworkInfo nInfo = cm.getActiveNetworkInfo();
-        return nInfo.isConnected();
+        ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo nInfo = (cm != null) ? cm.getActiveNetworkInfo() : null;
+        return nInfo != null && nInfo.isConnected();
     }
 
     // Боковая панель

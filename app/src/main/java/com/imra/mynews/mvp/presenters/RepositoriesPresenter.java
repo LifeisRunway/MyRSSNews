@@ -107,7 +107,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                         .subscribe((RSSFeed rssFeed) -> {
                             onLoadingFinish(isPageLoading, isRefreshing);
                             onLoadingSuccess(isPageLoading, rssFeed);
-                            saveRssToDB(rssFeed);
+                            saveRssToDB(rssFeed, url);
                         }, error -> {
                             onLoadingFinish(isPageLoading, isRefreshing);
                             onLoadingFailed(error, url);
@@ -122,9 +122,13 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
                 RSSFeed tempRssFeed;
                 RssFeedArticlesDetail tempRFAD = mAD.getRssFeedArticleDetail2(url);
-                tempRssFeed = tempRFAD.getRssFeed();
-                tempRssFeed.setArticleList(tempRFAD.getArticles());
-
+                if(tempRFAD != null) {
+                    tempRssFeed = tempRFAD.getRssFeed();
+                    tempRssFeed.setArticleList(tempRFAD.getArticles());
+                } else {
+                    tempRssFeed = new RSSFeed();
+                    tempRssFeed.setArticleList(new ArrayList<>());
+                }
 
                 Observable<RSSFeed> observable = Observable.just(tempRssFeed);
 
@@ -145,16 +149,20 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
     }
 
-    private void saveRssToDB (RSSFeed rssFeed) {
-
+    private void saveRssToDB (RSSFeed rssFeed, String url) {
+            rssFeed.setUrl(url);
+            mAD.insertRssFeed(rssFeed);
             RssFeedArticlesDetail temp = new RssFeedArticlesDetail();
+            RSSFeed tempRss = mAD.getRssFeed(rssFeed.getChannelTitle());
             temp.setRssFeed(rssFeed);
             for(Article article : rssFeed.getArticleList()) {
-                article.setRssId(rssFeed.getRssFeedId());
+                article.setRssId(tempRss.getRssFeedId());
+                if(article.getEnclosure() != null) {
+                    article.setEclos(article.getEnclosure().getUrl());
+                }
             }
             temp.setArticles(rssFeed.getArticleList());
             mAD.insertRssFeedArticles(temp);
-
     }
 
     private void findRSSFeeds (boolean isPageLoading, boolean isRefreshing, String url) {
