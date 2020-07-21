@@ -39,6 +39,10 @@ public interface ArticleDao {
     RssFeedArticlesDetail getRssFeedArticleDetail (Integer rssFeedId);
 
     @Transaction
+    @Query("SELECT * FROM rssfeeds WHERE url = :rssFeedId")
+    RssFeedArticlesDetail getRssFeedArticleDetail2 (String rssFeedId);
+
+    @Transaction
     default void insertRssFeedArticles(RssFeedArticlesDetail rssFeedArticlesDetail) {
         insertRssFeed(rssFeedArticlesDetail.getRssFeed());
         for(Article article : rssFeedArticlesDetail.getArticles()) {

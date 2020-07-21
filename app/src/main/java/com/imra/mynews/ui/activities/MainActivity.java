@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -144,6 +146,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     private static final String MY_URL = "url";
     private static final String MY_SETTINGS = "settings";
 
+    ConnectivityManager cm;
+
     private int mCheck = -1;
 
     Disposable disposable;
@@ -168,6 +172,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             e.putString(MY_URL,"");
             e.apply();
         }
+
+
 
         if(!sp.getAll().isEmpty()) {
             expDrawItem = new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(FontAwesome.Icon.faw_newspaper).withIdentifier(3).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorAccent)).withBadge("0").withSubItems().withIsExpanded(true);
@@ -197,7 +203,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
         mSwipeRefreshLayout.setListViewChild(mListView);
         mSwipeRefreshLayout.setOnRefreshListener(() -> {
-            mRepositoriesPresenter.loadRepositories(true, oldUrl);
+            mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
         });
 
         mReposAdapter = new RepositoriesAdapter(getMvpDelegate(), this);
@@ -210,7 +216,14 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         });
 
 
-        mRepositoriesPresenter.loadRepositories(false, oldUrl);
+        mRepositoriesPresenter.loadRepositories(false, oldUrl, isConnected());
+    }
+
+    private boolean isConnected () {
+        cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
+        assert cm != null;
+        NetworkInfo nInfo = cm.getActiveNetworkInfo();
+        return nInfo.isConnected();
     }
 
     // Боковая панель
@@ -326,7 +339,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                         }
                         if((int)drawerItem.getIdentifier() > 2000) {
                             oldUrl = sp.getString(drawerItem.getTag().toString(), "");
-                            mRepositoriesPresenter.loadRepositories(true, oldUrl);
+                            mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
                             mListView.smoothScrollToPosition(0);
 
                             //oldUrl = sp.getString(drawerItem.getTag().toString(), "");
@@ -370,7 +383,10 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     }
 
     private void setSubItems () {
-        //int i = 1;
+
+
+
+
         Map<String,?> map = sp.getAll();
         for (Map.Entry<String, ?> entry : map.entrySet()) {
 
@@ -419,7 +435,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             addNewNewsChannel();
             //oldUrl = sp.getString(MY_URL,"");
         }
-        mRepositoriesPresenter.loadRepositories(true, oldUrl);
+        mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
     }
 
     @Override
@@ -573,7 +589,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     @Override
     public void onScrollToBottom() {
-        mRepositoriesPresenter.loadNextRepositories(sp.getString(MY_URL,""));
+        mRepositoriesPresenter.loadNextRepositories(sp.getString(MY_URL,""), isConnected());
     }
 
 

@@ -27,6 +27,9 @@ public class RSSFeed {
     @PrimaryKey(autoGenerate = true)
     private Integer rssFeedId;
 
+    @ColumnInfo(name = "url")
+    private String url;
+
     @Nullable
     @ColumnInfo(name = "title")
     @Element(name="title")
@@ -75,5 +78,13 @@ public class RSSFeed {
 
     public void setRssFeedId(Integer rssFeedId) {
         this.rssFeedId = rssFeedId;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 }

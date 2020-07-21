@@ -71,12 +71,12 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         //loadRepositories(false, "https://");
     }
 
-    public void loadNextRepositories (String url) {
-        loadData(true, false, url);
+    public void loadNextRepositories (String url, boolean isConnected) {
+        loadData(true, false, url, isConnected);
     }
 
-    public void loadRepositories (boolean isRefreshing, String url) {
-        loadData(false, isRefreshing, url);
+    public void loadRepositories (boolean isRefreshing, String url, boolean isConnected) {
+        loadData(false, isRefreshing, url, isConnected);
     }
 
     public void findRSS (boolean isRefreshing, String url) {
@@ -87,7 +87,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         loadOfflineNews(false, isRefreshing);
     }
 
-    private void loadData (boolean isPageLoading, boolean isRefreshing, String url) {
+    private void loadData (boolean isPageLoading, boolean isRefreshing, String url, boolean isConnected) {
 
         if (mIsInLoading) {
             return;
@@ -97,24 +97,63 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         getViewState().onStartLoading();
 
         showProgress(isPageLoading, isRefreshing);
-        if(!url.equals("")) {
-            Observable<RSSFeed> observable = myNewsService.getRSSFeed(url);
+        if(isConnected) {
+            if(!url.equals("")) {
+                Observable<RSSFeed> observable = myNewsService.getRSSFeed(url);
 
-            Disposable disposable = observable
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe((RSSFeed rssFeed) -> {
-                        onLoadingFinish(isPageLoading, isRefreshing);
-                        onLoadingSuccess(isPageLoading, rssFeed);
-                    }, error -> {
-                        onLoadingFinish(isPageLoading, isRefreshing);
-                        onLoadingFailed(error, url);
-                    });
-            unsubscribeOnDestroy(disposable);
+                Disposable disposable = observable
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe((RSSFeed rssFeed) -> {
+                            onLoadingFinish(isPageLoading, isRefreshing);
+                            onLoadingSuccess(isPageLoading, rssFeed);
+                            saveRssToDB(rssFeed);
+                        }, error -> {
+                            onLoadingFinish(isPageLoading, isRefreshing);
+                            onLoadingFailed(error, url);
+                        });
+                unsubscribeOnDestroy(disposable);
+            } else {
+                onLoadingFinish(isPageLoading, isRefreshing);
+                onLoadingSuccess(isPageLoading, new RSSFeed());
+            }
         } else {
-            onLoadingFinish(isPageLoading, isRefreshing);
-            onLoadingSuccess(isPageLoading, new RSSFeed());
+            if(!url.equals("")) {
+
+                RSSFeed tempRssFeed;
+                RssFeedArticlesDetail tempRFAD = mAD.getRssFeedArticleDetail2(url);
+                tempRssFeed = tempRFAD.getRssFeed();
+                tempRssFeed.setArticleList(tempRFAD.getArticles());
+
+
+                Observable<RSSFeed> observable = Observable.just(tempRssFeed);
+
+                Disposable disposable = observable
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe((RSSFeed rssFeed) -> {
+                            onLoadingFinish(isPageLoading, isRefreshing);
+                            onLoadingSuccess(isPageLoading, rssFeed);
+                        }, error -> {
+                            onLoadingFinish(isPageLoading, isRefreshing);
+                            onLoadingFailed(error, url);
+                        });
+                unsubscribeOnDestroy(disposable);
+            }
         }
+
+
+    }
+
+    private void saveRssToDB (RSSFeed rssFeed) {
+
+            RssFeedArticlesDetail temp = new RssFeedArticlesDetail();
+            temp.setRssFeed(rssFeed);
+            for(Article article : rssFeed.getArticleList()) {
+                article.setRssId(rssFeed.getRssFeedId());
+            }
+            temp.setArticles(rssFeed.getArticleList());
+            mAD.insertRssFeedArticles(temp);
 
     }
 
