@@ -53,8 +53,7 @@ public class RepositoryPresenter extends MvpPresenter <RepositoryView> {
             getViewState().saveOrDelete(true);
         }
     }
-
-
+    
     @Override
     protected void onFirstViewAttach() {
         super.onFirstViewAttach();
