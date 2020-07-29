@@ -34,6 +34,9 @@ public class Article implements Serializable{
     @ColumnInfo(name = "rssId")
     private Integer rssId;
 
+    @ColumnInfo(name = "isSaved")
+    private boolean isSaved;
+
     @Nullable
     @ColumnInfo(name = "title")
     @Element (name = "title")
@@ -137,5 +140,13 @@ public class Article implements Serializable{
 
     public void setRssId(Integer rssId) {
         this.rssId = rssId;
+    }
+
+    public boolean isSaved() {
+        return isSaved;
+    }
+
+    public void setSaved(boolean saved) {
+        isSaved = saved;
     }
 }

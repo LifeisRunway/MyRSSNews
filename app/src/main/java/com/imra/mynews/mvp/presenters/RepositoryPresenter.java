@@ -42,18 +42,40 @@ public class RepositoryPresenter extends MvpPresenter <RepositoryView> {
 
     public void clickSave (@NonNull Article article) {
         //RssFeedArticlesDetail mRFAD = mAD.getRssFeedArticleDetail(mLocalDB);
-        if (mAD.getArticle(mLocalDB, article.getTitle()) != null) {
-            mAD.deleteArticle(mLocalDB, article.getTitle());
+
+//        if (mAD.getArticle(article.getTitle()) != null) {
+//            mAD.deleteArticle(mLocalDB, article.getTitle());
+//            getViewState().saveOrDelete(false);
+//        } else {
+//            article.setRssId(mLocalDB);
+//            //mRFAD.setArticle(article);
+//            mAD.saveArticles(article);
+//            //mAD.insertRssFeedArticles(mRFAD);
+//            getViewState().saveOrDelete(true);
+//        }
+
+        if (mAD.getArticle(article.getTitle()).isSaved()) {
+            article.setSaved(false);
+            mAD.updateArticle(article);
             getViewState().saveOrDelete(false);
+            getViewState().greenOrNot(false);
         } else {
-            article.setRssId(mLocalDB);
-            //mRFAD.setArticle(article);
-            mAD.saveArticles(article);
-            //mAD.insertRssFeedArticles(mRFAD);
+            article.setSaved(true);
+            mAD.updateArticle(article);
             getViewState().saveOrDelete(true);
+            getViewState().greenOrNot(true);
         }
     }
-    
+
+    public void greenOrNot (@NonNull Article article) {
+        if (mAD.getArticle(article.getTitle()).isSaved()) {
+            getViewState().greenOrNot(true);
+        } else {
+            getViewState().greenOrNot(false);
+        }
+    }
+
+
     @Override
     protected void onFirstViewAttach() {
         super.onFirstViewAttach();

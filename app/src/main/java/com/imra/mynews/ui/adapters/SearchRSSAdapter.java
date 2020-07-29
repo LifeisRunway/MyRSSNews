@@ -13,6 +13,7 @@ import android.widget.TextView;
 import com.arellomobile.mvp.MvpDelegate;
 import com.arellomobile.mvp.presenter.InjectPresenter;
 import com.arellomobile.mvp.presenter.ProvidePresenter;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.imra.mynews.R;
 import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.mvp.models.Article;
@@ -177,12 +178,19 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
             GlideApp
                     .with(view)
                     .load(mItemHtml.getIcon_url())
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)
                     .fitCenter()
                     .into(imageView);
         }
 
         @Override
         public void saveOrDelete(boolean isSave) {
+
+        }
+
+        @Override
+        public void greenOrNot(boolean isSave) {
 
         }
 

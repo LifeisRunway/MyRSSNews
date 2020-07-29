@@ -34,14 +34,14 @@ public class OfflineDBModule {
         return offlineDB.articleDao();
     }
 
-    @Provides
-    @Singleton
-    public Integer provideLocalDB (ArticleDao articleDao) {
-        RSSFeed mLocalDB = new RSSFeed();
-        mLocalDB.setChannelTitle(OfflineDB.LOCAL_DB_NAME);
-        mLocalDB.setRssFeedId(1);
-        articleDao.insertRssFeed(mLocalDB); //set localDB RssFeed
-        return mLocalDB.getRssFeedId();
-    }
+//    @Provides
+//    @Singleton
+//    public Integer provideLocalDB (ArticleDao articleDao) {
+//        RSSFeed mLocalDB = new RSSFeed();
+//        mLocalDB.setChannelTitle(OfflineDB.LOCAL_DB_NAME);
+//        mLocalDB.setRssFeedId(1);
+//        articleDao.insertRssFeed(mLocalDB); //set localDB RssFeed
+//        return mLocalDB.getRssFeedId();
+//    }
 
 }

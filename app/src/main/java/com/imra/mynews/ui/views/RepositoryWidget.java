@@ -93,6 +93,11 @@ public class RepositoryWidget extends AppCompatTextView implements RepositoryVie
 
     }
 
+    @Override
+    public void greenOrNot(boolean isSave) {
+
+    }
+
     @NonNull
     public SpannableString clickableSpan (@NonNull String description, @ColorInt int color) {
         //GlideImageGetter glideImageGetter = new GlideImageGetter(this);

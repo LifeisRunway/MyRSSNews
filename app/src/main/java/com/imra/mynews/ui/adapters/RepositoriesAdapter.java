@@ -264,7 +264,7 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
                             .asBitmap()
                             .load(mArticle.getEclos())
                             //.transition(withCrossFade())
-                            .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                             .centerCrop()
                             .override(480,360)
                             //.thumbnail(0.5f)
@@ -282,7 +282,7 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
                                     .asBitmap()
                                     .load(m2.group())
                                     //.transition(withCrossFade())
-                                    .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                                    .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                                     .centerCrop()
                                     .override(480,360)
                                     //.thumbnail(0.5f)
@@ -300,24 +300,11 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
                         .asBitmap()
                         .load(mArticle.getEclos())
                         //.transition(withCrossFade())
-                        .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                        .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                         .centerCrop()
                         .override(480,360)
                         //.thumbnail(0.5f)
                         .into(imageView);
-
-//
-//
-//                GlideApp
-//                        .with(view)
-//                        .asBitmap()
-//                        .load(mArticle.getEnclosure().getUrl())
-//                        //.transition(withCrossFade())
-//                        .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
-//                        .centerCrop()
-//                        .override(480,360)
-//                        //.thumbnail(0.5f)
-//                        .into(imageView);
 
             }
 
@@ -348,6 +335,10 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
 
         }
 
+        @Override
+        public void greenOrNot(boolean isSave) {
+
+        }
 
 
         MvpDelegate getMvpDelegate() {

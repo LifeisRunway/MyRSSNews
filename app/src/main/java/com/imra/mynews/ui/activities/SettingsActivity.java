@@ -73,6 +73,8 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
     Unbinder unbinder;
     SearchRSSAdapter searchRSSAdapter;
     private String mUrl;
+    private static final String MY_URL = "url";
+    private static final String MY_SETTINGS = "settings";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -204,12 +206,12 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
 
     @Override
     public void showDetailsContainer(int position, ItemHtml itemHtml) {
-        SharedPreferences sp = getSharedPreferences("settings", Context.MODE_PRIVATE);
+        SharedPreferences sp = getSharedPreferences(MY_SETTINGS, Context.MODE_PRIVATE);
         SharedPreferences.Editor e = sp.edit();
         if ((itemHtml.getHref().substring(0, 1).equals("/"))) {
-            e.putString("url", mUrl + itemHtml.getHref());
+            e.putString(MY_URL, mUrl + itemHtml.getHref());
         } else {
-            e.putString("url", itemHtml.getHref());
+            e.putString(MY_URL, itemHtml.getHref());
         }
         e.apply();
         super.onBackPressed();

@@ -16,4 +16,6 @@ public interface RepositoryView extends MvpView {
 
     void saveOrDelete(boolean isSave);
 
+    void greenOrNot (boolean isSave);
+
 }

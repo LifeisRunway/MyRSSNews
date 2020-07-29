@@ -8,6 +8,7 @@ import com.imra.mynews.di.modules.ContextModule;
 import com.imra.mynews.di.modules.MyNewsModule;
 import com.imra.mynews.di.modules.OfflineDBModule;
 import com.imra.mynews.mvp.MyNewsService;
+import com.imra.mynews.mvp.presenters.DrawerPresenter;
 import com.imra.mynews.mvp.presenters.RepositoriesPresenter;
 import com.imra.mynews.mvp.presenters.RepositoryPresenter;
 
@@ -33,4 +34,5 @@ public interface AppComponent {
 
     void inject(RepositoriesPresenter presenter);
     void inject2(RepositoryPresenter presenter);
+    void inject3(DrawerPresenter presenter);
 }

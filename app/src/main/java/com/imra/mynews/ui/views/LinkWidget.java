@@ -93,6 +93,11 @@ public class LinkWidget extends AppCompatTextView implements RepositoryView {
 
     }
 
+    @Override
+    public void greenOrNot(boolean isSave) {
+
+    }
+
     //Пригодится
     /**@NonNull
     public CharSequence plus (@NonNull String one, @NonNull SpannableString two) {

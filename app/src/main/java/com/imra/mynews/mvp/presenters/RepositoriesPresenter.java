@@ -1,5 +1,9 @@
 package com.imra.mynews.mvp.presenters;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import com.arellomobile.mvp.InjectViewState;
@@ -17,9 +21,19 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 import java.net.UnknownHostException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,6 +41,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -45,6 +60,7 @@ import retrofit2.Response;
  * @author IMRA027
  */
 
+@Singleton
 @InjectViewState
 public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
@@ -71,9 +87,11 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         //loadRepositories(false, "https://");
     }
 
+
     public void loadNextRepositories (String url, boolean isConnected) {
         loadData(true, false, url, isConnected);
     }
+
 
     public void loadRepositories (boolean isRefreshing, String url, boolean isConnected) {
         loadData(false, isRefreshing, url, isConnected);
@@ -86,6 +104,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     public void offlineNews (boolean isRefreshing) {
         loadOfflineNews(false, isRefreshing);
     }
+
 
     private void loadData (boolean isPageLoading, boolean isRefreshing, String url, boolean isConnected) {
 
@@ -106,8 +125,8 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe((RSSFeed rssFeed) -> {
                             onLoadingFinish(isPageLoading, isRefreshing);
-                            onLoadingSuccess(isPageLoading, rssFeed);
                             saveRssToDB(rssFeed, url);
+                            onLoadingSuccess(isPageLoading, getRssInDB(url));
                         }, error -> {
                             onLoadingFinish(isPageLoading, isRefreshing);
                             onLoadingFailed(error, url);
@@ -120,17 +139,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         } else {
             if(!url.equals("")) {
 
-                RSSFeed tempRssFeed;
-                RssFeedArticlesDetail tempRFAD = mAD.getRssFeedArticleDetail2(url);
-                if(tempRFAD != null) {
-                    tempRssFeed = tempRFAD.getRssFeed();
-                    tempRssFeed.setArticleList(tempRFAD.getArticles());
-                } else {
-                    tempRssFeed = new RSSFeed();
-                    tempRssFeed.setArticleList(new ArrayList<>());
-                }
-
-                Observable<RSSFeed> observable = Observable.just(tempRssFeed);
+                Observable<RSSFeed> observable = Observable.just(getRssInDB(url));
 
                 Disposable disposable = observable
                         .subscribeOn(Schedulers.io())
@@ -149,6 +158,44 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
     }
 
+    private RSSFeed getRssInDB (String url) {
+        RSSFeed tempRssFeed;
+        RssFeedArticlesDetail tempRFAD = mAD.getRssFeedArticleDetail2(url);
+        if(tempRFAD != null) {
+            tempRssFeed = tempRFAD.getRssFeed();
+            tempRssFeed.setArticleList(smallToBig(tempRFAD.getArticles()));
+        } else {
+            tempRssFeed = new RSSFeed();
+            tempRssFeed.setArticleList(new ArrayList<>());
+        }
+        return tempRssFeed;
+    }
+
+    @TargetApi(Build.VERSION_CODES.O)
+    private List<Article> smallToBig (List<Article> articles) {
+
+        if(articles.isEmpty()) return articles;
+
+        String temp2 = articles.get(0).getPubDate();
+        assert temp2 != null;
+        DateTimeFormatter format2 = (temp2.substring(temp2.length()-3, temp2.length()).equals("GMT")) ?
+                DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss 'GMT'",  Locale.US).withZone(ZoneOffset.UTC) :
+                DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US).withZone(ZoneOffset.UTC);
+
+        Collections.sort(articles, new Comparator<Article>() {
+            @Override
+            public int compare(Article o1, Article o2) {
+                TemporalAccessor date1 = format2.parse(o1.getPubDate());
+                Instant time = Instant.from(date1);
+                TemporalAccessor date2 = format2.parse(o2.getPubDate());
+                Instant time2 = Instant.from(date2);
+                return time2.compareTo(time);
+            }
+        });
+
+        return articles;
+    }
+
     private void saveRssToDB (RSSFeed rssFeed, String url) {
             rssFeed.setUrl(url);
             mAD.insertRssFeed(rssFeed);
@@ -162,7 +209,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                 }
             }
             temp.setArticles(rssFeed.getArticleList());
-            mAD.insertRssFeedArticles(temp);
+            mAD.insertOrUpdateRssFeedArticles(temp);
     }
 
     private void findRSSFeeds (boolean isPageLoading, boolean isRefreshing, String url) {
@@ -201,10 +248,14 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         showProgress(isPageLoading, isRefreshing);
 
         RSSFeed tempRssFeed = new RSSFeed();
-        RssFeedArticlesDetail tempRFAD = mAD.getRssFeedArticleDetail(mLocalDB);
-        tempRssFeed.setChannelTitle(tempRFAD.getRssFeed().getChannelTitle());
-        tempRssFeed.setArticleList(tempRFAD.getArticles());
-
+        //RssFeedArticlesDetail tempRFAD = mAD.getRssFeedArticleDetail(mLocalDB);
+        //tempRssFeed.setChannelTitle(tempRFAD.getRssFeed().getChannelTitle());
+        //tempRssFeed.setArticleList(smallToBig(tempRFAD.getArticles()));
+        if (mAD.getSavedArticles(true).isEmpty()) {
+            tempRssFeed.setArticleList(new ArrayList<Article>());
+        } else {
+            tempRssFeed.setArticleList(smallToBig(mAD.getSavedArticles(true)));
+        }
 
         Observable<RSSFeed> obs = Observable.just(tempRssFeed);
 

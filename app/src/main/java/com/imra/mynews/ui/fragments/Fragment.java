@@ -1,5 +1,6 @@
 package com.imra.mynews.ui.fragments;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -121,6 +122,8 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
         super.onViewCreated(view, savedInstanceState);
         unbinder = ButterKnife.bind(this, view);
 
+        mFragmentPresenter.greenOrNot(mArticle);
+
         if(mArticle != null) {
             if(mArticle.getEnclosure() != null) {
                 if(mArticle.getEclos() == null) mArticle.setEclos(mArticle.getEnclosure().getUrl());
@@ -196,6 +199,18 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
             Toast.makeText(getContext(),"Сохранено",Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(getContext(),"Удалено",Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @SuppressLint("ResourceAsColor")
+    @Override
+    public void greenOrNot (boolean isSave) {
+        if(isSave) {
+            //mImageButtonSave.setBackgroundColor(R.color.colorText);
+            mImageButtonSave.setImageResource(android.R.drawable.ic_menu_delete);
+        } else {
+            //mImageButtonSave.setBackgroundColor(android.R.color.transparent);
+            mImageButtonSave.setImageResource(android.R.drawable.ic_menu_save);
         }
     }
 

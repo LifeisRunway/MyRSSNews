@@ -25,6 +25,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.SizeReadyCallback;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
+import com.bumptech.glide.signature.ObjectKey;
 import com.imra.mynews.R;
 import com.imra.mynews.di.modules.GlideApp;
 
@@ -53,6 +54,8 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
     private HtmlImagesHandler imagesHandler;
     private float density = 1.0f;
 
+    //private RequestOptions requestOptions;
+
     private List<Integer> test;
 
     public GlideImageGifGetter(TextView textView) {
@@ -73,6 +76,9 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
             density = container.get().getResources().getDisplayMetrics().density;
         }
         test = new ArrayList<>();
+//        requestOptions = new RequestOptions()
+//                .diskCacheStrategy(DiskCacheStrategy.ALL)
+//                .signature()
     }
 
     @Override
@@ -97,7 +103,6 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
 
         UrlDrawable urlDrawable = new UrlDrawable();
         BitmapDrawablePlaceholder drawable = new BitmapDrawablePlaceholder(urlDrawable);
-
 
         container.get().post(() -> {
             GlideApp
