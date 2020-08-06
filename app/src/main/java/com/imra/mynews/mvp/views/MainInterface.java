@@ -1,14 +1,11 @@
 package com.imra.mynews.mvp.views;
 
-import android.view.View;
-
-import com.arellomobile.mvp.MvpView;
-import com.arellomobile.mvp.viewstate.strategy.AddToEndSingleStrategy;
-import com.arellomobile.mvp.viewstate.strategy.OneExecutionStateStrategy;
-import com.arellomobile.mvp.viewstate.strategy.StateStrategyType;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.ItemHtml;
-import com.imra.mynews.mvp.models.RSSFeed;
+import moxy.MvpView;
+import moxy.viewstate.strategy.AddToEndSingleStrategy;
+import moxy.viewstate.strategy.OneExecutionStateStrategy;
+import moxy.viewstate.strategy.StateStrategyType;
 
 /**
  * Date: 27.07.2019

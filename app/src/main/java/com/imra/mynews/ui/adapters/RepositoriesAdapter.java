@@ -2,29 +2,21 @@ package com.imra.mynews.ui.adapters;
 
 import android.annotation.TargetApi;
 import android.os.Build;
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
 import android.text.Html;
-import android.util.Log;
-import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import com.arellomobile.mvp.MvpDelegate;
-import com.arellomobile.mvp.presenter.InjectPresenter;
-import com.arellomobile.mvp.presenter.PresenterType;
-import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.imra.mynews.R;
 import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.RSSFeed;
-import com.imra.mynews.mvp.presenters.RepositoryLikesPresenter;
 import com.imra.mynews.mvp.presenters.RepositoryPresenter;
 import com.imra.mynews.mvp.views.RepositoryView;
 
@@ -40,10 +32,10 @@ import java.util.regex.Pattern;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
+import moxy.MvpDelegate;
+import moxy.presenter.InjectPresenter;
+import moxy.presenter.ProvidePresenter;
 
 import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
 
@@ -79,29 +71,35 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
     }
 
     public void setRepositories(@NonNull RSSFeed rssFeeds) {
-        rssFeed = rssFeeds;
-        mArticles = new ArrayList<>(rssFeeds.getArticleList());
-         if (rssFeeds.getChannelTitle() != null) {
-            if(checkRssTitle.equals("")) {
-                checkRssTitle = rssFeeds.getChannelTitle();}
-            checkRssTitle2 = rssFeeds.getChannelTitle();
-         }
+        //rssFeed = rssFeeds;
+        if(rssFeeds.getArticleList() != null) {
+            mArticles = new ArrayList<>(rssFeeds.getArticleList());
+        }
+        //mArticles = new ArrayList<>(rssFeeds.getArticleList());
+//         if (rssFeeds.getChannelTitle() != null) {
+//            if(checkRssTitle.equals("")) {
+//                checkRssTitle = rssFeeds.getChannelTitle();}
+//            checkRssTitle2 = rssFeeds.getChannelTitle();
+//         }
         notifyDataSetChanged();
     }
 
     public void addRepositories (@NonNull RSSFeed rssFeeds) {
-        rssFeed = rssFeeds;
-        mArticles.addAll(rssFeeds.getArticleList());
-        if (rssFeeds.getChannelTitle() != null) {
-            if(checkRssTitle.equals("")) {checkRssTitle = rssFeeds.getChannelTitle();}
-            checkRssTitle2 = rssFeeds.getChannelTitle();
+        //rssFeed = rssFeeds;
+        if(rssFeeds.getArticleList() != null) {
+            mArticles.addAll(rssFeeds.getArticleList());
         }
+
+//        if (rssFeeds.getChannelTitle() != null) {
+//            if(checkRssTitle.equals("")) {checkRssTitle = rssFeeds.getChannelTitle();}
+//            checkRssTitle2 = rssFeeds.getChannelTitle();
+//        }
         notifyDataSetChanged();
     }
 
-    private boolean oldRssTit () {
-        return checkRssTitle.equals(checkRssTitle2);
-    }
+//    private boolean oldRssTit () {
+//        return checkRssTitle.equals(checkRssTitle2);
+//    }
 
     public void setSelection(int selection) {
         mSelection = selection;

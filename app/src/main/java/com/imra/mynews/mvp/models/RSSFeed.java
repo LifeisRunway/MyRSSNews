@@ -1,11 +1,11 @@
 package com.imra.mynews.mvp.models;
 
-import android.arch.persistence.room.ColumnInfo;
-import android.arch.persistence.room.Entity;
-import android.arch.persistence.room.Ignore;
-import android.arch.persistence.room.Index;
-import android.arch.persistence.room.PrimaryKey;
-import android.support.annotation.Nullable;
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.Ignore;
+import androidx.room.Index;
+import androidx.room.PrimaryKey;
+import androidx.annotation.Nullable;
 
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.ElementList;
@@ -25,7 +25,7 @@ import java.util.List;
 public class RSSFeed {
 
     @PrimaryKey(autoGenerate = true)
-    private Integer rssFeedId;
+    private int rssFeedId;
 
     @ColumnInfo(name = "url")
     private String url;
@@ -44,6 +44,10 @@ public class RSSFeed {
     @ElementList(name="item", inline=true)
     @Path("channel")
     private List<Article> articleList;
+
+    @Element(name = "url", required = false)
+    @Path("channel/image")
+    private String iconUrl;
 
     @Nullable
     public String getChannelTitle() {
@@ -72,11 +76,11 @@ public class RSSFeed {
         this.channelDescription = channelDescription;
     }
 
-    public Integer getRssFeedId() {
+    public int getRssFeedId() {
         return rssFeedId;
     }
 
-    public void setRssFeedId(Integer rssFeedId) {
+    public void setRssFeedId(int rssFeedId) {
         this.rssFeedId = rssFeedId;
     }
 
@@ -86,5 +90,13 @@ public class RSSFeed {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getIconUrl() {
+        return iconUrl;
+    }
+
+    public void setIconUrl(String iconUrl) {
+        this.iconUrl = iconUrl;
     }
 }

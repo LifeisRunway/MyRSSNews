@@ -5,20 +5,14 @@ import android.os.Build;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
-import com.arellomobile.mvp.MvpDelegate;
-import com.arellomobile.mvp.presenter.InjectPresenter;
-import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.imra.mynews.R;
 import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.ItemHtml;
-import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.presenters.RepositoryPresenter;
 import com.imra.mynews.mvp.views.RepositoryView;
 
@@ -27,6 +21,9 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import moxy.MvpDelegate;
+import moxy.presenter.InjectPresenter;
+import moxy.presenter.ProvidePresenter;
 
 /**
  * Date: 16.05.2020

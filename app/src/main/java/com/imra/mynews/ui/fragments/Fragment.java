@@ -1,24 +1,17 @@
 package com.imra.mynews.ui.fragments;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.arellomobile.mvp.MvpAppCompatFragment;
-import com.arellomobile.mvp.presenter.InjectPresenter;
-import com.arellomobile.mvp.presenter.ProvidePresenter;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.daimajia.androidanimations.library.Techniques;
@@ -26,8 +19,6 @@ import com.daimajia.androidanimations.library.YoYo;
 import com.imra.mynews.R;
 
 //import com.imra.mynews.di.modules.GlideApp;
-import com.imra.mynews.di.common.ArticleDao;
-import com.imra.mynews.di.common.OfflineDB;
 import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.presenters.RepositoryPresenter;
@@ -35,10 +26,7 @@ import com.imra.mynews.mvp.views.RepositoryView;
 import com.imra.mynews.ui.views.LinkWidget;
 import com.imra.mynews.ui.views.RepositoryWidget;
 
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-
-import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -47,6 +35,9 @@ import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import moxy.MvpAppCompatFragment;
+import moxy.presenter.InjectPresenter;
+import moxy.presenter.ProvidePresenter;
 
 /**
  * Date: 27.07.2019

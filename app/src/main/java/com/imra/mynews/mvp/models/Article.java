@@ -1,19 +1,19 @@
 package com.imra.mynews.mvp.models;
 
-import android.arch.persistence.room.ColumnInfo;
-import android.arch.persistence.room.Entity;
-import android.arch.persistence.room.ForeignKey;
-import android.arch.persistence.room.Ignore;
-import android.arch.persistence.room.Index;
-import android.arch.persistence.room.PrimaryKey;
-import android.support.annotation.Nullable;
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.ForeignKey;
+import androidx.room.Ignore;
+import androidx.room.Index;
+import androidx.room.PrimaryKey;
+import androidx.annotation.Nullable;
 
 import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 
 import java.io.Serializable;
 
-import static android.arch.persistence.room.ForeignKey.CASCADE;
+import static androidx.room.ForeignKey.CASCADE;
 
 /**
  * Date: 27.07.2019
@@ -29,10 +29,10 @@ import static android.arch.persistence.room.ForeignKey.CASCADE;
 public class Article implements Serializable{
 
     @PrimaryKey(autoGenerate = true)
-    private Integer articleId;
+    private int articleId;
 
     @ColumnInfo(name = "rssId")
-    private Integer rssId;
+    private int rssId;
 
     @ColumnInfo(name = "isSaved")
     private boolean isSaved;
@@ -117,11 +117,11 @@ public class Article implements Serializable{
         this.creator = creator;
     }
 
-    public Integer getArticleId() {
+    public int getArticleId() {
         return articleId;
     }
 
-    public void setArticleId(Integer articleId) {
+    public void setArticleId(int articleId) {
         this.articleId = articleId;
     }
 
@@ -134,11 +134,11 @@ public class Article implements Serializable{
         this.eclos = eclos;
     }
 
-    public Integer getRssId() {
+    public int getRssId() {
         return rssId;
     }
 
-    public void setRssId(Integer rssId) {
+    public void setRssId(int rssId) {
         this.rssId = rssId;
     }
 

@@ -3,15 +3,17 @@ package com.imra.mynews.ui.activities;
 import android.animation.LayoutTransition;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
@@ -19,12 +21,12 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
-import com.arellomobile.mvp.MvpAppCompatActivity;
-import com.arellomobile.mvp.presenter.InjectPresenter;
-import com.arellomobile.mvp.presenter.ProvidePresenter;
+import com.bumptech.glide.request.target.CustomTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.imra.mynews.R;
 import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.mvp.models.Article;
@@ -38,6 +40,7 @@ import com.imra.mynews.mvp.views.MainInterface;
 import com.imra.mynews.mvp.views.RepositoriesView;
 import com.imra.mynews.ui.adapters.RepositoriesAdapter;
 import com.imra.mynews.ui.fragments.Fragment;
+import com.imra.mynews.ui.utils.GlideImageGetter;
 import com.imra.mynews.ui.views.FrameSwipeRefreshLayout;
 import com.mikepenz.fontawesome_typeface_library.FontAwesome;
 import com.mikepenz.iconics.IconicsDrawable;
@@ -73,6 +76,9 @@ import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
+import moxy.MvpAppCompatActivity;
+import moxy.presenter.InjectPresenter;
+import moxy.presenter.ProvidePresenter;
 
 
 public class MainActivity extends MvpAppCompatActivity implements MainInterface, RepositoriesView, DrawerView, RepositoriesAdapter.OnScrollToBottomListener{
@@ -86,7 +92,14 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     @InjectPresenter
     DrawerPresenter mDrawerPresenter;
 
+//    @Inject
+//    SharedPreferences mDrawerPresenter.getSP(;
+//
+//    @Inject
+//    SharedPreferences.Editor mDrawerPresenter.getSPEditor();
 
+//    @Inject
+//    boolean isVisited;
 
     @BindView(R.id.activity_home_swipe_refresh_layout)
     FrameSwipeRefreshLayout mSwipeRefreshLayout;
@@ -110,6 +123,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     private Unbinder unbinder;
     private int visible = View.VISIBLE;
 
+
     private RepositoriesAdapter mReposAdapter;
 
     private Drawer mDrawer = null;
@@ -117,7 +131,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     private static final int PROFILE_SETTING = 100000;
     int num = 1;
 
-    SharedPreferences sp;
+    //SharedPreferences sp;
 
     private String oldUrl;
 
@@ -132,11 +146,13 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     ExpandableBadgeDrawerItem expDrawItem;
     Bundle mBundle;
+    FirebaseUser user;
+    String uName;
+    String uEmail;
+    Uri uIcon;
 
     @ProvidePresenter
-    DrawerPresenter provideDrawerPresenter () {
-        return new DrawerPresenter(mBundle);
-    }
+    DrawerPresenter provideDrawerPresenter () { return new DrawerPresenter(mBundle); }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -144,17 +160,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         setContentView(R.layout.activity_main);
         mBundle = savedInstanceState;
         mContext = this;
-        sp = getSharedPreferences(MY_SETTINGS, Context.MODE_PRIVATE);
-        // проверяем, первый ли раз открывается программа
-        boolean hasVisited = sp.getBoolean("hasVisited", false);
-
-        if (!hasVisited) {
-            // выводим нужную активность
-            SharedPreferences.Editor e = sp.edit();
-            e.putBoolean("hasVisited", true);
-            e.putString(MY_URL,"");
-            e.apply();
-        }
 
         unbinder = ButterKnife.bind(this);
 
@@ -162,15 +167,25 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             mDetailsFrameLayout.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
         }
 
+        //Перенести это дерьмо в какой-нибудь Presenter
+        //user = FirebaseAuth.getInstance().getCurrentUser();
+        if (mDrawerPresenter.getUser() != null) {
+            uName = mDrawerPresenter.getUser().getDisplayName();
+            uEmail = mDrawerPresenter.getUser().getEmail();
+            uIcon = mDrawerPresenter.getUser().getPhotoUrl();
+        } else {
+            uName = "Null";
+            uEmail = "null@null";
+            uIcon = Uri.parse("https://avatars2.githubusercontent.com/u/39906544?v=3&s=460");
+        }
+
         setSupportActionBar(mToolbar);
         Objects.requireNonNull(getSupportActionBar()).setElevation(0);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        //setDrawer(savedInstanceState);
-
         mDetailsFrameLayout.setVisibility(View.GONE);
 
-        oldUrl = sp.getString(MY_URL,"");
+        oldUrl = mMainPresenter.getSP().getString(MY_URL,"");
 
         mSwipeRefreshLayout.setListViewChild(mListView);
         mSwipeRefreshLayout.setOnRefreshListener(() -> mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected()));
@@ -194,244 +209,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         return nInfo != null && nInfo.isConnected();
     }
 
-    // Боковая панель
-    @Override
-    public void setDrawer (Bundle savedInstanceState) {
-
-        //initialize and create the image loader logic
-        DrawerImageLoader.init(new AbstractDrawerImageLoader() {
-            @Override
-            public void set(ImageView imageView, Uri uri, Drawable placeholder, String tag) {
-                GlideApp.with(imageView.getContext()).load(uri).placeholder(placeholder).into(imageView);
-            }
-
-            @Override
-            public void cancel(ImageView imageView) {
-                GlideApp.with(imageView.getContext()).clear(imageView);
-            }
-
-            @Override
-            public Drawable placeholder(Context ctx, String tag) {
-                //define different placeholders for different imageView targets
-                //default tags are accessible via the DrawerImageLoader.Tags
-                //custom ones can be checked via string. see the CustomUrlBasePrimaryDrawerItem LINE 111
-                if (DrawerImageLoader.Tags.PROFILE.name().equals(tag)) {
-                    return DrawerUIUtils.getPlaceHolder(ctx);
-                } else if (DrawerImageLoader.Tags.ACCOUNT_HEADER.name().equals(tag)) {
-                    return new IconicsDrawable(ctx).iconText(" ").backgroundColorRes(com.mikepenz.materialdrawer.R.color.primary).sizeDp(56);
-                } else if ("customUrlItem".equals(tag)) {
-                    return new IconicsDrawable(ctx).iconText(" ").backgroundColorRes(R.color.md_red_500).sizeDp(56);
-                }
-
-                //we use the default one for
-                //DrawerImageLoader.Tags.PROFILE_DRAWER_ITEM.name()
-                return super.placeholder(ctx, tag);
-            }
-        });
-
-        // Create a sample profile
-        final IProfile profile = new ProfileDrawerItem().withName("Imustrunaway").withEmail("imra027@gmail.com").withIcon("https://avatars2.githubusercontent.com/u/39906544?v=3&s=460").withIdentifier(100);
-
-        mAccountHeader = new AccountHeaderBuilder()
-                .withActivity(this)
-                .withTranslucentStatusBar(true) //полупрозрачная строка состояния?
-                .withHeaderBackground(R.drawable.header)
-                .addProfiles(
-                        profile,
-                        //don't ask but google uses 14dp for the add account icon in gmail but 20dp for the normal icons (like manage account)
-                        new ProfileSettingDrawerItem().withName("Add Account").withDescription("Add new GitHub Account").withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_add).actionBar().paddingDp(5).colorRes(R.color.material_drawer_primary_text)).withIdentifier(PROFILE_SETTING),
-                        new ProfileSettingDrawerItem().withName("Manage Account").withIcon(GoogleMaterial.Icon.gmd_settings).withIdentifier(100001)
-                ).withOnAccountHeaderListener((view, profile1, current) -> {
-                    //sample usage of the onProfileChanged listener
-                    //if the clicked item has the identifier 1 add a new profile ;)
-                    int count = 100 + mAccountHeader.getProfiles().size() + 1;
-                    if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == PROFILE_SETTING) {
-                        IProfile newProfile = new ProfileDrawerItem().withNameShown(true).withName("Batman" + count).withEmail("batman" + count + "@gmail.com").withIcon("https://avatars3.githubusercontent.com/u/39906544?v=3&s=460").withIdentifier(count);
-                        if (mAccountHeader.getProfiles() != null) {
-                            //we know that there are 2 setting elements. set the new profile above them ;)
-                            mAccountHeader.addProfile(newProfile, mAccountHeader.getProfiles().size() - 2);
-                        } else {
-                            mAccountHeader.addProfiles(newProfile);
-                        }
-                    }
-                    if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == 100001) {
-                        if (mAccountHeader.getProfiles().size() > 3)
-                            mAccountHeader.removeProfile(mAccountHeader.getProfiles().size() - 3);
-                    }
-
-                    //false if you have not consumed the event and it should close the drawer
-                    return false;
-                })
-                .withSavedInstance(savedInstanceState)
-                .build();
-
-        if(!sp.getAll().isEmpty()) {
-            expDrawItem = new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(FontAwesome.Icon.faw_newspaper).withIdentifier(3).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorAccent)).withBadge("0").withSubItems().withIsExpanded(true);
-        } else {
-            expDrawItem = new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(FontAwesome.Icon.faw_newspaper).withIdentifier(3).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorAccent)).withBadge("0").withSubItems(
-                    new SecondaryDrawerItem()
-                            .withName("Нет новостных лент")
-                            .withLevel(3)
-                            .withIdentifier(2000).withSetSelected(false).withEnabled(false)).withIsExpanded(true);
-        }
-
-        //create the drawer
-        mDrawer = new DrawerBuilder()
-                .withActivity(this)
-                .withToolbar(mToolbar)
-                .withHasStableIds(true)
-                .withItemAnimator(new AlphaCrossFadeAnimator())
-                .withActionBarDrawerToggle(true)
-                .withAccountHeader(mAccountHeader)
-                .withSliderBackgroundColorRes(R.color.colorAppMyNews2)
-                .addDrawerItems(
-                        new DividerDrawerItem().withEnabled(false),
-                        new PrimaryDrawerItem().withName(R.string.drawer_item_home).withIcon(FontAwesome.Icon.faw_rocket).withIdentifier(1).withSelectable(false),
-                        new DividerDrawerItem(),
-                        new PrimaryDrawerItem().withName(R.string.drawer_item_settings).withIcon(FontAwesome.Icon.faw_edit).withIdentifier(2).withSelectable(false),
-                        new DividerDrawerItem(),
-                        new PrimaryDrawerItem().withName(R.string.drawer_item_offline).withIcon(FontAwesome.Icon.faw_save).withIdentifier(4).withSelectable(false),
-                        new SectionDrawerItem().withName("Новости"),
-                        expDrawItem
-                )
-                .withOnDrawerItemClickListener((view, position, drawerItem) -> {
-                    if(drawerItem != null) {
-                        Intent intent = null;
-                        switch ((int)drawerItem.getIdentifier()) {
-                            case 1 :
-                                break;
-                            case 2 :
-                                intent = new Intent(MainActivity.this, SettingsActivity.class);
-                                break;
-                            case 4 :
-                                intent = new Intent(MainActivity.this, OfflineActivity.class);
-                                break;
-                            default:
-                                break;
-                        }
-                        if (intent != null) {
-                            MainActivity.this.startActivity(intent);
-                        }
-                        if((int)drawerItem.getIdentifier() > 2000) {
-                            oldUrl = drawerItem.getTag().toString();
-                            if(mDetailsFrameLayout.getVisibility() == View.VISIBLE) mDetailsFrameLayout.setVisibility(View.GONE);
-                            mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
-                            mListView.smoothScrollToPosition(0);
-
-                            //oldUrl = sp.getString(drawerItem.getTag().toString(), "");
-                        }
-                    }
-                    return false;
-                })
-                .withOnDrawerItemLongClickListener((view, position, drawerItem) -> {
-                    if(drawerItem != null) {
-                        if((int)drawerItem.getIdentifier() > 2000) {
-                            mErrorDialog = new AlertDialog.Builder(mContext)
-                                    .setTitle(drawerItem.getTag().toString())
-                                    .setMessage("Удалить?")
-                                    .setPositiveButton("Да", (dialog, which) -> {
-//                                            SharedPreferences.Editor e = sp.edit();
-//                                            e.remove(drawerItem.getTag().toString());
-//                                            e.apply();
-                                        mDrawerPresenter.deleteSubItem(drawerItem.getTag().toString());
-                                        expDrawItem.getSubItems().remove(drawerItem);
-                                        expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
-                                        mDrawer.updateItem(expDrawItem);
-                                        mDrawer.removeItemByPosition(mDrawer.getDrawerItems().size());
-                                        dialog.dismiss();
-                                    })
-                                    .setNegativeButton("Нет", (dialog, which) -> {
-                                        dialog.dismiss();
-                                    })
-                                    .show();
-                        }
-                    }
-                    return false;
-                })
-                .withSavedInstance(savedInstanceState)
-                .withShowDrawerOnFirstLaunch(true)
-                //.withShowDrawerUntilDraggedOpened(true)
-                .build();
-
-        mDrawerPresenter.setSubItems();
-    }
-
-    @Override
-    public void setSubItems (List<String> urls) {
-        expDrawItem.getSubItems().clear();
-        String tempS;
-        System.out.println("urls " + urls.size());
-        for (String url : urls) {
-            tempS = url
-                    .replaceFirst("[^/]+//(www\\.)*","")
-                    .replaceFirst("/.+","");
-            if(!expDrawItem.getSubItems().isEmpty()) {
-                if(expDrawItem.getSubItems().get(0).getIdentifier() == 2000) {expDrawItem.getSubItems().remove(0);}
-            }
-
-            expDrawItem.getSubItems().add(new SecondaryDrawerItem()
-                    .withName(tempS)
-                    .withTag(url)
-                    .withLevel(2)
-                    .withIcon(FontAwesome.Icon.faw_newspaper)
-                    .withIdentifier(2000 + identif).withSelectable(false));
-            identif++;
-        }
-
-//        Map<String,?> map = sp.getAll();
-//        for (Map.Entry<String, ?> entry : map.entrySet()) {
-//
-//            if(!entry.getKey().equals("hasVisited") && !entry.getKey().equals("url")) {
-//                if(!expDrawItem.getSubItems().isEmpty()) {
-//                    if(expDrawItem.getSubItems().get(0).getIdentifier() == 2000) {expDrawItem.getSubItems().remove(0);}
-//                }
-//
-//                expDrawItem.getSubItems().add(new SecondaryDrawerItem()
-//                        .withName(entry.getKey())
-//                        .withTag(entry.getKey())
-//                        .withLevel(2)
-//                        .withIcon(FontAwesome.Icon.faw_newspaper)
-//                        .withIdentifier(2000 + identif).withSelectable(false));
-//                identif++;
-//            }
-//        }
-        expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
-        mDrawer.updateItem(expDrawItem);
-    }
-
-    @Override
-    public void addNewNewsChannel () {
-        String temp = sp.getString(MY_URL,"")
-                .replaceFirst("[^/]+//(www\\.)*","")
-                .replaceFirst("/.+","");
-        System.out.println(temp);
-        System.out.println(sp.getString(temp,"") + " что за херня?!!!");
-        if(sp.getString(temp,"").equals("")) {
-            // выводим нужную активность
-            SharedPreferences.Editor e = sp.edit();
-            e.putString(temp, sp.getString(MY_URL,""));
-            e.apply();
-            System.out.println(temp + " 2 ");
-            if(expDrawItem.getSubItems().get(0).getIdentifier() == 2000) {expDrawItem.getSubItems().remove(0);}
-
-            expDrawItem.getSubItems().add(new SecondaryDrawerItem()
-                    .withName(temp)
-                    .withTag(sp.getString(MY_URL,""))
-                    .withLevel(2)
-                    .withIcon(FontAwesome.Icon.faw_newspaper)
-                    .withIdentifier(3000 + identif)
-                    .withSelectable(false));
-
-            expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
-            mDrawer.updateItem(expDrawItem);
-            identif++;
-            System.out.println(temp + " 3 ");
-            oldUrl = sp.getString(temp, "");
-            System.out.println(oldUrl + " 4 ");
-        }
-
-    }
-
     @Override
     public void onBackPressed() {
 
@@ -448,29 +225,24 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         } else if (!mDrawer.isDrawerOpen()) {
             mDrawer.openDrawer(); // Закрываем Navigation Drawer по нажатию системной кнопки "Назад" если он открыт
         } else {
-            super.onBackPressed();
+            finishAffinity();
         }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if(!oldUrl.equals(sp.getString(MY_URL,""))) {
-            mRepositoriesPresenter.loadRepositories(true, sp.getString(MY_URL,""), isConnected());
-            mDrawerPresenter.setSubItems();
-            oldUrl = sp.getString(MY_URL,"");
-        }
-        mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
+            if(mMainPresenter.isUrl(oldUrl)) {
+                oldUrl = mMainPresenter.getSP().getString(MY_URL,"");
+                mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
+                mDrawerPresenter.addSubItem(oldUrl);
+            } else {mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());}
+
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if(!oldUrl.equals(sp.getString(MY_URL,""))) {
-            SharedPreferences.Editor e = sp.edit();
-            e.putString(MY_URL,oldUrl);
-            e.apply();
-        }
         unbinder.unbind();
         if(disposable != null) disposable.dispose();
     }
@@ -541,6 +313,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     public void setRepositories(RSSFeed repositories) {
         mListView.setEmptyView(mNoRepositoriesTextView);
         mReposAdapter.setRepositories(repositories);
+        //mDrawerPresenter.setSubItems();
 }
 
     @Override
@@ -586,9 +359,274 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     @Override
     public void onScrollToBottom() {
-        mRepositoriesPresenter.loadNextRepositories(sp.getString(MY_URL,""), isConnected());
+        mRepositoriesPresenter.loadNextRepositories(mMainPresenter.getSP().getString(MY_URL,""), isConnected());
     }
 
+    // Боковая панель
+    @Override
+    public void setDrawer (Bundle savedInstanceState) {
+
+        //initialize and create the image loader logic
+        DrawerImageLoader.init(new AbstractDrawerImageLoader() {
+            @Override
+            public void set(ImageView imageView, Uri uri, Drawable placeholder, String tag) {
+                GlideApp.with(imageView.getContext()).load(uri).placeholder(placeholder).into(imageView);
+            }
+
+            @Override
+            public void cancel(ImageView imageView) {
+                GlideApp.with(imageView.getContext()).clear(imageView);
+            }
+
+            @Override
+            public Drawable placeholder(Context ctx, String tag) {
+                //define different placeholders for different imageView targets
+                //default tags are accessible via the DrawerImageLoader.Tags
+                //custom ones can be checked via string. see the CustomUrlBasePrimaryDrawerItem LINE 111
+                if (DrawerImageLoader.Tags.PROFILE.name().equals(tag)) {
+                    return DrawerUIUtils.getPlaceHolder(ctx);
+                } else if (DrawerImageLoader.Tags.ACCOUNT_HEADER.name().equals(tag)) {
+                    return new IconicsDrawable(ctx).iconText(" ").backgroundColorRes(com.mikepenz.materialdrawer.R.color.primary).sizeDp(56);
+                } else if ("customUrlItem".equals(tag)) {
+                    return new IconicsDrawable(ctx).iconText(" ").backgroundColorRes(R.color.md_red_500).sizeDp(56);
+                }
+                //we use the default one for
+                //DrawerImageLoader.Tags.PROFILE_DRAWER_ITEM.name()
+                return super.placeholder(ctx, tag);
+            }
+        });
+
+        // Create a sample profile
+        final IProfile profile = new ProfileDrawerItem().withName(uName).withEmail(uEmail).withIcon(uIcon).withIdentifier(100);
+
+        mAccountHeader = new AccountHeaderBuilder()
+                .withActivity(this)
+                .withTranslucentStatusBar(true) //полупрозрачная строка состояния?
+                .withHeaderBackground(R.drawable.header)
+                .addProfiles(
+                        profile,
+                        //don't ask but google uses 14dp for the add account icon in gmail but 20dp for the normal icons (like manage account)
+                        new ProfileSettingDrawerItem().withName("Add Account").withDescription("Add new GitHub Account").withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_add).actionBar().paddingDp(5).colorRes(R.color.material_drawer_primary_text)).withIdentifier(PROFILE_SETTING),
+                        new ProfileSettingDrawerItem().withName("Manage Account").withIcon(GoogleMaterial.Icon.gmd_settings).withIdentifier(100001),
+                        new ProfileSettingDrawerItem().withName("Exit Account").withIcon(GoogleMaterial.Icon.gmd_exit_to_app).withIdentifier(100002)
+
+                ).withOnAccountHeaderListener((view, profile1, current) -> {
+                    //sample usage of the onProfileChanged listener
+                    //if the clicked item has the identifier 1 add a new profile ;)
+                    int count = 100 + mAccountHeader.getProfiles().size() + 1;
+                    if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == PROFILE_SETTING) {
+                        IProfile newProfile = new ProfileDrawerItem().withNameShown(true).withName("Batman" + count).withEmail("batman" + count + "@gmail.com").withIcon("https://avatars3.githubusercontent.com/u/39906544?v=3&s=460").withIdentifier(count);
+                        if (mAccountHeader.getProfiles() != null) {
+                            //we know that there are 2 setting elements. set the new profile above them ;)
+                            mAccountHeader.addProfile(newProfile, mAccountHeader.getProfiles().size() - 2);
+                        } else {
+                            mAccountHeader.addProfiles(newProfile);
+                        }
+                    }
+                    if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == 100001) {
+                        if (mAccountHeader.getProfiles().size() > 3)
+                            mAccountHeader.removeProfile(mAccountHeader.getProfiles().size() - 3);
+                    }
+                    if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == 100002) {
+                        FirebaseAuth.getInstance().signOut();
+                        startActivity(new Intent(this, LoginActivity.class));
+                        finishAffinity();
+                    }
 
 
+                    //false if you have not consumed the event and it should close the drawer
+                    return false;
+                })
+                .withSavedInstance(savedInstanceState)
+                .build();
+
+        if(!mDrawerPresenter.getUrlRssFeeds().isEmpty()) {
+            expDrawItem = new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(R.drawable.youtube_icon).withIdentifier(3).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorAccent)).withBadge("0").withSubItems().withIsExpanded(true);
+        } else {
+            expDrawItem = new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(R.drawable.youtube_icon).withIdentifier(3).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorAccent)).withBadge("0").withSubItems(
+                    new SecondaryDrawerItem()
+                            .withName("Нет новостных лент")
+                            .withLevel(3)
+                            .withIdentifier(2000).withSetSelected(false).withEnabled(false)).withIsExpanded(true);
+        }
+
+        //create the drawer
+        mDrawer = new DrawerBuilder()
+                .withActivity(this)
+                .withToolbar(mToolbar)
+                .withHasStableIds(true)
+                .withItemAnimator(new AlphaCrossFadeAnimator())
+                .withActionBarDrawerToggle(true)
+                .withAccountHeader(mAccountHeader)
+                .withSliderBackgroundColorRes(R.color.colorAppMyNews2)
+                .addDrawerItems(
+                        new DividerDrawerItem().withEnabled(false),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_home).withIcon(FontAwesome.Icon.faw_rocket).withIdentifier(1).withSelectable(false),
+                        new DividerDrawerItem(),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_settings).withIcon(FontAwesome.Icon.faw_edit).withIdentifier(2).withSelectable(false),
+                        new DividerDrawerItem(),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_offline).withIcon(FontAwesome.Icon.faw_save).withIdentifier(4).withSelectable(false),
+                        new SectionDrawerItem().withName("Новости"),
+                        expDrawItem
+                )
+                .withOnDrawerItemClickListener((view, position, drawerItem) -> {
+                    if(drawerItem != null) {
+                        Intent intent = null;
+                        switch ((int)drawerItem.getIdentifier()) {
+                            case 1 :
+                                break;
+                            case 2 :
+                                intent = new Intent(MainActivity.this, SettingsActivity.class);
+                                break;
+                            case 4 :
+                                intent = new Intent(MainActivity.this, OfflineActivity.class);
+                                break;
+                            default:
+                                break;
+                        }
+                        if (intent != null) {
+                            MainActivity.this.startActivity(intent);
+                        }
+                        if((int)drawerItem.getIdentifier() > 2000) {
+                            oldUrl = drawerItem.getTag().toString();
+                            if(mDetailsFrameLayout.getVisibility() == View.VISIBLE) mDetailsFrameLayout.setVisibility(View.GONE);
+                            mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
+                            mListView.smoothScrollToPosition(0);
+                            if(mMainPresenter.isUrl(oldUrl)) { mMainPresenter.saveSP(oldUrl); }
+                            //oldUrl = sp.getString(drawerItem.getTag().toString(), "");
+                        }
+                    }
+                    return false;
+                })
+                .withOnDrawerItemLongClickListener((view, position, drawerItem) -> {
+                    if(drawerItem != null) {
+                        if((int)drawerItem.getIdentifier() > 2000) {
+                            mErrorDialog = new AlertDialog.Builder(mContext)
+                                    .setTitle(drawerItem.getTag().toString())
+                                    .setMessage("Удалить?")
+                                    .setPositiveButton("Да", (dialog, which) -> {
+//                                            SharedPreferences.Editor e = sp.edit();
+//                                            e.remove(drawerItem.getTag().toString());
+//                                            e.apply();
+                                        mDrawerPresenter.deleteSubItem(drawerItem.getTag().toString());
+                                        expDrawItem.getSubItems().remove(drawerItem);
+                                        expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
+                                        mDrawer.updateItem(expDrawItem);
+                                        mDrawer.removeItemByPosition(mDrawer.getDrawerItems().size());
+                                        dialog.dismiss();
+                                    })
+                                    .setNegativeButton("Нет", (dialog, which) -> {
+                                        dialog.dismiss();
+                                    })
+                                    .show();
+                        }
+                    }
+                    return false;
+                })
+                .withSavedInstance(savedInstanceState)
+                .withShowDrawerOnFirstLaunch(true)
+                //.withShowDrawerUntilDraggedOpened(true)
+                .build();
+
+        mDrawerPresenter.setSubItems();
+    }
+
+    @Override
+    public void addSubItem(Map<String, String> urlsAndIcons) {
+        String tmp;
+        final Drawable[] d = new Drawable[1];
+        for (Map.Entry entry : urlsAndIcons.entrySet()) {
+            tmp = entry.getKey().toString()
+                .replaceFirst("[^/]+//(www\\.)*","")
+                    .replaceFirst("/.+","");
+            if(!expDrawItem.getSubItems().isEmpty()) {
+                if(expDrawItem.getSubItems().get(0).getIdentifier() == 2000) {expDrawItem.getSubItems().remove(0);}
+            }
+
+            GlideApp.with(this).asDrawable().load(entry.getValue().toString()).into(new CustomTarget<Drawable>() {
+                @Override
+                public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                    d[0] = resource;
+                }
+
+                @Override
+                public void onLoadCleared(@Nullable Drawable placeholder) {
+
+                }
+            });
+
+            expDrawItem.getSubItems().add(new SecondaryDrawerItem()
+                    .withName(tmp)
+                    .withTag(entry.getKey().toString())
+                    .withLevel(2)
+                    .withIcon(d[0])
+                    .withIdentifier(2000 + identif).withSelectable(false));
+            identif++;
+        }
+        expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
+        mDrawer.updateItem(expDrawItem);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    @Override
+    public void setSubItems (@NonNull Map<String, String> urlsAndIcons) {
+        String tempS;
+        Drawable d;
+        GlideImageGetter gil = new GlideImageGetter(this);
+
+        for (Map.Entry entry : urlsAndIcons.entrySet()) {
+            tempS = entry.getKey().toString()
+                    .replaceFirst("[^/]+//(www\\.)*","")
+                    .replaceFirst("/.+","");
+            if(entry.getValue() != null) {
+                d = gil.getDrawable("https://cs.pikabu.ru/assets/images/apple-touch-icon-152x152.png");
+            } else {
+                d = getDrawable(R.drawable.youtube_icon);
+            }
+
+
+            if(!expDrawItem.getSubItems().isEmpty()) {
+                if(expDrawItem.getSubItems().get(0).getIdentifier() == 2000) {expDrawItem.getSubItems().remove(0);}
+            }
+
+            expDrawItem.getSubItems().add(new SecondaryDrawerItem()
+                    .withName(tempS)
+                    .withTag(entry.getKey().toString())
+                    .withLevel(2)
+                    .withIcon(d)
+                    .withIdentifier(2000 + identif).withSelectable(false));
+            identif++;
+        }
+        expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
+        mDrawer.updateItem(expDrawItem);
+    }
+
+    @Override
+    public void addNewNewsChannel () {
+        String temp = mMainPresenter.getSP().getString(MY_URL,"")
+                .replaceFirst("[^/]+//(www\\.)*","")
+                .replaceFirst("/.+","");
+        if(mMainPresenter.getSP().getString(temp,"").equals("")) {
+            // выводим нужную активность
+//            SharedPreferences.Editor e = sp.edit();
+//            e.putString(temp, sp.getString(MY_URL,""));
+//            e.apply();
+            mMainPresenter.getEditor().putString(temp, mMainPresenter.getSP().getString(MY_URL,"")).apply();
+            if(expDrawItem.getSubItems().get(0).getIdentifier() == 2000) {expDrawItem.getSubItems().remove(0);}
+
+            expDrawItem.getSubItems().add(new SecondaryDrawerItem()
+                    .withName(temp)
+                    .withTag(mMainPresenter.getSP().getString(MY_URL,""))
+                    .withLevel(2)
+                    .withIcon(FontAwesome.Icon.faw_newspaper)
+                    .withIdentifier(3000 + identif)
+                    .withSelectable(false));
+
+            expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
+            mDrawer.updateItem(expDrawItem);
+            identif++;
+            oldUrl = mMainPresenter.getSP().getString(temp, "");
+        }
+
+    }
 }

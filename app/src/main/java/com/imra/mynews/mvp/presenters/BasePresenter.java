@@ -1,13 +1,10 @@
 package com.imra.mynews.mvp.presenters;
 
-import android.support.annotation.NonNull;
-
-import com.arellomobile.mvp.MvpPresenter;
-import com.arellomobile.mvp.MvpView;
-
+import androidx.annotation.NonNull;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-
+import moxy.MvpPresenter;
+import moxy.MvpView;
 
 
 /**

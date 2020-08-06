@@ -1,8 +1,7 @@
 package com.imra.mynews.ui.adapters;
 
 import android.widget.BaseAdapter;
-
-import com.arellomobile.mvp.MvpDelegate;
+import moxy.MvpDelegate;
 
 /**
  * Date: 28.07.2019

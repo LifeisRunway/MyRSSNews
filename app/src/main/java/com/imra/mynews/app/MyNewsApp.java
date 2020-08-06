@@ -1,8 +1,8 @@
 package com.imra.mynews.app;
 
 import android.app.Application;
-import android.support.annotation.NonNull;
-import android.support.annotation.VisibleForTesting;
+import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import com.imra.mynews.di.AppComponent;
 import com.imra.mynews.di.DaggerAppComponent;
@@ -24,8 +24,8 @@ public class MyNewsApp extends Application {
 
         mAppComp = DaggerAppComponent.builder()
                 .contextModule(new ContextModule(this))
+                //.preferenceModule(new PreferenceModule(getApplicationContext()))
                 .build();
-
     }
 
     public static AppComponent getAppComponent() {

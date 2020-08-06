@@ -5,10 +5,10 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
-import android.support.annotation.ColorInt;
-import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
-import android.support.v7.widget.AppCompatTextView;
+import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.appcompat.widget.AppCompatTextView;
 import android.text.Html;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -19,13 +19,14 @@ import android.text.style.URLSpan;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.arellomobile.mvp.MvpDelegate;
-import com.arellomobile.mvp.presenter.InjectPresenter;
-import com.arellomobile.mvp.presenter.ProvidePresenter;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.presenters.RepositoryPresenter;
 import com.imra.mynews.mvp.views.RepositoryView;
 import com.imra.mynews.ui.utils.GlideImageGifGetter;
+
+import moxy.MvpDelegate;
+import moxy.presenter.InjectPresenter;
+import moxy.presenter.ProvidePresenter;
 
 /**
  * Date: 29.07.2019

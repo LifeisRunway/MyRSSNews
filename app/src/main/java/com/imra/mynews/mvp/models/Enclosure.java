@@ -1,9 +1,8 @@
 package com.imra.mynews.mvp.models;
 
-import android.support.annotation.Nullable;
+import androidx.annotation.Nullable;
 
 import org.simpleframework.xml.Attribute;
-import org.simpleframework.xml.Element;
 import org.simpleframework.xml.Root;
 
 import java.io.Serializable;

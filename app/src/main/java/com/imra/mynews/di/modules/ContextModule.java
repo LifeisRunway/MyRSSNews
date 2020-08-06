@@ -1,10 +1,7 @@
 package com.imra.mynews.di.modules;
 
-import android.arch.persistence.room.Room;
+import androidx.room.Room;
 import android.content.Context;
-
-import com.imra.mynews.di.common.ArticleDao;
-import com.imra.mynews.di.common.OfflineDB;
 
 import javax.inject.Singleton;
 
@@ -20,6 +17,7 @@ import dagger.Provides;
 
 @Module
 public class ContextModule {
+
     private Context mContext;
 
     public ContextModule(Context context) {
@@ -28,8 +26,11 @@ public class ContextModule {
 
     @Provides
     @Singleton
+    //@MyAppScope
     public Context provideContext() {
         return mContext;
     }
+
+
 
 }

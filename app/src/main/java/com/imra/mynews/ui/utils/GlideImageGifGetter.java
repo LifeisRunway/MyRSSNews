@@ -4,28 +4,22 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.drawable.Animatable;
-import android.graphics.drawable.Animatable2;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.support.graphics.drawable.Animatable2Compat;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.vectordrawable.graphics.drawable.Animatable2Compat;
 import android.text.Html;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.load.resource.bitmap.BitmapEncoder;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.Request;
 import com.bumptech.glide.request.RequestOptions;
-import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.SizeReadyCallback;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
-import com.bumptech.glide.signature.ObjectKey;
 import com.imra.mynews.R;
 import com.imra.mynews.di.modules.GlideApp;
 
@@ -33,12 +27,8 @@ import com.imra.mynews.di.modules.GlideApp;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.schedulers.Schedulers;
 
 import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
 
@@ -254,7 +244,7 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
             if (placeholderDrawable != null) {
                 setDrawableOnLoadStart(placeholderDrawable);
             }
-            System.out.println("Загрузка начата");
+            //System.out.println("Загрузка начата");
         }
 
         @Override
@@ -262,13 +252,13 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
 //            if (errorDrawable != null) {
 //                setDrawable(errorDrawable);
 //            }
-            System.out.println("Загрузка провалена");
+            //System.out.println("Загрузка провалена");
         }
 
         @Override
         public void onResourceReady(@NonNull Drawable drawable, @Nullable Transition<? super Drawable> transition) {
             setDrawable(drawable);
-            System.out.println("Ресурсы загрузились ");
+            //System.out.println("Ресурсы загрузились ");
         }
 
         @Override
@@ -276,7 +266,7 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
             if(placeholderDrawable != null) {
                 setDrawableOnLoadStart(placeholderDrawable);
             }
-            System.out.println("Очистка");
+            //System.out.println("Очистка");
         }
 
         @Override

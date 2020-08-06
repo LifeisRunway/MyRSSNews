@@ -1,8 +1,10 @@
 package com.imra.mynews.mvp.views;
 
-import com.arellomobile.mvp.MvpView;
 import com.imra.mynews.mvp.models.Article;
-import com.imra.mynews.mvp.models.RSSFeed;
+
+import moxy.MvpView;
+import moxy.viewstate.strategy.AddToEndSingleStrategy;
+import moxy.viewstate.strategy.StateStrategyType;
 
 /**
  * Date: 28.07.2019
@@ -10,6 +12,7 @@ import com.imra.mynews.mvp.models.RSSFeed;
  *
  * @author IMRA027
  */
+@StateStrategyType(AddToEndSingleStrategy.class)
 public interface RepositoryView extends MvpView {
 
     void showRepository(int position, Article article);

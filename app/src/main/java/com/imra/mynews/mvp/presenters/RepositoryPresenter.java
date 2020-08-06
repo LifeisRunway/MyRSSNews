@@ -1,17 +1,15 @@
 package com.imra.mynews.mvp.presenters;
 
-import android.support.annotation.NonNull;
-
-import com.arellomobile.mvp.InjectViewState;
-import com.arellomobile.mvp.MvpPresenter;
+import androidx.annotation.NonNull;
 import com.imra.mynews.app.MyNewsApp;
 import com.imra.mynews.di.common.ArticleDao;
 import com.imra.mynews.mvp.models.Article;
-import com.imra.mynews.mvp.models.RSSFeed;
-import com.imra.mynews.mvp.models.RssFeedArticlesDetail;
 import com.imra.mynews.mvp.views.RepositoryView;
 
 import javax.inject.Inject;
+
+import moxy.InjectViewState;
+import moxy.MvpPresenter;
 
 /**
  * Date: 28.07.2019
@@ -21,13 +19,13 @@ import javax.inject.Inject;
  */
 
 @InjectViewState
-public class RepositoryPresenter extends MvpPresenter <RepositoryView> {
+public class RepositoryPresenter extends MvpPresenter<RepositoryView> {
 
     @Inject
     ArticleDao mAD;
 
-    @Inject
-    Integer mLocalDB;
+    //@Inject
+    //Integer mLocalDB;
 
     private Article mArticle;
     private int mPos;

@@ -2,18 +2,23 @@ package com.imra.mynews.mvp.presenters;
 
 import android.os.Bundle;
 
-import com.arellomobile.mvp.InjectViewState;
-import com.arellomobile.mvp.MvpPresenter;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.imra.mynews.app.MyNewsApp;
 import com.imra.mynews.di.common.ArticleDao;
-import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.views.DrawerView;
 
+import java.io.FileFilter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
+
+import moxy.InjectViewState;
+import moxy.MvpPresenter;
 
 /**
  * Date: 25.07.2020
@@ -28,15 +33,28 @@ class DrawerPresenter extends MvpPresenter<DrawerView> {
     @Inject
     ArticleDao mAD;
 
+//    @Inject
+//    SharedPreferences mSP;
+//
+//    @Inject
+//    SharedPreferences.Editor mSPEditor;
+
     Bundle bundle;
-    List<String> temp;
-    List<RSSFeed> tempRssFeed;
+    List<String> urlRssFeeds;
+    List<String> iconRssFeeds;
+    List<RSSFeed> mRssFeeds;
+    FirebaseUser user;
+
+    Map<String, String> urlsAndIcons;
 
     public DrawerPresenter (Bundle savedInstanceState) {
         MyNewsApp.getAppComponent().inject3(this);
         bundle = savedInstanceState;
-        temp = new ArrayList<>();
-        tempRssFeed = new ArrayList<>();
+        urlRssFeeds = new ArrayList<>();
+        mRssFeeds = new ArrayList<>();
+        urlsAndIcons = new HashMap<>();
+        user = FirebaseAuth.getInstance().getCurrentUser();
+        setTemp();
     }
 
     @Override
@@ -45,19 +63,47 @@ class DrawerPresenter extends MvpPresenter<DrawerView> {
         getViewState().setDrawer(bundle);
     }
 
-    public void setSubItems() {
-
-        tempRssFeed = mAD.getAllRssFeeds();
-        if(!tempRssFeed.isEmpty()) {
-            for(RSSFeed rssFeed : tempRssFeed) {
-                if(rssFeed.getUrl() != null) {
-                    temp.add(rssFeed.getUrl());
-                }
-            }
-            getViewState().setSubItems(temp);
+    public void addSubItem(String url) {
+        urlsAndIcons.clear();
+        RSSFeed r = mAD.getRssForDrawer(url);
+        if(r != null) {
+            urlsAndIcons.put(r.getUrl(), r.getIconUrl());
         }
-        temp.clear();
-        tempRssFeed.clear();
+        getViewState().addSubItem(urlsAndIcons);
+    }
+
+    public void setSubItems() {
+        //urlRssFeeds.clear();
+        //iconRssFeeds.clear();
+        mRssFeeds.clear();
+
+        urlsAndIcons.clear();
+        mRssFeeds = mAD.getAllRssFeeds();
+        if(!mRssFeeds.isEmpty()) {
+            for(RSSFeed rssFeed : mRssFeeds) {
+
+                    //urlRssFeeds.add(rssFeed.getUrl());
+                    //iconRssFeeds.add(rssFeed.getIconUrl());
+                    urlsAndIcons.put(rssFeed.getUrl(),rssFeed.getIconUrl());
+
+            }
+        }
+        getViewState().setSubItems(urlsAndIcons);
+    }
+
+    public List<String> getUrlRssFeeds() {
+        return urlRssFeeds;
+    }
+
+    public void setTemp() {
+        mRssFeeds = mAD.getAllRssFeeds();
+        if(!mRssFeeds.isEmpty()) {
+            for(RSSFeed rssFeed : mRssFeeds) {
+                //if(rssFeed.getUrl() != null) {
+                urlRssFeeds.add(rssFeed.getUrl());
+                //}
+            }
+        }
     }
 
     public void addNewNewsChannel() {
@@ -68,8 +114,9 @@ class DrawerPresenter extends MvpPresenter<DrawerView> {
         mAD.deleteRssFeed(url);
     }
 
-//    private String changeUrl(String Tag) {
-//
-//    }
+    public FirebaseUser getUser () {
+        return user;
+    }
+
 
 }

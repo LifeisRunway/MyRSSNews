@@ -1,15 +1,9 @@
 package com.imra.mynews.ui.activities;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.Toolbar;
+
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.Toolbar;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -17,13 +11,7 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
-import com.arellomobile.mvp.MvpAppCompatActivity;
-import com.arellomobile.mvp.presenter.InjectPresenter;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
 import com.imra.mynews.R;
-import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
@@ -33,13 +21,14 @@ import com.imra.mynews.mvp.views.MainInterface;
 import com.imra.mynews.mvp.views.RepositoriesView;
 import com.imra.mynews.ui.adapters.SearchRSSAdapter;
 
-import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Objects;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
+import moxy.MvpAppCompatActivity;
+import moxy.presenter.InjectPresenter;
 
 /**
  * Date: 16.05.2020
@@ -74,7 +63,7 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
     SearchRSSAdapter searchRSSAdapter;
     private String mUrl;
     private static final String MY_URL = "url";
-    private static final String MY_SETTINGS = "settings";
+    //private static final String MY_SETTINGS = "settings";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -206,14 +195,11 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
 
     @Override
     public void showDetailsContainer(int position, ItemHtml itemHtml) {
-        SharedPreferences sp = getSharedPreferences(MY_SETTINGS, Context.MODE_PRIVATE);
-        SharedPreferences.Editor e = sp.edit();
         if ((itemHtml.getHref().substring(0, 1).equals("/"))) {
-            e.putString(MY_URL, mUrl + itemHtml.getHref());
+            mMainPresenter.getEditor().putString(MY_URL, mUrl + itemHtml.getHref()).apply();
         } else {
-            e.putString(MY_URL, itemHtml.getHref());
+            mMainPresenter.getEditor().putString(MY_URL, itemHtml.getHref()).apply();
         }
-        e.apply();
         super.onBackPressed();
     }
 
@@ -221,4 +207,5 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
     public void showDetails(int position, Article article) {
 
     }
+
 }

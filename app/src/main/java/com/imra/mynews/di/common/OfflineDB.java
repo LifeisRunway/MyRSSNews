@@ -1,7 +1,7 @@
 package com.imra.mynews.di.common;
 
-import android.arch.persistence.room.Database;
-import android.arch.persistence.room.RoomDatabase;
+import androidx.room.Database;
+import androidx.room.RoomDatabase;
 
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.RSSFeed;

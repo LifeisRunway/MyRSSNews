@@ -1,15 +1,9 @@
 package com.imra.mynews.mvp.presenters;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.os.Build;
-import android.support.annotation.RequiresApi;
-import android.util.Log;
-
-import com.arellomobile.mvp.InjectViewState;
 import com.imra.mynews.app.MyNewsApp;
 import com.imra.mynews.di.common.ArticleDao;
-import com.imra.mynews.di.common.OfflineDB;
 import com.imra.mynews.mvp.MyNewsService;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.ItemHtml;
@@ -17,12 +11,7 @@ import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.models.RssFeedArticlesDetail;
 import com.imra.mynews.mvp.views.RepositoriesView;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-
 import java.net.UnknownHostException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -30,27 +19,21 @@ import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.annotations.Nullable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import okhttp3.ResponseBody;
-import retrofit2.Call;
-import retrofit2.Callback;
+import moxy.InjectViewState;
 import retrofit2.Response;
 
 /**
@@ -70,8 +53,8 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     @Inject
     ArticleDao mAD;
 
-    @Inject
-    Integer mLocalDB;
+    //@Inject
+    //Integer mLocalDB;
 
     private boolean mIsInLoading;
     private boolean mIsInLoading2;
@@ -248,9 +231,6 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         showProgress(isPageLoading, isRefreshing);
 
         RSSFeed tempRssFeed = new RSSFeed();
-        //RssFeedArticlesDetail tempRFAD = mAD.getRssFeedArticleDetail(mLocalDB);
-        //tempRssFeed.setChannelTitle(tempRFAD.getRssFeed().getChannelTitle());
-        //tempRssFeed.setArticleList(smallToBig(tempRFAD.getArticles()));
         if (mAD.getSavedArticles(true).isEmpty()) {
             tempRssFeed.setArticleList(new ArrayList<Article>());
         } else {

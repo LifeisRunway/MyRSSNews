@@ -1,11 +1,10 @@
 package com.imra.mynews.di.modules;
 
-import android.arch.persistence.room.Room;
+import androidx.room.Room;
 import android.content.Context;
 
 import com.imra.mynews.di.common.ArticleDao;
 import com.imra.mynews.di.common.OfflineDB;
-import com.imra.mynews.mvp.models.RSSFeed;
 
 import javax.inject.Singleton;
 
