@@ -267,6 +267,7 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
                             .override(480,360)
                             //.thumbnail(0.5f)
                             .into(imageView);
+                    //System.out.println(1 + " " + position + " " + mArticle.getEclos());
                 } else {
                     if(mArticle.getDescription() != null) {
                         Pattern p2 = Pattern.compile("https*://[^\"']+\\.(png|jpg|jpeg|gif)");
@@ -285,6 +286,7 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
                                     .override(480,360)
                                     //.thumbnail(0.5f)
                                     .into(imageView);
+                            //System.out.println(2 + " " + position + " " + m2.group());
                             if(llOne.getVisibility() == View.GONE) llOne.setVisibility(View.VISIBLE);
                         } else llOne.setVisibility(View.GONE);
                     } else llOne.setVisibility(View.GONE);
@@ -303,7 +305,7 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
                         .override(480,360)
                         //.thumbnail(0.5f)
                         .into(imageView);
-
+                //System.out.println(3 + " " + position + " " + mArticle.getEclos());
             }
 
             titleTextView.setText(Html.fromHtml(mArticle.getTitle()));

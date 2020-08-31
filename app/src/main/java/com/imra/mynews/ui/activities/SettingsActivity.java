@@ -5,6 +5,7 @@ import android.os.Bundle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -71,9 +72,10 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
         setContentView(R.layout.settings_activity);
 
         unbinder = ButterKnife.bind(this);
-
+        //getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         setSupportActionBar(mToolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
+
 
         searchRSSAdapter = new SearchRSSAdapter(getMvpDelegate(),"");
         mListView.setAdapter(searchRSSAdapter);
@@ -89,7 +91,7 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
                 mRepositoriesPresenter.findRSS(false, changeToURL());
             }
         });
-
+        mRepositoriesPresenter.findRSS(false, "");
     }
 
     @Override
@@ -197,10 +199,18 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
     public void showDetailsContainer(int position, ItemHtml itemHtml) {
         if ((itemHtml.getHref().substring(0, 1).equals("/"))) {
             mMainPresenter.getEditor().putString(MY_URL, mUrl + itemHtml.getHref()).apply();
+            mMainPresenter.getEditor().putString(mUrl + itemHtml.getHref(), itemHtml.getIcon_url()).apply();
         } else {
             mMainPresenter.getEditor().putString(MY_URL, itemHtml.getHref()).apply();
+            mMainPresenter.getEditor().putString(itemHtml.getHref(), itemHtml.getIcon_url()).apply();
         }
+        onBackPressed();
+    }
+
+    @Override
+    public void onBackPressed() {
         super.onBackPressed();
+        this.finish();
     }
 
     @Override

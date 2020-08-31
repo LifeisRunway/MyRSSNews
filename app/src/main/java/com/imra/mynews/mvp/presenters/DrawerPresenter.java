@@ -27,8 +27,7 @@ import moxy.MvpPresenter;
  * @author IMRA027
  */
 @InjectViewState
-public
-class DrawerPresenter extends MvpPresenter<DrawerView> {
+public class DrawerPresenter extends MvpPresenter<DrawerView> {
 
     @Inject
     ArticleDao mAD;
@@ -43,7 +42,12 @@ class DrawerPresenter extends MvpPresenter<DrawerView> {
     List<String> urlRssFeeds;
     List<String> iconRssFeeds;
     List<RSSFeed> mRssFeeds;
+    RSSFeed tmpRss;
     FirebaseUser user;
+
+    public String getIcon(String key) {
+        return urlsAndIcons.get(key);
+    }
 
     Map<String, String> urlsAndIcons;
 
@@ -63,32 +67,25 @@ class DrawerPresenter extends MvpPresenter<DrawerView> {
         getViewState().setDrawer(bundle);
     }
 
-    public void addSubItem(String url) {
-        urlsAndIcons.clear();
-        RSSFeed r = mAD.getRssForDrawer(url);
-        if(r != null) {
-            urlsAndIcons.put(r.getUrl(), r.getIconUrl());
-        }
-        getViewState().addSubItem(urlsAndIcons);
+    public void addSubItem(String url, String iconUrl) {
+//        urlsAndIcons.clear();
+//        RSSFeed r = mAD.getRssForDrawer(url);
+//        if(r != null) {
+//            urlsAndIcons.put(r.getUrl(), r.getIconUrl());
+//        }
+//
+        tmpRss = mAD.getRssForDrawer(url);
+        tmpRss.setIconUrl(iconUrl);
+        mAD.updateRss(tmpRss);
+        getViewState().addSubItem(url, iconUrl);
     }
 
     public void setSubItems() {
-        //urlRssFeeds.clear();
-        //iconRssFeeds.clear();
         mRssFeeds.clear();
-
-        urlsAndIcons.clear();
         mRssFeeds = mAD.getAllRssFeeds();
         if(!mRssFeeds.isEmpty()) {
-            for(RSSFeed rssFeed : mRssFeeds) {
-
-                    //urlRssFeeds.add(rssFeed.getUrl());
-                    //iconRssFeeds.add(rssFeed.getIconUrl());
-                    urlsAndIcons.put(rssFeed.getUrl(),rssFeed.getIconUrl());
-
-            }
+            getViewState().setSubItems(mRssFeeds);
         }
-        getViewState().setSubItems(urlsAndIcons);
     }
 
     public List<String> getUrlRssFeeds() {
@@ -106,13 +103,35 @@ class DrawerPresenter extends MvpPresenter<DrawerView> {
         }
     }
 
-    public void addNewNewsChannel() {
-        getViewState().addNewNewsChannel();
+    public void addNewNewsChannel(String name) {
+        getViewState().addNewNewsChannel(name);
+    }
+
+    public boolean checkDouble (String nameChannel) {
+        mRssFeeds.clear();
+        mRssFeeds = mAD.getAllRssFeeds();
+        if(!mRssFeeds.isEmpty()) {
+            List<String> temp = new ArrayList<>();
+            for (RSSFeed r : mRssFeeds) {
+
+                if(r.getUrl() != null) {
+                    temp.add(r.getUrl()
+                            .replaceFirst("[^/]+//(www\\.)*","")
+                            .replaceFirst("/.+",""));
+                }
+            }
+            for(String s : temp) {
+                if(s.equals(nameChannel)) return true;
+            }
+        }
+        return false;
     }
 
     public void deleteSubItem(String url) {
         mAD.deleteRssFeed(url);
     }
+
+
 
     public FirebaseUser getUser () {
         return user;

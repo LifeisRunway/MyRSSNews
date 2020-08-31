@@ -1,6 +1,7 @@
 package com.imra.mynews.ui.activities;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -27,11 +28,14 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.imra.mynews.R;
+import com.imra.mynews.mvp.presenters.LoginPresenter;
+import com.imra.mynews.mvp.views.LoginView;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.Unbinder;
 import moxy.MvpAppCompatActivity;
+import moxy.presenter.InjectPresenter;
 
 /**
  * Date: 03.08.2020
@@ -39,7 +43,10 @@ import moxy.MvpAppCompatActivity;
  *
  * @author IMRA027
  */
-public class LoginActivity extends MvpAppCompatActivity {
+public class LoginActivity extends MvpAppCompatActivity implements LoginView {
+
+    @InjectPresenter
+    LoginPresenter mLoginPresenter;
 
     public static final int GOOGLE_SIGN_IN_CODE = 10005;
     private static final String TAG = "Tag";
@@ -67,12 +74,10 @@ public class LoginActivity extends MvpAppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        if(FirebaseAuth.getInstance().getCurrentUser() != null) {
-            startActivity(new Intent(this, MainActivity.class));
-            finishAffinity();
-        }
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         unbinder = ButterKnife.bind(this);
         mAuth = FirebaseAuth.getInstance();
+        mLoginPresenter.isEnter();
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
@@ -83,9 +88,17 @@ public class LoginActivity extends MvpAppCompatActivity {
         if(signInClient != null) {
             Toast.makeText(this, "User is logged in already!", Toast.LENGTH_SHORT).show();
         }
-        mGoogle.setOnClickListener(v -> onClickGoogleSignIn());
-        mSignUpBtn.setOnClickListener(v -> onClickSignUp());
-        mLoginBtn.setOnClickListener(v -> onClickSignIn());
+        mGoogle.setOnClickListener(v -> mLoginPresenter.onClickGoogleSignIn());
+        mSignUpBtn.setOnClickListener(v -> mLoginPresenter.onClickSignUp());
+        mLoginBtn.setOnClickListener(v -> mLoginPresenter.onClickSignIn());
+    }
+
+    @Override
+    public void isEnter() {
+        if(mAuth.getCurrentUser() != null) {
+            startActivity(new Intent(this, MainActivity.class));
+            finishAffinity();
+        }
     }
 
     @Override
@@ -96,7 +109,7 @@ public class LoginActivity extends MvpAppCompatActivity {
         if(currentUser != null) {
             Toast.makeText(this, "User not null", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, MainActivity.class));
-            this.finish();
+            finishAffinity();
         } else {
             Toast.makeText(this, "User is null", Toast.LENGTH_SHORT).show();
         }
@@ -108,36 +121,22 @@ public class LoginActivity extends MvpAppCompatActivity {
         finishAffinity();
     }
 
+    @Override
     public void onClickSignUp () {
-        if(!TextUtils.isEmpty(mEmailET.getText().toString()) && !TextUtils.isEmpty(mPassET.getText().toString())) {
-            mAuth.createUserWithEmailAndPassword(mEmailET.getText().toString(), mPassET.getText().toString())
-                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            if(task.isSuccessful()) {
-                                Toast.makeText(getApplicationContext(), "User SignUp Successful!", Toast.LENGTH_SHORT).show();
-                            } else {
-                                Toast.makeText(getApplicationContext(), "User SignUp Failed!", Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    });
-        } else {
-            Toast.makeText(this, "Please, enter Email and Password!", Toast.LENGTH_SHORT).show();
-        }
+        startActivity(new Intent(this, SignUpActivity.class));
     }
 
+    @Override
     public void onClickSignIn () {
         if(!TextUtils.isEmpty(mEmailET.getText().toString()) && !TextUtils.isEmpty(mPassET.getText().toString())) {
             mAuth.signInWithEmailAndPassword(mEmailET.getText().toString(), mPassET.getText().toString())
-                    .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                        @Override
-                        public void onComplete(@NonNull Task<AuthResult> task) {
-                            if(task.isSuccessful()) {
-                                Toast.makeText(getApplicationContext(), "User SignIn Successful!", Toast.LENGTH_SHORT).show();
-                                LoginActivity.this.startActivity(new Intent(LoginActivity.this, MainActivity.class));
-                            } else {
-                                Toast.makeText(getApplicationContext(), "Check Email or Password!", Toast.LENGTH_SHORT).show();
-                            }
+                    .addOnCompleteListener(this, task -> {
+                        if(task.isSuccessful()) {
+                            Toast.makeText(getApplicationContext(), "User SignIn Successful!", Toast.LENGTH_SHORT).show();
+                            startActivity(new Intent(this, MainActivity.class));
+                            finishAffinity();
+                        } else {
+                            Toast.makeText(getApplicationContext(), "Check Email or Password!", Toast.LENGTH_SHORT).show();
                         }
                     });
         } else {
@@ -145,6 +144,7 @@ public class LoginActivity extends MvpAppCompatActivity {
         }
     }
 
+    @Override
     public void onClickGoogleSignIn () {
         Intent sign = signInClient.getSignInIntent();
         startActivityForResult(sign, GOOGLE_SIGN_IN_CODE);
@@ -159,31 +159,30 @@ public class LoginActivity extends MvpAppCompatActivity {
             try {
                 GoogleSignInAccount account = task.getResult(ApiException.class);
                 Log.d(TAG, "firebaseAuthWithGoogle:" + account.getId());
-                firebaseAuthWithGoogle(account.getIdToken());
-                startActivity(new Intent(this, MainActivity.class));
+                mLoginPresenter.firebaseAuthWithGoogle(account.getIdToken());
             } catch (ApiException e) {
                 Log.w(TAG, "Google sign in failed", e);
             }
         }
     }
 
-    private void firebaseAuthWithGoogle(String idToken) {
+    @Override
+    public void firebaseAuthWithGoogle(String idToken) {
         AuthCredential credential = GoogleAuthProvider.getCredential(idToken, null);
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
                         // Sign in success, update UI with the signed-in user's information
                         Log.d(TAG, "signInWithCredential:success");
-                        FirebaseUser user = mAuth.getCurrentUser();
-                        //updateUI(user);
+                        startActivity(new Intent(this, MainActivity.class));
+                        finishAffinity();
                     } else {
                         // If sign in fails, display a message to the user.
                         Log.w(TAG, "signInWithCredential:failure", task.getException());
-                        //Snackbar.make(mBinding.mainLayout, "Authentication Failed.", Snackbar.LENGTH_SHORT).show();
-                        //updateUI(null);
                     }
                 });
     }
+
 
     @Override
     protected void onDestroy() {

@@ -1,6 +1,10 @@
 package com.imra.mynews.mvp.views;
 
 import android.os.Bundle;
+
+import com.imra.mynews.mvp.models.RSSFeed;
+
+import java.util.List;
 import java.util.Map;
 import moxy.MvpView;
 import moxy.viewstate.strategy.AddToEndSingleStrategy;
@@ -19,10 +23,10 @@ public interface DrawerView extends MvpView {
     @StateStrategyType(OneExecutionStateStrategy.class)
     void setDrawer (Bundle savedInstanceState);
 
-    void setSubItems (Map<String, String> urlsAndIcons);
+    void setSubItems (List<RSSFeed> mRssFeeds);
 
-    void addSubItem (Map<String, String> urlsAndIcons);
+    void addSubItem (String url, String iconUrl);
 
-    void addNewNewsChannel();
+    void addNewNewsChannel(String name);
 
 }

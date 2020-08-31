@@ -80,7 +80,8 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
             mSource = "http://img.youtube.com/vi/" + source.substring(source.indexOf("embed/") + 6) + "/0.jpg";
             test.add(1);
         }else if(source.contains("coub") && source.contains("embed/")) {
-            mSource = "https://coubsecureassets-a.akamaihd.net/assets/brand_assets_og_image-4de4b0738780e78134bbb312d76412f0c3259b5e26323e2f5b899a5cfff5ee3d.png";
+            //mSource = "https://coubsecureassets-a.akamaihd.net/assets/brand_assets_og_image-4de4b0738780e78134bbb312d76412f0c3259b5e26323e2f5b899a5cfff5ee3d.png";
+            mSource = " ";
             test.add(2);
         } else {
             mSource = source;
@@ -149,9 +150,9 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
 //                        .subscribeOn(Schedulers.io())
 //                        .observeOn(AndroidSchedulers.mainThread())
 //                        .subscribe((tem) -> { mDraw = addWaterMark(drawable);});
-                mDraw = addWaterMark(drawable);
+                mDraw = addWaterMark(drawable, 1);
             } else if(test.get(0) == 2) {
-                mDraw = drawable;
+                mDraw = container.get().getResources().getDrawable(R.drawable.coub_icon);
             } else {
                 mDraw = drawable;
             }
@@ -205,7 +206,7 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
 
 
 
-        private Drawable addWaterMark(Drawable drawable) {
+        private Drawable addWaterMark(Drawable drawable, int youtubeOrCoub) {
             Bitmap src;
             if (drawable instanceof Animatable) {
                 GifDrawable gd = (GifDrawable) drawable;
@@ -222,7 +223,12 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
             Canvas canvas = new Canvas(result);
             canvas.drawBitmap(src, 0, 0, null);
 
-            Bitmap waterMark = BitmapFactory.decodeResource(container.get().getResources(), R.drawable.youtube_icon);
+            Bitmap waterMark;
+            if(youtubeOrCoub == 1) {
+                waterMark = BitmapFactory.decodeResource(container.get().getResources(), R.drawable.youtube_icon);
+            } else {
+                waterMark = BitmapFactory.decodeResource(container.get().getResources(), R.drawable.coub_icon);
+            }
             int resizeW = waterMark.getWidth()/5;
             int resizeH = waterMark.getHeight()/5;
             Bitmap resizeWM = Bitmap.createScaledBitmap(waterMark,resizeW,resizeH,true);

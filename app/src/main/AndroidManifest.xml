@@ -17,7 +17,8 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:targetApi="m">
-        <activity android:name=".ui.activities.LoginActivity">
+        <activity android:name=".ui.activities.LoginActivity"
+            android:windowSoftInputMode="adjustPan">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -27,6 +28,8 @@
         <activity android:name=".ui.activities.SettingsActivity" />
         <activity android:name=".ui.activities.OfflineActivity" />
         <activity android:name=".ui.activities.MainActivity" />
+        <activity android:name=".ui.activities.SignUpActivity"
+            android:windowSoftInputMode="adjustPan"/>
 
         <meta-data
             android:name="preloaded_fonts"

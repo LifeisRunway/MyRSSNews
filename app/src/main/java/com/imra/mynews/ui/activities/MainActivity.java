@@ -1,8 +1,13 @@
 package com.imra.mynews.ui.activities;
 
 import android.animation.LayoutTransition;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -14,6 +19,10 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
+import androidx.palette.graphics.Palette;
+
+import android.os.Environment;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
@@ -21,10 +30,15 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
+import android.widget.Toast;
+
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
+import com.github.florent37.glidepalette.GlidePalette;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInClient;
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
+import com.google.android.gms.common.util.ArrayUtils;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.imra.mynews.R;
@@ -40,7 +54,7 @@ import com.imra.mynews.mvp.views.MainInterface;
 import com.imra.mynews.mvp.views.RepositoriesView;
 import com.imra.mynews.ui.adapters.RepositoriesAdapter;
 import com.imra.mynews.ui.fragments.Fragment;
-import com.imra.mynews.ui.utils.GlideImageGetter;
+import com.imra.mynews.ui.utils.CustomUrlPrimaryDrawerItem;
 import com.imra.mynews.ui.views.FrameSwipeRefreshLayout;
 import com.mikepenz.fontawesome_typeface_library.FontAwesome;
 import com.mikepenz.iconics.IconicsDrawable;
@@ -50,6 +64,7 @@ import com.mikepenz.materialdrawer.AccountHeaderBuilder;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
 import com.mikepenz.materialdrawer.holder.BadgeStyle;
+import com.mikepenz.materialdrawer.holder.StringHolder;
 import com.mikepenz.materialdrawer.model.DividerDrawerItem;
 import com.mikepenz.materialdrawer.model.ExpandableBadgeDrawerItem;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
@@ -64,9 +79,11 @@ import com.mikepenz.materialdrawer.util.AbstractDrawerImageLoader;
 import com.mikepenz.materialdrawer.util.DrawerImageLoader;
 import com.mikepenz.materialdrawer.util.DrawerUIUtils;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
@@ -111,6 +128,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     TextView mNoRepositoriesTextView;
     @BindView(R.id.toolbar)
     Toolbar mToolbar;
+    @BindView(R.id.v_toolbar_extension)
+    FrameLayout mToolbarFrame;
     @BindView (R.id.tvChanTitle)
     TextView mChannelTitle;
     @BindView (R.id.tvChanDesc)
@@ -122,7 +141,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     private AlertDialog mErrorDialog;
     private Unbinder unbinder;
     private int visible = View.VISIBLE;
-
+    private boolean isNew;
 
     private RepositoriesAdapter mReposAdapter;
 
@@ -130,6 +149,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     private AccountHeader mAccountHeader = null;
     private static final int PROFILE_SETTING = 100000;
     int num = 1;
+    View view ;
 
     //SharedPreferences sp;
 
@@ -144,12 +164,18 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     Context mContext;
     int identif = 1;
 
+    int sizeStart = 0;
+    int sizeEnd = 0;
+
     ExpandableBadgeDrawerItem expDrawItem;
     Bundle mBundle;
     FirebaseUser user;
     String uName;
     String uEmail;
     Uri uIcon;
+    Disposable dis;
+    private GoogleSignInOptions gso;
+    private GoogleSignInClient signInClient;
 
     @ProvidePresenter
     DrawerPresenter provideDrawerPresenter () { return new DrawerPresenter(mBundle); }
@@ -160,9 +186,16 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         setContentView(R.layout.activity_main);
         mBundle = savedInstanceState;
         mContext = this;
+        view = new View(this);
+        view.setBackgroundColor(getResources().getColor(R.color.colorAppMyNews));
+        gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                .build();
+        signInClient = GoogleSignIn.getClient(this, gso);
 
         unbinder = ButterKnife.bind(this);
-
+        drawerImageLoader();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             mDetailsFrameLayout.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
         }
@@ -172,15 +205,17 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         if (mDrawerPresenter.getUser() != null) {
             uName = mDrawerPresenter.getUser().getDisplayName();
             uEmail = mDrawerPresenter.getUser().getEmail();
-            uIcon = mDrawerPresenter.getUser().getPhotoUrl();
+            uIcon = mDrawerPresenter.getUser().getPhotoUrl() == null ?
+                    Uri.parse("android.resource://com.imra.mynews/" + R.drawable.ic_user_svg) :
+                    mDrawerPresenter.getUser().getPhotoUrl();
         } else {
-            uName = "Null";
-            uEmail = "null@null";
-            uIcon = Uri.parse("https://avatars2.githubusercontent.com/u/39906544?v=3&s=460");
+            uName = " ";
+            uEmail = " ";
+            uIcon = Uri.parse("android.resource://com.imra.mynews/" + R.drawable.ic_user_svg);
         }
-
+        mToolbar.setPopupTheme(R.style.AppTheme);
         setSupportActionBar(mToolbar);
-        Objects.requireNonNull(getSupportActionBar()).setElevation(0);
+        Objects.requireNonNull(getSupportActionBar()).setElevation(1);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
         mDetailsFrameLayout.setVisibility(View.GONE);
@@ -232,12 +267,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     @Override
     protected void onResume() {
         super.onResume();
-            if(mMainPresenter.isUrl(oldUrl)) {
-                oldUrl = mMainPresenter.getSP().getString(MY_URL,"");
-                mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
-                mDrawerPresenter.addSubItem(oldUrl);
-            } else {mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());}
-
+        if(mMainPresenter.isUrl(oldUrl)) {
+            oldUrl = mMainPresenter.getSP().getString(MY_URL,"");
+            mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
+            isNew = true;
+        }
     }
 
     @Override
@@ -328,6 +362,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             mChannelDescription.setText(rssFeed.getChannelDescription());
             if(mChannelDescription.getVisibility() == View.GONE) { mChannelDescription.setVisibility(View.VISIBLE); }
         } else mChannelDescription.setVisibility(View.GONE);
+        if(isNew) {
+            String iconUrl = mMainPresenter.getSP().getString(oldUrl, "");
+            mDrawerPresenter.addSubItem(oldUrl, iconUrl);
+            isNew = false;
+        }
     }
 
     @Override
@@ -362,15 +401,13 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         mRepositoriesPresenter.loadNextRepositories(mMainPresenter.getSP().getString(MY_URL,""), isConnected());
     }
 
-    // Боковая панель
-    @Override
-    public void setDrawer (Bundle savedInstanceState) {
+    private void drawerImageLoader () {
 
         //initialize and create the image loader logic
         DrawerImageLoader.init(new AbstractDrawerImageLoader() {
             @Override
             public void set(ImageView imageView, Uri uri, Drawable placeholder, String tag) {
-                GlideApp.with(imageView.getContext()).load(uri).placeholder(placeholder).into(imageView);
+                GlideApp.with(imageView.getContext()).load(uri).placeholder(placeholder).error(R.drawable.ic_my_news_playstore).into(imageView);
             }
 
             @Override
@@ -396,44 +433,40 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             }
         });
 
+    }
+
+    // Боковая панель
+    @SuppressLint("ResourceAsColor")
+    @Override
+    public void setDrawer (Bundle savedInstanceState) {
+
         // Create a sample profile
-        final IProfile profile = new ProfileDrawerItem().withName(uName).withEmail(uEmail).withIcon(uIcon).withIdentifier(100);
+        final IProfile profile = new ProfileDrawerItem().withName(uName).withEmail(uEmail).withIcon(uIcon).withIdentifier(100000);
 
         mAccountHeader = new AccountHeaderBuilder()
                 .withActivity(this)
                 .withTranslucentStatusBar(true) //полупрозрачная строка состояния?
-                .withHeaderBackground(R.drawable.header)
+                .withHeaderBackground(R.drawable.header) //задник (фон)
                 .addProfiles(
                         profile,
                         //don't ask but google uses 14dp for the add account icon in gmail but 20dp for the normal icons (like manage account)
-                        new ProfileSettingDrawerItem().withName("Add Account").withDescription("Add new GitHub Account").withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_add).actionBar().paddingDp(5).colorRes(R.color.material_drawer_primary_text)).withIdentifier(PROFILE_SETTING),
-                        new ProfileSettingDrawerItem().withName("Manage Account").withIcon(GoogleMaterial.Icon.gmd_settings).withIdentifier(100001),
                         new ProfileSettingDrawerItem().withName("Exit Account").withIcon(GoogleMaterial.Icon.gmd_exit_to_app).withIdentifier(100002)
-
                 ).withOnAccountHeaderListener((view, profile1, current) -> {
-                    //sample usage of the onProfileChanged listener
-                    //if the clicked item has the identifier 1 add a new profile ;)
-                    int count = 100 + mAccountHeader.getProfiles().size() + 1;
-                    if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == PROFILE_SETTING) {
-                        IProfile newProfile = new ProfileDrawerItem().withNameShown(true).withName("Batman" + count).withEmail("batman" + count + "@gmail.com").withIcon("https://avatars3.githubusercontent.com/u/39906544?v=3&s=460").withIdentifier(count);
-                        if (mAccountHeader.getProfiles() != null) {
-                            //we know that there are 2 setting elements. set the new profile above them ;)
-                            mAccountHeader.addProfile(newProfile, mAccountHeader.getProfiles().size() - 2);
-                        } else {
-                            mAccountHeader.addProfiles(newProfile);
-                        }
-                    }
-                    if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == 100001) {
-                        if (mAccountHeader.getProfiles().size() > 3)
-                            mAccountHeader.removeProfile(mAccountHeader.getProfiles().size() - 3);
-                    }
                     if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == 100002) {
-                        FirebaseAuth.getInstance().signOut();
-                        startActivity(new Intent(this, LoginActivity.class));
-                        finishAffinity();
+                        mErrorDialog = new AlertDialog.Builder(mContext)
+                                .setTitle("Выйти из аккаунта")
+                                .setMessage("Вы уверены?")
+                                .setPositiveButton("Да", (dialog, which) -> {
+                                    FirebaseAuth.getInstance().signOut();
+                                    signInClient.signOut();
+                                    startActivity(new Intent(this, LoginActivity.class));
+                                    finishAffinity();
+                                })
+                                .setNegativeButton("Нет", (dialog, which) -> {
+                                    dialog.dismiss();
+                                })
+                                .show();
                     }
-
-
                     //false if you have not consumed the event and it should close the drawer
                     return false;
                 })
@@ -441,14 +474,18 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 .build();
 
         if(!mDrawerPresenter.getUrlRssFeeds().isEmpty()) {
-            expDrawItem = new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(R.drawable.youtube_icon).withIdentifier(3).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorAccent)).withBadge("0").withSubItems().withIsExpanded(true);
+            expDrawItem = new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_book).sizeDp(48)).withTag("-").withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon)).withBadge("!").withSubItems().withTag("новости").withIsExpanded(false);
         } else {
-            expDrawItem = new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(R.drawable.youtube_icon).withIdentifier(3).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorAccent)).withBadge("0").withSubItems(
+            expDrawItem =  new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(GoogleMaterial.Icon.gmd_book).withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon)).withTag("новости").withBadge("!").withSubItems(
                     new SecondaryDrawerItem()
                             .withName("Нет новостных лент")
-                            .withLevel(3)
-                            .withIdentifier(2000).withSetSelected(false).withEnabled(false)).withIsExpanded(true);
+                            .withLevel(2)
+                            .withTag("-")
+                            .withIdentifier(20000).withSetSelected(false).withEnabled(false)).withIsExpanded(false);
         }
+
+
+
 
         //create the drawer
         mDrawer = new DrawerBuilder()
@@ -458,40 +495,44 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 .withItemAnimator(new AlphaCrossFadeAnimator())
                 .withActionBarDrawerToggle(true)
                 .withAccountHeader(mAccountHeader)
-                .withSliderBackgroundColorRes(R.color.colorAppMyNews2)
+                .withSliderBackgroundColorRes(R.color.col)
                 .addDrawerItems(
                         new DividerDrawerItem().withEnabled(false),
-                        new PrimaryDrawerItem().withName(R.string.drawer_item_home).withIcon(FontAwesome.Icon.faw_rocket).withIdentifier(1).withSelectable(false),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_home).withIcon(GoogleMaterial.Icon.gmd_settings).withIdentifier(50000).withSelectable(false),
                         new DividerDrawerItem(),
-                        new PrimaryDrawerItem().withName(R.string.drawer_item_settings).withIcon(FontAwesome.Icon.faw_edit).withIdentifier(2).withSelectable(false),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_settings).withIcon(GoogleMaterial.Icon.gmd_find_in_page).withIdentifier(50001).withSelectable(false),
                         new DividerDrawerItem(),
-                        new PrimaryDrawerItem().withName(R.string.drawer_item_offline).withIcon(FontAwesome.Icon.faw_save).withIdentifier(4).withSelectable(false),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_offline).withIcon(GoogleMaterial.Icon.gmd_save).withIdentifier(50002).withSelectable(false),
                         new SectionDrawerItem().withName("Новости"),
-                        expDrawItem
-                )
-                .withOnDrawerItemClickListener((view, position, drawerItem) -> {
+                        expDrawItem,
+                        new SectionDrawerItem().withIdentifier(60000),
+                        new PrimaryDrawerItem().withName("Контакты").withIcon(GoogleMaterial.Icon.gmd_settings).withIdentifier(50004).withSelectable(false)
+                        )
+                .withOnDrawerItemClickListener((View view, int position, IDrawerItem drawerItem) -> {
+
                     if(drawerItem != null) {
                         Intent intent = null;
                         switch ((int)drawerItem.getIdentifier()) {
-                            case 1 :
-                                break;
-                            case 2 :
+                            case 50001 :
                                 intent = new Intent(MainActivity.this, SettingsActivity.class);
                                 break;
-                            case 4 :
+                            case 50002 :
                                 intent = new Intent(MainActivity.this, OfflineActivity.class);
                                 break;
+                            case 50004:
+                                return true;
                             default:
                                 break;
                         }
                         if (intent != null) {
                             MainActivity.this.startActivity(intent);
                         }
-                        if((int)drawerItem.getIdentifier() > 2000) {
+                        if((int)drawerItem.getIdentifier() < 20000) {
+                            mListView.smoothScrollToPosition(0);
                             oldUrl = drawerItem.getTag().toString();
+                            changeBackCol(mMainPresenter.getSP().getString(oldUrl, ""));
                             if(mDetailsFrameLayout.getVisibility() == View.VISIBLE) mDetailsFrameLayout.setVisibility(View.GONE);
                             mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
-                            mListView.smoothScrollToPosition(0);
                             if(mMainPresenter.isUrl(oldUrl)) { mMainPresenter.saveSP(oldUrl); }
                             //oldUrl = sp.getString(drawerItem.getTag().toString(), "");
                         }
@@ -500,20 +541,68 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 })
                 .withOnDrawerItemLongClickListener((view, position, drawerItem) -> {
                     if(drawerItem != null) {
-                        if((int)drawerItem.getIdentifier() > 2000) {
+                        if((int)drawerItem.getIdentifier() < 20000) {
+
                             mErrorDialog = new AlertDialog.Builder(mContext)
-                                    .setTitle(drawerItem.getTag().toString())
+                                    .setTitle(drawerItem.getTag().toString() + " " + drawerItem.getIdentifier())
                                     .setMessage("Удалить?")
                                     .setPositiveButton("Да", (dialog, which) -> {
-//                                            SharedPreferences.Editor e = sp.edit();
-//                                            e.remove(drawerItem.getTag().toString());
-//                                            e.apply();
+                                        int [] testing = mDrawer.getExpandableExtension().getExpandedItems();
+                                        for (int i = testing.length - 1; i >= 0; i--) {
+                                            mDrawer.getExpandableExtension().collapse(testing[i]);
+                                        }
                                         mDrawerPresenter.deleteSubItem(drawerItem.getTag().toString());
+                                        expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
+                                        mDrawer.removeItem(drawerItem.getIdentifier());
+                                        expDrawItem.getSubItems().remove(drawerItem);
+                                        expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
+                                        for(int i = 0; i <= testing.length - 1; i++) {
+                                            mDrawer.getExpandableExtension().expand(testing[i]);
+                                        }
+                                        //mDrawer.removeItemByPosition(mDrawer.getDrawerItems().size());
+                                        if(oldUrl.equals(drawerItem.getTag().toString())) {
+                                            if(!expDrawItem.getSubItems().isEmpty()) {oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();}
+                                            else {setZeroItemDrawer ();}
+                                        }
+                                        dialog.dismiss();
+                                        mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
+                                    })
+                                    .setNegativeButton("Нет", (dialog, which) -> {
+                                        dialog.dismiss();
+                                    })
+                                    .show();
+                        }
+                        if((int)drawerItem.getIdentifier() > 30000 && (int)drawerItem.getIdentifier() < 50000) {
+
+                            mErrorDialog = new AlertDialog.Builder(mContext)
+                                    .setTitle(drawerItem.getTag().toString() + " " + drawerItem.getIdentifier())
+                                    .setMessage("Удалить список?")
+                                    .setPositiveButton("Да", (dialog, which) -> {
+                                        int [] testing = mDrawer.getExpandableExtension().getExpandedItems();
+                                        for (int i = testing.length - 1; i >= 0; i--) {
+                                            mDrawer.getExpandableExtension().collapse(testing[i]);
+                                        }
+                                        for(Object item : drawerItem.getSubItems()) {
+                                            mDrawerPresenter.deleteSubItem(((IDrawerItem) item).getTag().toString());
+                                        }
+                                        expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
+                                        drawerItem.getSubItems().clear();
+                                        mDrawer.removeItem(drawerItem.getIdentifier());
                                         expDrawItem.getSubItems().remove(drawerItem);
                                         expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
                                         mDrawer.updateItem(expDrawItem);
-                                        mDrawer.removeItemByPosition(mDrawer.getDrawerItems().size());
+                                        for(int i = 0; i <= testing.length - 1; i++) {
+                                            mDrawer.getExpandableExtension().expand(testing[i]);
+                                        }
+
+                                        for(Object item : drawerItem.getSubItems()) {
+                                            if(oldUrl.equals(((IDrawerItem)item).getTag().toString())) {
+                                                if(!expDrawItem.getSubItems().isEmpty()) {oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();}
+                                                else {setZeroItemDrawer ();}
+                                            }
+                                        }
                                         dialog.dismiss();
+                                        mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
                                     })
                                     .setNegativeButton("Нет", (dialog, which) -> {
                                         dialog.dismiss();
@@ -525,101 +614,487 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 })
                 .withSavedInstance(savedInstanceState)
                 .withShowDrawerOnFirstLaunch(true)
-                //.withShowDrawerUntilDraggedOpened(true)
+                .withShowDrawerUntilDraggedOpened(true)
                 .build();
 
+        mDrawer.getAdapter().withOnPreClickListener((v, adapter, item, position1) -> {
+            if (item.getIdentifier() == 50003) {
+                if (item.isExpanded()) {
+                    int[] temp = mDrawer.getExpandableExtension().getExpandedItems();
+                    for (int i = temp.length - 1; i > 0; i--) {
+                        mDrawer.getExpandableExtension().collapse(temp[i]);
+                    }
+                }
+            }
+            return false;
+        });
+        if(savedInstanceState == null) {
+            mDrawer.setSelection(27, false);
+        }
         mDrawerPresenter.setSubItems();
     }
 
     @Override
-    public void addSubItem(Map<String, String> urlsAndIcons) {
-        String tmp;
-        final Drawable[] d = new Drawable[1];
-        for (Map.Entry entry : urlsAndIcons.entrySet()) {
-            tmp = entry.getKey().toString()
-                .replaceFirst("[^/]+//(www\\.)*","")
-                    .replaceFirst("/.+","");
-            if(!expDrawItem.getSubItems().isEmpty()) {
-                if(expDrawItem.getSubItems().get(0).getIdentifier() == 2000) {expDrawItem.getSubItems().remove(0);}
+    protected void onSaveInstanceState(Bundle outState) {
+        //add the values which need to be saved from the drawer to the bundle
+        outState = mDrawer.saveInstanceState(outState);
+        //add the values which need to be saved from the accountHeader to the bundle
+        outState = mAccountHeader.saveInstanceState(outState);
+        super.onSaveInstanceState(outState);
+    }
+
+    @SuppressLint({"ResourceAsColor", "ResourceType"})
+    private void changeBackCol(String iconUrl) {
+        if (iconUrl != null) {
+            if(!iconUrl.equals("")) {
+                GlideApp.with(this).load(iconUrl)
+                        .listener(GlidePalette.with(iconUrl)
+                                .use(GlidePalette.Profile.VIBRANT_DARK)
+                                .intoCallBack(new GlidePalette.CallBack() {
+                                    @Override
+                                    public void onPaletteLoaded(@Nullable Palette palette) {
+                                        int col = ((ColorDrawable) mToolbar.getBackground()).getColor();
+                                        int col2 = -1;
+                                        assert palette != null;
+                                        Palette.Swatch ps = palette.getVibrantSwatch();
+                                        if(ps != null) {
+                                            int tem = ps.getRgb();
+                                            mToolbar.setBackgroundColor(tem);
+                                            mToolbarFrame.setBackgroundColor(tem);
+                                            int temp = manipulateColor(ps.getRgb());
+                                            mListView.setBackgroundColor(temp);
+                                            mDetailsFrameLayout.setBackgroundColor(temp);
+                                            col2 = ((ColorDrawable) mToolbar.getBackground()).getColor();
+
+                                        }
+                                        if(col2 != -1) {
+                                            if(col == col2) {
+                                                changeBackCol2(iconUrl);
+                                            }
+                                        }
+                                    }
+                                })
+                                .crossfade(false))
+                        .submit();
+
+
+
+//                if(color2 == color) {
+//                    mToolbar.setBackgroundColor(R.color.colorAppMyNews);
+//                    mToolbarFrame.setBackgroundColor(R.color.colorAppMyNews);
+//                    mListView.setBackgroundColor(R.color.colorAppMyNews);
+//                }
+            } else {
+                Toast.makeText(this, "IconUrl is empty!", Toast.LENGTH_SHORT).show();
             }
-
-            GlideApp.with(this).asDrawable().load(entry.getValue().toString()).into(new CustomTarget<Drawable>() {
-                @Override
-                public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
-                    d[0] = resource;
-                }
-
-                @Override
-                public void onLoadCleared(@Nullable Drawable placeholder) {
-
-                }
-            });
-
-            expDrawItem.getSubItems().add(new SecondaryDrawerItem()
-                    .withName(tmp)
-                    .withTag(entry.getKey().toString())
-                    .withLevel(2)
-                    .withIcon(d[0])
-                    .withIdentifier(2000 + identif).withSelectable(false));
-            identif++;
+        } else {
+            Toast.makeText(this, "IconUrl is null!", Toast.LENGTH_SHORT).show();
         }
-        expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
+    }
+
+    private void changeBackCol2(String iconUrl) {
+        if (iconUrl != null) {
+            if(!iconUrl.equals("")) {
+
+                int colorTemporaly = getResources().getColor(R.color.colorAppMyNews);
+                GlideApp.with(this).load(iconUrl)
+                        .listener(GlidePalette.with(iconUrl)
+                                .use(GlidePalette.Profile.VIBRANT)
+                                .intoCallBack(new GlidePalette.CallBack() {
+                                    @Override
+                                    public void onPaletteLoaded(@Nullable Palette palette) {
+                                        int col = ((ColorDrawable) mToolbar.getBackground()).getColor();
+                                        int col2 = -1;
+                                        assert palette != null;
+                                        Palette.Swatch ps = palette.getVibrantSwatch();
+                                        if(ps != null) {
+                                            int tem = ps.getRgb();
+                                            mToolbar.setBackgroundColor(tem);
+                                            mToolbarFrame.setBackgroundColor(tem);
+                                            int temp = manipulateColor(ps.getRgb());
+                                            mListView.setBackgroundColor(temp);
+                                            mDetailsFrameLayout.setBackgroundColor(temp);
+                                            col2 = ((ColorDrawable) mToolbar.getBackground()).getColor();
+                                        }
+                                        if(col2 != -1) {
+                                            if(col == col2) {
+                                                mToolbar.setBackgroundColor(colorTemporaly);
+                                                mToolbarFrame.setBackgroundColor(colorTemporaly);
+                                                mListView.setBackgroundColor(colorTemporaly);
+                                            }
+                                        }
+                                    }
+                                })
+                                .crossfade(false))
+                        .submit();
+            }
+        }
+    }
+
+    private int manipulateColor(int color) {
+        //float factor = 0.5f;
+        int r = Math.round(Color.red(color));
+        int g = Math.round(Color.green(color));
+        int b = Math.round(Color.blue(color));
+
+        return Color.argb(210,
+                Math.min(r, 255),
+                Math.min(g, 255),
+                Math.min(b, 255));
+    }
+
+    private void setZeroItemDrawer () {
+        oldUrl = "";
+        mMainPresenter.saveSP("");
+        expDrawItem.getSubItems().add( new SecondaryDrawerItem()
+                .withName("Нет новостных лент")
+                .withLevel(2)
+                .withTag("-")
+                .withIdentifier(20000).withSetSelected(false).withEnabled(false));
+        expDrawItem.getBadge().setText("0");
         mDrawer.updateItem(expDrawItem);
     }
+
+    @Override
+    public void addSubItem(String url, String iconUrl) {
+
+        boolean isChanged = false;
+        int [] testing = mDrawer.getExpandableExtension().getExpandedItems();
+
+        String name = url
+                .replaceFirst("[^/]+//(www\\.)*","")
+                .replaceFirst("/.+","");
+
+        for (int i = testing.length - 1; i >= 0; i--) {
+            mDrawer.getExpandableExtension().collapse(testing[i]);
+        }
+
+        expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
+
+        for (int i = 0; i < expDrawItem.getSubItems().size(); i++) {
+
+            String itemTag = expDrawItem.getSubItems().get(i).getTag().toString();
+
+            String itemName = itemTag
+                    .replaceFirst("[^/]+//(www\\.)*","")
+                    .replaceFirst("/.+","");
+            //поиск дублей и создание expandBDI
+            if(itemName.equals(name)) {
+                ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
+                        .withName(name)
+                        .withIcon(GoogleMaterial.Icon.gmd_book)
+                        .withTag(" ")
+                        .withIdentifier(30000 + identif)
+                        .withSelectable(false)
+                        .withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon))
+                        .withBadge("0")
+                        .withSubItems()
+                        .withIsExpanded(false);
+
+                CustomUrlPrimaryDrawerItem kvakva = (CustomUrlPrimaryDrawerItem) expDrawItem.getSubItems().get(i);
+
+                if(iconUrl != null && !iconUrl.equals("")) {
+                    expTest.getSubItems().add(kvakva);
+                    expTest.getSubItems().add(new CustomUrlPrimaryDrawerItem()
+                            .withName(name)
+                            .withTag(url)
+                            .withLevel(3)
+                            .withIcon(iconUrl)
+                            .withIdentifier(identif).withSelectable(false));
+                } else {
+                    expTest.getSubItems().add(kvakva);
+                    expTest.getSubItems().add(new CustomUrlPrimaryDrawerItem()
+                            .withName(name)
+                            .withTag(url)
+                            .withLevel(3)
+                            .withIcon(R.drawable.youtube_icon)
+                            .withIdentifier(identif).withSelectable(false));
+                }
+                expTest.withBadge(String.valueOf(expTest.getSubItems().size()));
+                expDrawItem.getSubItems().remove(kvakva);
+                expDrawItem.getSubItems().add(expTest);
+                isChanged = true;
+                identif++;
+
+            } else {
+                //поиск созданного expBDI
+                if(itemTag.equals(name)) {
+                    if(expDrawItem.getSubItems().get(i) instanceof ExpandableBadgeDrawerItem) {
+                        //ExpandableBadgeDrawerItem bb = (ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i);
+                        if(iconUrl != null && !iconUrl.equals("")) {
+                            ((ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i)).getSubItems().add(new CustomUrlPrimaryDrawerItem()
+                                    .withName(name)
+                                    .withTag(url)
+                                    .withLevel(3)
+                                    .withIcon(iconUrl)
+                                    .withIdentifier(identif).withSelectable(false));
+                        } else {
+                            ((ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i)).getSubItems().add(new CustomUrlPrimaryDrawerItem()
+                                    .withName(name)
+                                    .withTag(url)
+                                    .withLevel(3)
+                                    .withIcon(R.drawable.youtube_icon)
+                                    .withIdentifier(identif).withSelectable(false));
+                        }
+                        isChanged = true;
+                        identif++;
+                    }
+                }
+            }
+        }
+
+        if(!isChanged) {
+
+            if(!expDrawItem.getSubItems().isEmpty()) {
+                if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) {expDrawItem.getSubItems().remove(0);}
+            }
+
+            if(iconUrl != null && !iconUrl.equals("")) {
+
+                expDrawItem.getSubItems().add(new CustomUrlPrimaryDrawerItem()
+                        .withName(name)
+                        .withTag(url)
+                        .withLevel(2)
+                        .withIcon(iconUrl)
+                        .withIdentifier(identif).withSelectable(false));
+
+            } else {
+                expDrawItem.getSubItems().add(new CustomUrlPrimaryDrawerItem()
+                        .withName(name)
+                        .withTag(url)
+                        .withLevel(2)
+                        .withIcon(R.drawable.youtube_icon)
+                        .withIdentifier(identif).withSelectable(false));
+            }
+            identif++;
+        }
+
+        expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
+        mDrawer.updateItem(expDrawItem);
+
+        for(int i = 0; i <= testing.length - 1; i++) {
+            mDrawer.getExpandableExtension().expand(testing[i]);
+        }
+
+    }
+
+
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
-    public void setSubItems (@NonNull Map<String, String> urlsAndIcons) {
-        String tempS;
-        Drawable d;
-        GlideImageGetter gil = new GlideImageGetter(this);
+    public void setSubItems (List<RSSFeed> mRssFeeds) {
+        String name;
+        String iconUrl;
+        List<String> dub = new ArrayList<>();
+        List<RSSFeed> normals = new ArrayList<>();
+        List<RSSFeed> dublicates = new ArrayList<>();
+        Set<String> set = new HashSet<>();
 
-        for (Map.Entry entry : urlsAndIcons.entrySet()) {
-            tempS = entry.getKey().toString()
+        expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
+
+        for (RSSFeed r : mRssFeeds) {
+            name = r.getUrl()
                     .replaceFirst("[^/]+//(www\\.)*","")
                     .replaceFirst("/.+","");
-            if(entry.getValue() != null) {
-                d = gil.getDrawable("https://cs.pikabu.ru/assets/images/apple-touch-icon-152x152.png");
+            if(!set.add(name)) {
+                for (RSSFeed rf : normals) {
+                    String nameRF = rf.getUrl()
+                            .replaceFirst("[^/]+//(www\\.)*","")
+                            .replaceFirst("/.+","");
+                    if(nameRF.equals(name)) {
+                        dublicates.add(rf);
+                        normals.remove(rf);
+                    }
+                }
+                dub.add(name);
+                dublicates.add(r);
             } else {
-                d = getDrawable(R.drawable.youtube_icon);
+                normals.add(r);
             }
+        }
 
+        for (RSSFeed normal : normals) {
+            name = normal.getUrl()
+                    .replaceFirst("[^/]+//(www\\.)*","")
+                    .replaceFirst("/.+","");
 
             if(!expDrawItem.getSubItems().isEmpty()) {
-                if(expDrawItem.getSubItems().get(0).getIdentifier() == 2000) {expDrawItem.getSubItems().remove(0);}
+                if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) {expDrawItem.getSubItems().remove(0);}
             }
 
-            expDrawItem.getSubItems().add(new SecondaryDrawerItem()
-                    .withName(tempS)
-                    .withTag(entry.getKey().toString())
-                    .withLevel(2)
-                    .withIcon(d)
-                    .withIdentifier(2000 + identif).withSelectable(false));
+            iconUrl = normal.getIconUrl();
+
+            if(iconUrl != null && !iconUrl.equals("")) {
+
+                expDrawItem.getSubItems().add(new CustomUrlPrimaryDrawerItem()
+                        .withName(name)
+                        .withTag(normal.getUrl())
+                        .withLevel(2)
+                        .withIcon(iconUrl)
+                        .withIdentifier(identif).withSelectable(false));
+
+            } else {
+                expDrawItem.getSubItems().add(new CustomUrlPrimaryDrawerItem()
+                        .withName(name)
+                        .withTag(normal.getUrl())
+                        .withLevel(2)
+                        .withIcon(R.drawable.youtube_icon)
+                        .withIdentifier(identif).withSelectable(false));
+            }
             identif++;
         }
-        expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
+
+        while(!dub.isEmpty()) {
+            List<RSSFeed> test;
+            name = dub.get(0);
+            dub.remove(name);
+            test = gangBang(dublicates, name);
+
+            ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
+                    .withName(name)
+                    .withIcon(GoogleMaterial.Icon.gmd_book)
+                    .withTag(" ")
+                    .withIdentifier(30000 + identif)
+                    .withSelectable(false)
+                    .withLevel(1)
+                    .withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon))
+                    .withBadge("0")
+                    .withSubItems()
+                    .withIsExpanded(false);
+
+            for(RSSFeed t : test) {
+                iconUrl = t.getIconUrl();
+                String title = t.getChannelTitle();
+
+                if(iconUrl != null && !iconUrl.equals("")) {
+
+                    expTest.getSubItems().add(new CustomUrlPrimaryDrawerItem()
+                            .withName(title)
+                            .withTag(t.getUrl())
+                            .withLevel(3)
+                            .withIcon(iconUrl)
+                            .withIdentifier(identif).withSelectable(false));
+
+                } else {
+                    expTest.getSubItems().add(new CustomUrlPrimaryDrawerItem()
+                            .withName(title)
+                            .withTag(t.getUrl())
+                            .withLevel(3)
+                            .withIcon(R.drawable.youtube_icon)
+                            .withIdentifier(identif).withSelectable(false));
+                }
+                identif++;
+            }
+            expTest.withBadge(String.valueOf(expTest.getSubItems().size()));
+            expDrawItem.getSubItems().add(expTest);
+        }
+
+        if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) { expDrawItem.getBadge().setText("!"); }
+        else {expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));}
         mDrawer.updateItem(expDrawItem);
     }
 
+    private List<RSSFeed> gangBang (List<RSSFeed> dublicates, String name) {
+        List<RSSFeed> test = new ArrayList<>();
+        for(RSSFeed rf : dublicates) {
+            String nameRF = rf.getUrl()
+                    .replaceFirst("[^/]+//(www\\.)*","")
+                    .replaceFirst("/.+","");
+            if(nameRF.equals(name)) {
+                test.add(rf);
+            }
+        }
+        return test;
+    }
+
+    private ExpandableBadgeDrawerItem kadabra (List<RSSFeed> test, String name) {
+        ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
+                .withName(name)
+                .withIcon(GoogleMaterial.Icon.gmd_book)
+                .withSelectable(false)
+                .withLevel(3)
+                .withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon))
+                .withBadge("0")
+                .withSubItems()
+                .withIsExpanded(false);
+
+        for(RSSFeed t : test) {
+            String iconUrl = t.getIconUrl();
+
+            if(iconUrl != null && !iconUrl.equals("")) {
+
+                expTest.getSubItems().add(new CustomUrlPrimaryDrawerItem()
+                        .withName(name)
+                        .withTag(t.getUrl())
+                        .withLevel(3)
+                        .withIcon(iconUrl)
+                        .withIdentifier(identif).withSelectable(false));
+
+            } else {
+                expTest.getSubItems().add(new CustomUrlPrimaryDrawerItem()
+                        .withName(name)
+                        .withTag(t.getUrl())
+                        .withLevel(3)
+                        .withIcon(R.drawable.youtube_icon)
+                        .withIdentifier(identif).withSelectable(false));
+            }
+            identif++;
+        }
+        return expTest;
+    }
+
     @Override
-    public void addNewNewsChannel () {
+    public void addNewNewsChannel (String name) {
+        String one;
+        for(int i = 0; i < expDrawItem.getSubItems().size(); i++) {
+            one = expDrawItem.getSubItems().get(i).getTag().toString().replaceFirst("[^/]+//(www\\.)*","")
+                    .replaceFirst("/.+","");
+            if(one.equals(name)) {
+                if(expDrawItem.getSubItems().get(i) instanceof ExpandableBadgeDrawerItem) {
+                    expDrawItem.getSubItems().get(i).getSubItems().add(new CustomUrlPrimaryDrawerItem()
+                            .withName(name + identif)
+                            .withTag(name + identif)
+                            .withLevel(3)
+                            .withIcon(R.drawable.youtube_icon)
+                            .withIdentifier(identif).withSelectable(false));
+                } else {
+                    expDrawItem.getSubItems().remove(expDrawItem.getSubItems().get(i));
+                    ExpandableBadgeDrawerItem ex = new ExpandableBadgeDrawerItem()
+                            .withName(name)
+                            .withTag(name)
+                            .withLevel(3)
+                            .withIcon(FontAwesome.Icon.faw_newspaper)
+                            .withIdentifier(identif).withSelectable(false);
+                    ex.getSubItems().add(new CustomUrlPrimaryDrawerItem()
+                            .withName(name + identif)
+                            .withTag(name + identif)
+                            .withLevel(3)
+                            .withIcon(R.drawable.youtube_icon)
+                            .withIdentifier(identif).withSelectable(false));
+                    expDrawItem.getSubItems().add(i, ex);
+                }
+                identif++;
+                expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
+                mDrawer.updateItem(expDrawItem);
+            }
+        }
+
+
+
         String temp = mMainPresenter.getSP().getString(MY_URL,"")
                 .replaceFirst("[^/]+//(www\\.)*","")
                 .replaceFirst("/.+","");
         if(mMainPresenter.getSP().getString(temp,"").equals("")) {
-            // выводим нужную активность
-//            SharedPreferences.Editor e = sp.edit();
-//            e.putString(temp, sp.getString(MY_URL,""));
-//            e.apply();
+
             mMainPresenter.getEditor().putString(temp, mMainPresenter.getSP().getString(MY_URL,"")).apply();
-            if(expDrawItem.getSubItems().get(0).getIdentifier() == 2000) {expDrawItem.getSubItems().remove(0);}
+            if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) {expDrawItem.getSubItems().remove(0);}
 
             expDrawItem.getSubItems().add(new SecondaryDrawerItem()
                     .withName(temp)
                     .withTag(mMainPresenter.getSP().getString(MY_URL,""))
                     .withLevel(2)
                     .withIcon(FontAwesome.Icon.faw_newspaper)
-                    .withIdentifier(3000 + identif)
+                    .withIdentifier(identif)
                     .withSelectable(false));
 
             expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));

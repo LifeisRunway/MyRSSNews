@@ -34,7 +34,7 @@ public class GlideImageGetter {
     private WeakReference<TextView> container;
     private Context mContext;
     private boolean matchParentWidth;
-    private HtmlImagesHandler imagesHandler;
+    //private HtmlImagesHandler imagesHandler;
     private float density = 1.0f;
     Disposable dis;
 
@@ -44,7 +44,7 @@ public class GlideImageGetter {
                             @Nullable HtmlImagesHandler imagesHandler) {
         mContext = context;
         this.matchParentWidth = matchParentWidth;
-        this.imagesHandler = imagesHandler;
+        //this.imagesHandler = imagesHandler;
         if (densityAware) {
             density = context.getResources().getDisplayMetrics().density;
         }
@@ -52,9 +52,9 @@ public class GlideImageGetter {
 
     public Drawable getDrawable(String source) {
 
-        if (imagesHandler != null) {
-            imagesHandler.addImage(source);
-        }
+//        if (imagesHandler != null) {
+//            imagesHandler.addImage(source);
+//        }
 
         BitmapDrawablePlaceholder drawable = new BitmapDrawablePlaceholder();
 
@@ -65,7 +65,7 @@ public class GlideImageGetter {
                     GlideApp.with(mContext)
                     .asBitmap()
                     .load(source)
-                    .override(150,150)
+                    //.override(150,150)
                     .into(drawable));
         return drawable;
     }

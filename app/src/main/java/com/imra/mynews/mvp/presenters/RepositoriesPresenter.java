@@ -2,6 +2,8 @@ package com.imra.mynews.mvp.presenters;
 
 import android.annotation.TargetApi;
 import android.os.Build;
+import android.util.Log;
+
 import com.imra.mynews.app.MyNewsApp;
 import com.imra.mynews.di.common.ArticleDao;
 import com.imra.mynews.mvp.MyNewsService;
@@ -116,8 +118,10 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                         });
                 unsubscribeOnDestroy(disposable);
             } else {
+                RSSFeed r = new RSSFeed();
+                r.setArticleList(new ArrayList<>());
                 onLoadingFinish(isPageLoading, isRefreshing);
-                onLoadingSuccess(isPageLoading, new RSSFeed());
+                onLoadingSuccess(isPageLoading, r);
             }
         } else {
             if(!url.equals("")) {
@@ -137,8 +141,6 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                 unsubscribeOnDestroy(disposable);
             }
         }
-
-
     }
 
     private RSSFeed getRssInDB (String url) {
@@ -206,19 +208,25 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
         showProgress(isPageLoading, isRefreshing);
 
-        Observable<Response<String>> observables = myNewsService.findRSSFeeds(url);
+        if(!url.equals("")) {
+            Observable<Response<String>> observables = myNewsService.findRSSFeeds(url);
 
-        Disposable disposable = observables
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe((stringResponse) -> {
-                    onLoadingFinish(isPageLoading, isRefreshing);
-                    onLoadingSuccess(isPageLoading, findRssUrl(stringResponse.body(),url));
-                }, error -> {
-                    onLoadingFinish(isPageLoading, isRefreshing);
-                    onLoadingFailed(error, url);
-                });
-        unsubscribeOnDestroy(disposable);
+            Disposable disposable = observables
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe((stringResponse) -> {
+                        onLoadingFinish(isPageLoading, isRefreshing);
+                        onLoadingSuccess(isPageLoading, findRssUrl(stringResponse.body(),url));
+                    }, error -> {
+                        onLoadingFinish(isPageLoading, isRefreshing);
+                        onLoadingFailed(error, url);
+                    });
+            unsubscribeOnDestroy(disposable);
+        } else {
+            onLoadingFinish(false, isRefreshing);
+            onLoadingSuccess(false, findRssUrl("",url));
+        }
+
 
     }
 
@@ -255,58 +263,61 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
 
     private List<ItemHtml> findRssUrl (String stringHtml, String url) {
-        String mRegex = "<\\s*link\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*/*>";
+        String sRssFeed = "<\\s*link\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*/*>";
         String mRegex2 = "<\\s*link[^>]+(type\\s*=\\s*['\"]*image[^'\"]['\"]*[^>]+href\\s*=(\\s*['\"]*[^\"']+['\"]*)|href\\s*=(\\s*['\"]*[^\"']+['\"]*)[^>]+type\\s*=\\s*['\"]*image[^'\"]['\"]*)[^>]+";
+
+        String smallIcon = "<\\s*link\\s*.+?(rel)\\s*=\\s*['\"]*([^'\"]*icon[^'\"]*)['\"]*\\s*.+?(href)\\s*=\\s*['\"]*([^'\"]+)['\"]*\\s*.+?\\/*>";
+
         Map<String, String> map = new HashMap<>();
         List<ItemHtml> itemHtmls = new ArrayList<>();
-        Pattern pattern = Pattern.compile(mRegex);
-        Matcher matcher = pattern.matcher(stringHtml);
-        while (matcher.find()) {
-            for (int i = 0; i < 7; i+=2) {
-                String name = matcher.group(i + 1).replace("\"","");
-                String value = matcher.group(i + 2).replace("\"","");
-                map.put(name, value);
-            }
 
-            if (map.get("rel").equals("alternate")) {
-                if(map.get("type").equals("application/atom+xml") || map.get("type").equals("application/rss+xml")){
-                    ItemHtml itemHtml = new ItemHtml();
-                    if(map.get("href").substring(0,1).equals("/")) itemHtml.setHref(url + map.get("href"));
-                    else itemHtml.setHref(map.get("href"));
-                    itemHtml.setTitle(map.get("title"));
-                    itemHtmls.add(itemHtml);
+        if(!stringHtml.equals("") && !url.equals("")) {
+            Pattern pattern = Pattern.compile(sRssFeed);
+            Matcher matcher = pattern.matcher(stringHtml);
+            while (matcher.find()) {
+                for (int i = 0; i < 7; i+=2) {
+                    String name = matcher.group(i + 1).replace("\"","");
+                    String value = matcher.group(i + 2).replace("\"","");
+                    map.put(name, value);
                 }
-            }
 
-            map.clear();
-        }
-
-        if(!itemHtmls.isEmpty()) {
-            pattern = Pattern.compile(mRegex2);
-            matcher = pattern.matcher(stringHtml);
-            if(matcher.find()) {
-                String group2 = "";
-                String group3 = "";
-                if(matcher.group(2) != null) {
-                    group2 = matcher.group(2).replace("\"", "");
-                    if(group2.substring(0, 1).equals("/")) {
-                        group2 = url + group2;
-                    }
-                }
-                if(matcher.group(3) != null) {
-                    group3 = matcher.group(3).replace("\"", "");
-                    if(group3.substring(0, 1).equals("/")) {
-                        group3 = url + group3;
+                if (map.get("rel").equals("alternate")) {
+                    if(map.get("type").equals("application/atom+xml") || map.get("type").equals("application/rss+xml")){
+                        ItemHtml itemHtml = new ItemHtml();
+                        if(map.get("href").substring(0,1).equals("/")) itemHtml.setHref(url + map.get("href"));
+                        else itemHtml.setHref(map.get("href"));
+                        itemHtml.setTitle(map.get("title"));
+                        itemHtmls.add(itemHtml);
                     }
                 }
 
-                for(ItemHtml itemHtml : itemHtmls) {
-                    if(!group2.equals("")) itemHtml.setIcon_url(group2);
-                    if(!group3.equals("")) itemHtml.setIcon_url(group3);
+                map.clear();
+            }
+
+            if(!itemHtmls.isEmpty()) {
+                pattern = Pattern.compile(smallIcon);
+                matcher = pattern.matcher(stringHtml);
+                if(matcher.find()) {
+
+                    for (int i = 0; i < 3; i+=2) {
+                        String name = matcher.group(i + 1);
+                        String value = matcher.group(i + 2);
+                        map.put(name, value);
+                    }
+
+                    if (map.get("rel").equals("apple-touch-icon") || map.get("rel").equals("icon") || map.get("rel").equals("shortcut icon")) {
+
+                        String tmp = (map.get("href").substring(0,1).equals("/")) ?
+                                url + map.get("href") :
+                                map.get("href");
+
+                        for(ItemHtml itemHtml : itemHtmls) {
+                            itemHtml.setIcon_url(tmp);
+                        }
+                    }
                 }
             }
         }
-
         return new ArrayList<>(itemHtmls);
     }
 
@@ -341,8 +352,8 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
     private void onLoadingFailed(Throwable error, String url) {
         String fixError = error.toString();
-        //String si = Log.getStackTraceString(error);
-        //System.out.println(si);
+        String si = Log.getStackTraceString(error);
+        System.out.println(si);
 
         if(error.getClass() == UnknownHostException.class) {
             fixError = "Невозможно подключиться к:\n\"" + url + "\"\nПроверьте правильность адреса и доступ к интернету";
