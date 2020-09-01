@@ -121,6 +121,13 @@ public interface ArticleDao {
     @Query("DELETE FROM rssfeeds WHERE url = :url")
     void deleteRssFeed (String url);
 
+    @Transaction
+    default void deleteManyRssFeeds (List<String> urls) {
+        for(String url : urls) {
+            deleteRssFeed(url);
+        }
+    }
+
     @Query("SELECT * FROM rssfeeds WHERE url = :url")
     RSSFeed getRssForDrawer (String url);
 }

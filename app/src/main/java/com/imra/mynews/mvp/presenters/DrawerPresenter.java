@@ -131,7 +131,9 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
         mAD.deleteRssFeed(url);
     }
 
-
+    public void deleteManySubItems(List<String> urls) {
+        mAD.deleteManyRssFeeds(urls);
+    }
 
     public FirebaseUser getUser () {
         return user;

@@ -32,6 +32,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
 import com.github.florent37.glidepalette.GlidePalette;
@@ -407,7 +408,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         DrawerImageLoader.init(new AbstractDrawerImageLoader() {
             @Override
             public void set(ImageView imageView, Uri uri, Drawable placeholder, String tag) {
-                GlideApp.with(imageView.getContext()).load(uri).placeholder(placeholder).error(R.drawable.ic_my_news_playstore).into(imageView);
+                GlideApp.with(imageView.getContext()).load(uri).placeholder(placeholder).error(R.drawable.ic_my_news_playstore).diskCacheStrategy(DiskCacheStrategy.DATA).into(imageView);
             }
 
             @Override
@@ -548,6 +549,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                     .setMessage("Удалить?")
                                     .setPositiveButton("Да", (dialog, which) -> {
                                         int [] testing = mDrawer.getExpandableExtension().getExpandedItems();
+                                        if(oldUrl.equals(drawerItem.getTag().toString())) {
+                                            if(!expDrawItem.getSubItems().isEmpty()) {oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();}
+                                            else {setZeroItemDrawer ();}
+                                        }
+
                                         for (int i = testing.length - 1; i >= 0; i--) {
                                             mDrawer.getExpandableExtension().collapse(testing[i]);
                                         }
@@ -556,14 +562,12 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                         mDrawer.removeItem(drawerItem.getIdentifier());
                                         expDrawItem.getSubItems().remove(drawerItem);
                                         expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
+                                        mDrawer.updateItem(expDrawItem);
                                         for(int i = 0; i <= testing.length - 1; i++) {
                                             mDrawer.getExpandableExtension().expand(testing[i]);
                                         }
-                                        //mDrawer.removeItemByPosition(mDrawer.getDrawerItems().size());
-                                        if(oldUrl.equals(drawerItem.getTag().toString())) {
-                                            if(!expDrawItem.getSubItems().isEmpty()) {oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();}
-                                            else {setZeroItemDrawer ();}
-                                        }
+
+
                                         dialog.dismiss();
                                         mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
                                     })
@@ -579,12 +583,12 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                     .setMessage("Удалить список?")
                                     .setPositiveButton("Да", (dialog, which) -> {
                                         int [] testing = mDrawer.getExpandableExtension().getExpandedItems();
-                                        for (int i = testing.length - 1; i >= 0; i--) {
-                                            mDrawer.getExpandableExtension().collapse(testing[i]);
-                                        }
+                                        mDrawer.getExpandableExtension().collapse();
+                                        List <String> list = new ArrayList<>();
                                         for(Object item : drawerItem.getSubItems()) {
-                                            mDrawerPresenter.deleteSubItem(((IDrawerItem) item).getTag().toString());
+                                            list.add(((IDrawerItem) item).getTag().toString());
                                         }
+                                        mDrawerPresenter.deleteManySubItems(list);
                                         expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
                                         drawerItem.getSubItems().clear();
                                         mDrawer.removeItem(drawerItem.getIdentifier());
@@ -595,8 +599,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                             mDrawer.getExpandableExtension().expand(testing[i]);
                                         }
 
-                                        for(Object item : drawerItem.getSubItems()) {
-                                            if(oldUrl.equals(((IDrawerItem)item).getTag().toString())) {
+                                        for(String tag : list) {
+                                            if(oldUrl.equals(tag)) {
                                                 if(!expDrawItem.getSubItems().isEmpty()) {oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();}
                                                 else {setZeroItemDrawer ();}
                                             }
@@ -628,9 +632,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             }
             return false;
         });
-        if(savedInstanceState == null) {
-            mDrawer.setSelection(27, false);
-        }
+
         mDrawerPresenter.setSubItems();
     }
 
@@ -765,120 +767,97 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 .replaceFirst("[^/]+//(www\\.)*","")
                 .replaceFirst("/.+","");
 
-        for (int i = testing.length - 1; i >= 0; i--) {
-            mDrawer.getExpandableExtension().collapse(testing[i]);
-        }
+        mDrawer.getExpandableExtension().collapse();
 
         expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
 
+        String itemTag;
+        String itemName;
         for (int i = 0; i < expDrawItem.getSubItems().size(); i++) {
-
-            String itemTag = expDrawItem.getSubItems().get(i).getTag().toString();
-
-            String itemName = itemTag
-                    .replaceFirst("[^/]+//(www\\.)*","")
-                    .replaceFirst("/.+","");
-            //поиск дублей и создание expandBDI
+            itemTag = expDrawItem.getSubItems().get(i).getTag().toString();
+            itemName = itemTag
+                    .replaceFirst("[^/]+//(www\\.)*", "")
+                    .replaceFirst("/.+", "");
+            //поиск созданных ExpandItem
             if(itemName.equals(name)) {
-                ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
-                        .withName(name)
-                        .withIcon(GoogleMaterial.Icon.gmd_book)
-                        .withTag(" ")
-                        .withIdentifier(30000 + identif)
-                        .withSelectable(false)
-                        .withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon))
-                        .withBadge("0")
-                        .withSubItems()
-                        .withIsExpanded(false);
-
-                CustomUrlPrimaryDrawerItem kvakva = (CustomUrlPrimaryDrawerItem) expDrawItem.getSubItems().get(i);
-
-                if(iconUrl != null && !iconUrl.equals("")) {
-                    expTest.getSubItems().add(kvakva);
-                    expTest.getSubItems().add(new CustomUrlPrimaryDrawerItem()
-                            .withName(name)
-                            .withTag(url)
-                            .withLevel(3)
-                            .withIcon(iconUrl)
-                            .withIdentifier(identif).withSelectable(false));
-                } else {
-                    expTest.getSubItems().add(kvakva);
-                    expTest.getSubItems().add(new CustomUrlPrimaryDrawerItem()
-                            .withName(name)
-                            .withTag(url)
-                            .withLevel(3)
-                            .withIcon(R.drawable.youtube_icon)
-                            .withIdentifier(identif).withSelectable(false));
-                }
-                expTest.withBadge(String.valueOf(expTest.getSubItems().size()));
-                expDrawItem.getSubItems().remove(kvakva);
-                expDrawItem.getSubItems().add(expTest);
-                isChanged = true;
-                identif++;
-
-            } else {
-                //поиск созданного expBDI
-                if(itemTag.equals(name)) {
-                    if(expDrawItem.getSubItems().get(i) instanceof ExpandableBadgeDrawerItem) {
-                        //ExpandableBadgeDrawerItem bb = (ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i);
-                        if(iconUrl != null && !iconUrl.equals("")) {
-                            ((ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i)).getSubItems().add(new CustomUrlPrimaryDrawerItem()
-                                    .withName(name)
-                                    .withTag(url)
-                                    .withLevel(3)
-                                    .withIcon(iconUrl)
-                                    .withIdentifier(identif).withSelectable(false));
-                        } else {
-                            ((ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i)).getSubItems().add(new CustomUrlPrimaryDrawerItem()
-                                    .withName(name)
-                                    .withTag(url)
-                                    .withLevel(3)
-                                    .withIcon(R.drawable.youtube_icon)
-                                    .withIdentifier(identif).withSelectable(false));
+                if (expDrawItem.getSubItems().get(i) instanceof ExpandableBadgeDrawerItem) {
+                    ExpandableBadgeDrawerItem exp = (ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i);
+                    boolean needAdd = true;
+                    if (!exp.getSubItems().isEmpty()) {
+                        for (Object item : exp.getSubItems()) {
+                            if (((IDrawerItem) item).getTag().toString().equals(url)) {
+                                needAdd = false;
+                            }
                         }
-                        isChanged = true;
-                        identif++;
                     }
+
+                    if (needAdd) {
+                        ((ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i)).getSubItems().add(addCUPDrawerItem(name, url, iconUrl));
+                        ((ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i)).withBadge(String.valueOf(((ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i)).getSubItems().size()));
+                    }
+
+                    isChanged = true;
+                }
+
+                if (expDrawItem.getSubItems().get(i) instanceof CustomUrlPrimaryDrawerItem) {
+
+                    if(!itemTag.equals(url)) {
+                        ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
+                                .withName(name)
+                                .withIcon(GoogleMaterial.Icon.gmd_book)
+                                .withTag(name)
+                                .withIdentifier(30000 + identif)
+                                .withSelectable(false)
+                                .withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon))
+                                .withBadge("0")
+                                .withSubItems()
+                                .withIsExpanded(false);
+
+                        CustomUrlPrimaryDrawerItem removedItem = (CustomUrlPrimaryDrawerItem) expDrawItem.getSubItems().get(i);
+                        expTest.getSubItems().add(removedItem);
+                        expTest.getSubItems().add(addCUPDrawerItem(name, url, iconUrl));
+                        expTest.withBadge(String.valueOf(expTest.getSubItems().size()));
+                        expDrawItem.getSubItems().remove(removedItem);
+                        expDrawItem.getSubItems().add(expTest);
+                    }
+                    isChanged = true;
                 }
             }
         }
 
         if(!isChanged) {
-
             if(!expDrawItem.getSubItems().isEmpty()) {
                 if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) {expDrawItem.getSubItems().remove(0);}
             }
-
-            if(iconUrl != null && !iconUrl.equals("")) {
-
-                expDrawItem.getSubItems().add(new CustomUrlPrimaryDrawerItem()
-                        .withName(name)
-                        .withTag(url)
-                        .withLevel(2)
-                        .withIcon(iconUrl)
-                        .withIdentifier(identif).withSelectable(false));
-
-            } else {
-                expDrawItem.getSubItems().add(new CustomUrlPrimaryDrawerItem()
-                        .withName(name)
-                        .withTag(url)
-                        .withLevel(2)
-                        .withIcon(R.drawable.youtube_icon)
-                        .withIdentifier(identif).withSelectable(false));
-            }
-            identif++;
+            expDrawItem.getSubItems().add(addCUPDrawerItem(name,url,iconUrl));
         }
 
         expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
         mDrawer.updateItem(expDrawItem);
-
         for(int i = 0; i <= testing.length - 1; i++) {
             mDrawer.getExpandableExtension().expand(testing[i]);
         }
-
     }
 
+    private CustomUrlPrimaryDrawerItem addCUPDrawerItem (String name, String tag, String iconUrl) {
+        CustomUrlPrimaryDrawerItem c;
+        if(iconUrl != null && !iconUrl.equals("")) {
+            c = new CustomUrlPrimaryDrawerItem()
+                    .withName(name)
+                    .withTag(tag)
+                    .withIcon(iconUrl)
+                    .withIdentifier(identif).withSelectable(false);
 
+        } else {
+            c = new CustomUrlPrimaryDrawerItem()
+                    .withName(name)
+                    .withTag(tag)
+                    .withIcon(R.drawable.youtube_icon)
+                    .withIdentifier(identif).withSelectable(false);
+        }
+        identif++;
+        return c;
+    }
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -889,6 +868,17 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         List<RSSFeed> normals = new ArrayList<>();
         List<RSSFeed> dublicates = new ArrayList<>();
         Set<String> set = new HashSet<>();
+        StringBuilder may = new StringBuilder();
+        for(RSSFeed r : mRssFeeds) {
+            if(r.getChannelTitle() != null) {
+                may.append(r.getChannelTitle()).append("\n");
+            } else {
+                may.append("null").append("\n");
+            }
+        }
+        System.out.println(may);
+        System.out.println(mRssFeeds.size() + " размер");
+
 
         expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
 
@@ -897,15 +887,17 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                     .replaceFirst("[^/]+//(www\\.)*","")
                     .replaceFirst("/.+","");
             if(!set.add(name)) {
+                RSSFeed removedItem = new RSSFeed();
                 for (RSSFeed rf : normals) {
                     String nameRF = rf.getUrl()
                             .replaceFirst("[^/]+//(www\\.)*","")
                             .replaceFirst("/.+","");
                     if(nameRF.equals(name)) {
                         dublicates.add(rf);
-                        normals.remove(rf);
+                        removedItem = rf;
                     }
                 }
+                normals.remove(removedItem);
                 dub.add(name);
                 dublicates.add(r);
             } else {
@@ -923,25 +915,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             }
 
             iconUrl = normal.getIconUrl();
-
-            if(iconUrl != null && !iconUrl.equals("")) {
-
-                expDrawItem.getSubItems().add(new CustomUrlPrimaryDrawerItem()
-                        .withName(name)
-                        .withTag(normal.getUrl())
-                        .withLevel(2)
-                        .withIcon(iconUrl)
-                        .withIdentifier(identif).withSelectable(false));
-
-            } else {
-                expDrawItem.getSubItems().add(new CustomUrlPrimaryDrawerItem()
-                        .withName(name)
-                        .withTag(normal.getUrl())
-                        .withLevel(2)
-                        .withIcon(R.drawable.youtube_icon)
-                        .withIdentifier(identif).withSelectable(false));
-            }
-            identif++;
+            expDrawItem.getSubItems().add(addCUPDrawerItem(name,normal.getUrl(),iconUrl));
         }
 
         while(!dub.isEmpty()) {
@@ -953,7 +927,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
                     .withName(name)
                     .withIcon(GoogleMaterial.Icon.gmd_book)
-                    .withTag(" ")
+                    .withTag(name)
                     .withIdentifier(30000 + identif)
                     .withSelectable(false)
                     .withLevel(1)
@@ -965,25 +939,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             for(RSSFeed t : test) {
                 iconUrl = t.getIconUrl();
                 String title = t.getChannelTitle();
-
-                if(iconUrl != null && !iconUrl.equals("")) {
-
-                    expTest.getSubItems().add(new CustomUrlPrimaryDrawerItem()
-                            .withName(title)
-                            .withTag(t.getUrl())
-                            .withLevel(3)
-                            .withIcon(iconUrl)
-                            .withIdentifier(identif).withSelectable(false));
-
-                } else {
-                    expTest.getSubItems().add(new CustomUrlPrimaryDrawerItem()
-                            .withName(title)
-                            .withTag(t.getUrl())
-                            .withLevel(3)
-                            .withIcon(R.drawable.youtube_icon)
-                            .withIdentifier(identif).withSelectable(false));
-                }
-                identif++;
+                expTest.getSubItems().add(addCUPDrawerItem(title,t.getUrl(),iconUrl));
             }
             expTest.withBadge(String.valueOf(expTest.getSubItems().size()));
             expDrawItem.getSubItems().add(expTest);
@@ -1007,101 +963,64 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         return test;
     }
 
-    private ExpandableBadgeDrawerItem kadabra (List<RSSFeed> test, String name) {
-        ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
-                .withName(name)
-                .withIcon(GoogleMaterial.Icon.gmd_book)
-                .withSelectable(false)
-                .withLevel(3)
-                .withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon))
-                .withBadge("0")
-                .withSubItems()
-                .withIsExpanded(false);
-
-        for(RSSFeed t : test) {
-            String iconUrl = t.getIconUrl();
-
-            if(iconUrl != null && !iconUrl.equals("")) {
-
-                expTest.getSubItems().add(new CustomUrlPrimaryDrawerItem()
-                        .withName(name)
-                        .withTag(t.getUrl())
-                        .withLevel(3)
-                        .withIcon(iconUrl)
-                        .withIdentifier(identif).withSelectable(false));
-
-            } else {
-                expTest.getSubItems().add(new CustomUrlPrimaryDrawerItem()
-                        .withName(name)
-                        .withTag(t.getUrl())
-                        .withLevel(3)
-                        .withIcon(R.drawable.youtube_icon)
-                        .withIdentifier(identif).withSelectable(false));
-            }
-            identif++;
-        }
-        return expTest;
-    }
-
     @Override
     public void addNewNewsChannel (String name) {
-        String one;
-        for(int i = 0; i < expDrawItem.getSubItems().size(); i++) {
-            one = expDrawItem.getSubItems().get(i).getTag().toString().replaceFirst("[^/]+//(www\\.)*","")
-                    .replaceFirst("/.+","");
-            if(one.equals(name)) {
-                if(expDrawItem.getSubItems().get(i) instanceof ExpandableBadgeDrawerItem) {
-                    expDrawItem.getSubItems().get(i).getSubItems().add(new CustomUrlPrimaryDrawerItem()
-                            .withName(name + identif)
-                            .withTag(name + identif)
-                            .withLevel(3)
-                            .withIcon(R.drawable.youtube_icon)
-                            .withIdentifier(identif).withSelectable(false));
-                } else {
-                    expDrawItem.getSubItems().remove(expDrawItem.getSubItems().get(i));
-                    ExpandableBadgeDrawerItem ex = new ExpandableBadgeDrawerItem()
-                            .withName(name)
-                            .withTag(name)
-                            .withLevel(3)
-                            .withIcon(FontAwesome.Icon.faw_newspaper)
-                            .withIdentifier(identif).withSelectable(false);
-                    ex.getSubItems().add(new CustomUrlPrimaryDrawerItem()
-                            .withName(name + identif)
-                            .withTag(name + identif)
-                            .withLevel(3)
-                            .withIcon(R.drawable.youtube_icon)
-                            .withIdentifier(identif).withSelectable(false));
-                    expDrawItem.getSubItems().add(i, ex);
-                }
-                identif++;
-                expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
-                mDrawer.updateItem(expDrawItem);
-            }
-        }
-
-
-
-        String temp = mMainPresenter.getSP().getString(MY_URL,"")
-                .replaceFirst("[^/]+//(www\\.)*","")
-                .replaceFirst("/.+","");
-        if(mMainPresenter.getSP().getString(temp,"").equals("")) {
-
-            mMainPresenter.getEditor().putString(temp, mMainPresenter.getSP().getString(MY_URL,"")).apply();
-            if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) {expDrawItem.getSubItems().remove(0);}
-
-            expDrawItem.getSubItems().add(new SecondaryDrawerItem()
-                    .withName(temp)
-                    .withTag(mMainPresenter.getSP().getString(MY_URL,""))
-                    .withLevel(2)
-                    .withIcon(FontAwesome.Icon.faw_newspaper)
-                    .withIdentifier(identif)
-                    .withSelectable(false));
-
-            expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
-            mDrawer.updateItem(expDrawItem);
-            identif++;
-            oldUrl = mMainPresenter.getSP().getString(temp, "");
-        }
-
+//        String one;
+//        for(int i = 0; i < expDrawItem.getSubItems().size(); i++) {
+//            one = expDrawItem.getSubItems().get(i).getTag().toString().replaceFirst("[^/]+//(www\\.)*","")
+//                    .replaceFirst("/.+","");
+//            if(one.equals(name)) {
+//                if(expDrawItem.getSubItems().get(i) instanceof ExpandableBadgeDrawerItem) {
+//                    expDrawItem.getSubItems().get(i).getSubItems().add(new CustomUrlPrimaryDrawerItem()
+//                            .withName(name + identif)
+//                            .withTag(name + identif)
+//                            .withLevel(3)
+//                            .withIcon(R.drawable.youtube_icon)
+//                            .withIdentifier(identif).withSelectable(false));
+//                } else {
+//                    expDrawItem.getSubItems().remove(expDrawItem.getSubItems().get(i));
+//                    ExpandableBadgeDrawerItem ex = new ExpandableBadgeDrawerItem()
+//                            .withName(name)
+//                            .withTag(name)
+//                            .withLevel(3)
+//                            .withIcon(FontAwesome.Icon.faw_newspaper)
+//                            .withIdentifier(identif).withSelectable(false);
+//                    ex.getSubItems().add(new CustomUrlPrimaryDrawerItem()
+//                            .withName(name + identif)
+//                            .withTag(name + identif)
+//                            .withLevel(3)
+//                            .withIcon(R.drawable.youtube_icon)
+//                            .withIdentifier(identif).withSelectable(false));
+//                    expDrawItem.getSubItems().add(i, ex);
+//                }
+//                identif++;
+//                expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
+//                mDrawer.updateItem(expDrawItem);
+//            }
+//        }
+//
+//        String temp = mMainPresenter.getSP().getString(MY_URL,"")
+//                .replaceFirst("[^/]+//(www\\.)*","")
+//                .replaceFirst("/.+","");
+//        if(mMainPresenter.getSP().getString(temp,"").equals("")) {
+//
+//            mMainPresenter.getEditor().putString(temp, mMainPresenter.getSP().getString(MY_URL,"")).apply();
+//            if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) {expDrawItem.getSubItems().remove(0);}
+//
+//            expDrawItem.getSubItems().add(new SecondaryDrawerItem()
+//                    .withName(temp)
+//                    .withTag(mMainPresenter.getSP().getString(MY_URL,""))
+//                    .withLevel(2)
+//                    .withIcon(FontAwesome.Icon.faw_newspaper)
+//                    .withIdentifier(identif)
+//                    .withSelectable(false));
+//
+//            expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
+//            mDrawer.updateItem(expDrawItem);
+//            identif++;
+//            oldUrl = mMainPresenter.getSP().getString(temp, "");
+//        }
+//
+//    }
     }
 }
