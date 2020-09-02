@@ -53,6 +53,10 @@ public class MainPresenter extends MvpPresenter<MainInterface> {
         return mSP;
     }
 
+    public void clearSP (String url) {
+        mSPEditor.remove(url).apply();
+    }
+
     public SharedPreferences.Editor getEditor() {
         return mSPEditor;
     }

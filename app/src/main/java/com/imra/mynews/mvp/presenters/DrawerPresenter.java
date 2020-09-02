@@ -44,6 +44,7 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
     List<RSSFeed> mRssFeeds;
     RSSFeed tmpRss;
     FirebaseUser user;
+    String tag;
 
     public String getIcon(String key) {
         return urlsAndIcons.get(key);
@@ -68,16 +69,15 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
     }
 
     public void addSubItem(String url, String iconUrl) {
-//        urlsAndIcons.clear();
-//        RSSFeed r = mAD.getRssForDrawer(url);
-//        if(r != null) {
-//            urlsAndIcons.put(r.getUrl(), r.getIconUrl());
-//        }
-//
+
         tmpRss = mAD.getRssForDrawer(url);
         tmpRss.setIconUrl(iconUrl);
+        tag = url
+                .replaceFirst("[^/]+//(www\\.)*","")
+                .replaceFirst("/.+","");
+        tmpRss.setTag(tag);
         mAD.updateRss(tmpRss);
-        getViewState().addSubItem(url, iconUrl);
+        getViewState().addSubItem(tmpRss);
     }
 
     public void setSubItems() {
@@ -125,6 +125,10 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
             }
         }
         return false;
+    }
+
+    public String getIconUrl (String url) {
+        return mAD.getRssForDrawer(url).getIconUrl();
     }
 
     public void deleteSubItem(String url) {

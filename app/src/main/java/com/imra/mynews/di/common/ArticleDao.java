@@ -130,4 +130,10 @@ public interface ArticleDao {
 
     @Query("SELECT * FROM rssfeeds WHERE url = :url")
     RSSFeed getRssForDrawer (String url);
+
+    @Query("SELECT * FROM rssfeeds WHERE tag = :tag")
+    List<RSSFeed> getRssAsTag (String tag);
+
+
+
 }

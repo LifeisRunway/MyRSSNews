@@ -30,6 +30,9 @@ public class RSSFeed {
     @ColumnInfo(name = "url")
     private String url;
 
+    @ColumnInfo(name = "tag")
+    private String tag;
+
     @Nullable
     @ColumnInfo(name = "title")
     @Element(name="title")
@@ -98,5 +101,13 @@ public class RSSFeed {
 
     public void setIconUrl(String iconUrl) {
         this.iconUrl = iconUrl;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
     }
 }

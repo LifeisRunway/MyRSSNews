@@ -25,7 +25,7 @@ public interface DrawerView extends MvpView {
 
     void setSubItems (List<RSSFeed> mRssFeeds);
 
-    void addSubItem (String url, String iconUrl);
+    void addSubItem (RSSFeed rssFeed);
 
     void addNewNewsChannel(String name);
 

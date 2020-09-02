@@ -24,6 +24,7 @@ import androidx.palette.graphics.Palette;
 import android.os.Environment;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -47,6 +48,7 @@ import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
+import com.imra.mynews.mvp.models.RssFeedArticlesDetail;
 import com.imra.mynews.mvp.presenters.DrawerPresenter;
 import com.imra.mynews.mvp.presenters.MainPresenter;
 import com.imra.mynews.mvp.presenters.RepositoriesPresenter;
@@ -83,6 +85,7 @@ import com.mikepenz.materialdrawer.util.DrawerUIUtils;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -223,6 +226,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
         oldUrl = mMainPresenter.getSP().getString(MY_URL,"");
 
+        Map<String, ?> s = mMainPresenter.getSP().getAll();
+        for(Map.Entry<String, ?> entry : s.entrySet()) {
+            System.out.println(entry.getKey() + " " + entry.getValue());
+        }
+
         mSwipeRefreshLayout.setListViewChild(mListView);
         mSwipeRefreshLayout.setOnRefreshListener(() -> mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected()));
 
@@ -280,6 +288,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         super.onDestroy();
         unbinder.unbind();
         if(disposable != null) disposable.dispose();
+        mMainPresenter.saveSP(oldUrl);
     }
 
 
@@ -367,6 +376,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             String iconUrl = mMainPresenter.getSP().getString(oldUrl, "");
             mDrawerPresenter.addSubItem(oldUrl, iconUrl);
             isNew = false;
+            mMainPresenter.clearSP(oldUrl);
         }
     }
 
@@ -426,7 +436,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 } else if (DrawerImageLoader.Tags.ACCOUNT_HEADER.name().equals(tag)) {
                     return new IconicsDrawable(ctx).iconText(" ").backgroundColorRes(com.mikepenz.materialdrawer.R.color.primary).sizeDp(56);
                 } else if ("customUrlItem".equals(tag)) {
-                    return new IconicsDrawable(ctx).iconText(" ").backgroundColorRes(R.color.md_red_500).sizeDp(56);
+                    return new IconicsDrawable(ctx).iconText(" ").backgroundColorRes(R.color.md_white_1000).sizeDp(56);
                 }
                 //we use the default one for
                 //DrawerImageLoader.Tags.PROFILE_DRAWER_ITEM.name()
@@ -531,7 +541,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                         if((int)drawerItem.getIdentifier() < 20000) {
                             mListView.smoothScrollToPosition(0);
                             oldUrl = drawerItem.getTag().toString();
-                            changeBackCol(mMainPresenter.getSP().getString(oldUrl, ""));
+                            changeBackCol(mDrawerPresenter.getIconUrl(oldUrl));
                             if(mDetailsFrameLayout.getVisibility() == View.VISIBLE) mDetailsFrameLayout.setVisibility(View.GONE);
                             mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
                             if(mMainPresenter.isUrl(oldUrl)) { mMainPresenter.saveSP(oldUrl); }
@@ -545,7 +555,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                         if((int)drawerItem.getIdentifier() < 20000) {
 
                             mErrorDialog = new AlertDialog.Builder(mContext)
-                                    .setTitle(drawerItem.getTag().toString() + " " + drawerItem.getIdentifier())
+                                    .setTitle(drawerItem.getTag().toString()  + " " + drawerItem.getIdentifier())
                                     .setMessage("Удалить?")
                                     .setPositiveButton("Да", (dialog, which) -> {
                                         int [] testing = mDrawer.getExpandableExtension().getExpandedItems();
@@ -553,10 +563,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                             if(!expDrawItem.getSubItems().isEmpty()) {oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();}
                                             else {setZeroItemDrawer ();}
                                         }
-
-                                        for (int i = testing.length - 1; i >= 0; i--) {
-                                            mDrawer.getExpandableExtension().collapse(testing[i]);
-                                        }
+                                        mDrawer.getExpandableExtension().collapse();
                                         mDrawerPresenter.deleteSubItem(drawerItem.getTag().toString());
                                         expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
                                         mDrawer.removeItem(drawerItem.getIdentifier());
@@ -566,8 +573,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                         for(int i = 0; i <= testing.length - 1; i++) {
                                             mDrawer.getExpandableExtension().expand(testing[i]);
                                         }
-
-
+                                        if(expDrawItem.getSubItems().isEmpty()) {
+                                            setZeroItemDrawer ();
+                                        }
                                         dialog.dismiss();
                                         mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
                                     })
@@ -605,6 +613,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                                 else {setZeroItemDrawer ();}
                                             }
                                         }
+
+                                        if(expDrawItem.getSubItems().isEmpty()) {
+                                            setZeroItemDrawer ();
+                                        }
+
                                         dialog.dismiss();
                                         mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
                                     })
@@ -678,14 +691,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                 })
                                 .crossfade(false))
                         .submit();
-
-
-
-//                if(color2 == color) {
-//                    mToolbar.setBackgroundColor(R.color.colorAppMyNews);
-//                    mToolbarFrame.setBackgroundColor(R.color.colorAppMyNews);
-//                    mListView.setBackgroundColor(R.color.colorAppMyNews);
-//                }
             } else {
                 Toast.makeText(this, "IconUrl is empty!", Toast.LENGTH_SHORT).show();
             }
@@ -758,14 +763,14 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     }
 
     @Override
-    public void addSubItem(String url, String iconUrl) {
+    public void addSubItem (RSSFeed rssFeed) {
+        String url = rssFeed.getUrl();
+        String iconUrl = rssFeed.getIconUrl();
+        String tag = rssFeed.getTag();
+        String title = rssFeed.getChannelTitle();
 
         boolean isChanged = false;
         int [] testing = mDrawer.getExpandableExtension().getExpandedItems();
-
-        String name = url
-                .replaceFirst("[^/]+//(www\\.)*","")
-                .replaceFirst("/.+","");
 
         mDrawer.getExpandableExtension().collapse();
 
@@ -779,7 +784,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                     .replaceFirst("[^/]+//(www\\.)*", "")
                     .replaceFirst("/.+", "");
             //поиск созданных ExpandItem
-            if(itemName.equals(name)) {
+            if(itemName.equals(tag)) {
                 if (expDrawItem.getSubItems().get(i) instanceof ExpandableBadgeDrawerItem) {
                     ExpandableBadgeDrawerItem exp = (ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i);
                     boolean needAdd = true;
@@ -790,12 +795,10 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                             }
                         }
                     }
-
                     if (needAdd) {
-                        ((ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i)).getSubItems().add(addCUPDrawerItem(name, url, iconUrl));
+                        ((ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i)).getSubItems().add(addCUPDrawerItem(title, url, iconUrl));
                         ((ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i)).withBadge(String.valueOf(((ExpandableBadgeDrawerItem) expDrawItem.getSubItems().get(i)).getSubItems().size()));
                     }
-
                     isChanged = true;
                 }
 
@@ -803,9 +806,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
                     if(!itemTag.equals(url)) {
                         ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
-                                .withName(name)
+                                .withName(tag)
                                 .withIcon(GoogleMaterial.Icon.gmd_book)
-                                .withTag(name)
+                                .withTag(tag)
                                 .withIdentifier(30000 + identif)
                                 .withSelectable(false)
                                 .withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon))
@@ -814,8 +817,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                 .withIsExpanded(false);
 
                         CustomUrlPrimaryDrawerItem removedItem = (CustomUrlPrimaryDrawerItem) expDrawItem.getSubItems().get(i);
-                        expTest.getSubItems().add(removedItem);
-                        expTest.getSubItems().add(addCUPDrawerItem(name, url, iconUrl));
+                        expTest.getSubItems().add(removedItem.withName(title));
+                        expTest.getSubItems().add(addCUPDrawerItem(title, url, iconUrl));
                         expTest.withBadge(String.valueOf(expTest.getSubItems().size()));
                         expDrawItem.getSubItems().remove(removedItem);
                         expDrawItem.getSubItems().add(expTest);
@@ -829,7 +832,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             if(!expDrawItem.getSubItems().isEmpty()) {
                 if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) {expDrawItem.getSubItems().remove(0);}
             }
-            expDrawItem.getSubItems().add(addCUPDrawerItem(name,url,iconUrl));
+            expDrawItem.getSubItems().add(addCUPDrawerItem(tag,url,iconUrl));
         }
 
         expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
@@ -867,61 +870,49 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         List<String> dub = new ArrayList<>();
         List<RSSFeed> normals = new ArrayList<>();
         List<RSSFeed> dublicates = new ArrayList<>();
-        Set<String> set = new HashSet<>();
-        StringBuilder may = new StringBuilder();
-        for(RSSFeed r : mRssFeeds) {
-            if(r.getChannelTitle() != null) {
-                may.append(r.getChannelTitle()).append("\n");
-            } else {
-                may.append("null").append("\n");
-            }
-        }
-        System.out.println(may);
-        System.out.println(mRssFeeds.size() + " размер");
-
 
         expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
 
-        for (RSSFeed r : mRssFeeds) {
-            name = r.getUrl()
-                    .replaceFirst("[^/]+//(www\\.)*","")
-                    .replaceFirst("/.+","");
-            if(!set.add(name)) {
-                RSSFeed removedItem = new RSSFeed();
-                for (RSSFeed rf : normals) {
-                    String nameRF = rf.getUrl()
-                            .replaceFirst("[^/]+//(www\\.)*","")
-                            .replaceFirst("/.+","");
-                    if(nameRF.equals(name)) {
-                        dublicates.add(rf);
-                        removedItem = rf;
+        for (int i = 0; i < mRssFeeds.size(); i++) {
+            boolean unique = true;
+            name = mRssFeeds.get(i).getTag();
+            int j = i + 1;
+            if(j == mRssFeeds.size()) {
+                for (int k = 0; k < j; k++) {
+                    if (mRssFeeds.get(k).getTag().equals(name)) {
+                        unique = false;
+                        break;
                     }
                 }
-                normals.remove(removedItem);
-                dub.add(name);
-                dublicates.add(r);
             } else {
-                normals.add(r);
+                for(; j < mRssFeeds.size(); j++) {
+                    if(name.equals(mRssFeeds.get(j).getTag())){
+                        unique = false;
+                    }
+                }
             }
+
+            if(unique) {
+                normals.add(mRssFeeds.get(i));
+            } else {
+                dublicates.add(mRssFeeds.get(i));
+                if(!dub.contains(name)) {dub.add(name);}
+            }
+
         }
 
         for (RSSFeed normal : normals) {
-            name = normal.getUrl()
-                    .replaceFirst("[^/]+//(www\\.)*","")
-                    .replaceFirst("/.+","");
-
+            name = normal.getTag();
             if(!expDrawItem.getSubItems().isEmpty()) {
                 if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) {expDrawItem.getSubItems().remove(0);}
             }
-
             iconUrl = normal.getIconUrl();
             expDrawItem.getSubItems().add(addCUPDrawerItem(name,normal.getUrl(),iconUrl));
         }
-
-        while(!dub.isEmpty()) {
+        int i = 0;
+        while(i < dub.size()) {
             List<RSSFeed> test;
-            name = dub.get(0);
-            dub.remove(name);
+            name = dub.get(i);
             test = gangBang(dublicates, name);
 
             ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
@@ -943,6 +934,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             }
             expTest.withBadge(String.valueOf(expTest.getSubItems().size()));
             expDrawItem.getSubItems().add(expTest);
+            i++;
         }
 
         if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) { expDrawItem.getBadge().setText("!"); }
@@ -953,9 +945,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     private List<RSSFeed> gangBang (List<RSSFeed> dublicates, String name) {
         List<RSSFeed> test = new ArrayList<>();
         for(RSSFeed rf : dublicates) {
-            String nameRF = rf.getUrl()
-                    .replaceFirst("[^/]+//(www\\.)*","")
-                    .replaceFirst("/.+","");
+            String nameRF = rf.getTag();
             if(nameRF.equals(name)) {
                 test.add(rf);
             }
