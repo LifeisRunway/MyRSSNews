@@ -80,4 +80,6 @@ public class RepositoryPresenter extends MvpPresenter<RepositoryView> {
         getViewState().showRepository(mPos, mArticle);
     }
 
+
+
 }

@@ -74,12 +74,12 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
 
     public void loadNextRepositories (String url, boolean isConnected) {
-        loadData(true, false, url, isConnected);
+        loadData(true, false, url, "", isConnected);
     }
 
 
-    public void loadRepositories (boolean isRefreshing, String url, boolean isConnected) {
-        loadData(false, isRefreshing, url, isConnected);
+    public void loadRepositories (boolean isRefreshing, String url, String iconUrl, boolean isConnected) {
+        loadData(false, isRefreshing, url, iconUrl, isConnected);
     }
 
     public void findRSS (boolean isRefreshing, String url) {
@@ -91,7 +91,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     }
 
 
-    private void loadData (boolean isPageLoading, boolean isRefreshing, String url, boolean isConnected) {
+    private void loadData (boolean isPageLoading, boolean isRefreshing, String url, String iconUrl, boolean isConnected) {
 
         if (mIsInLoading) {
             return;
@@ -110,7 +110,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe((RSSFeed rssFeed) -> {
                             onLoadingFinish(isPageLoading, isRefreshing);
-                            saveRssToDB(rssFeed, url);
+                            saveRssToDB(rssFeed, url, iconUrl);
                             onLoadingSuccess(isPageLoading, getRssInDB(url));
                         }, error -> {
                             onLoadingFinish(isPageLoading, isRefreshing);
@@ -161,37 +161,63 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
         if(articles.isEmpty()) return articles;
 
-        String temp2 = articles.get(0).getPubDate();
-        assert temp2 != null;
-        DateTimeFormatter format2 = (temp2.substring(temp2.length()-3, temp2.length()).equals("GMT")) ?
-                DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss 'GMT'",  Locale.US).withZone(ZoneOffset.UTC) :
-                DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US).withZone(ZoneOffset.UTC);
+        if(articles.get(0).getPubDate() != null) {
+            String temp2 = articles.get(0).getPubDate();
+            assert temp2 != null;
+            DateTimeFormatter format2 = (temp2.substring(temp2.length()-3, temp2.length()).equals("GMT")) ?
+                    DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss 'GMT'",  Locale.US).withZone(ZoneOffset.UTC) :
+                    DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US).withZone(ZoneOffset.UTC);
 
-        Collections.sort(articles, new Comparator<Article>() {
-            @Override
-            public int compare(Article o1, Article o2) {
-                TemporalAccessor date1 = format2.parse(o1.getPubDate());
-                Instant time = Instant.from(date1);
-                TemporalAccessor date2 = format2.parse(o2.getPubDate());
-                Instant time2 = Instant.from(date2);
-                return time2.compareTo(time);
-            }
-        });
-
+            Collections.sort(articles, new Comparator<Article>() {
+                @Override
+                public int compare(Article o1, Article o2) {
+                    TemporalAccessor date1 = format2.parse(o1.getPubDate());
+                    Instant time = Instant.from(date1);
+                    TemporalAccessor date2 = format2.parse(o2.getPubDate());
+                    Instant time2 = Instant.from(date2);
+                    return time2.compareTo(time);
+                }
+            });
+        }
         return articles;
     }
 
-    private void saveRssToDB (RSSFeed rssFeed, String url) {
+    private void saveRssToDB (RSSFeed rssFeed, String url, String iconUrl) {
             rssFeed.setUrl(url);
+            if(!iconUrl.equals("")) {rssFeed.setIconUrl(iconUrl);}
+            String tag = url
+                .replaceFirst("[^/]+//(www\\.)*","")
+                .replaceFirst("/.+","");
+            rssFeed.setTag(tag);
+            StringBuilder sb = new StringBuilder();
+
             mAD.insertRssFeed(rssFeed);
             RssFeedArticlesDetail temp = new RssFeedArticlesDetail();
             RSSFeed tempRss = mAD.getRssFeed(rssFeed.getChannelTitle());
             temp.setRssFeed(rssFeed);
-            for(Article article : rssFeed.getArticleList()) {
-                article.setRssId(tempRss.getRssFeedId());
-                if(article.getEnclosure() != null) {
-                    article.setEclos(article.getEnclosure().getUrl());
+            for(Article a : rssFeed.getArticleList()) {
+                a.setRssId(tempRss.getRssFeedId());
+                if(a.getEnclosure() != null) {
+                    a.setEclos(a.getEnclosure().getUrl());
                 }
+                sb.setLength(0);
+                if(a.getCategoryList() != null && !a.getCategoryList().isEmpty()) {
+                    for(String s : a.getCategoryList()) {
+                        sb.append(s).append(", ");
+                        //Log.e("КАТЕГОРИЯ", s);
+                    }
+                    a.setCategory(sb.toString());
+                    //System.out.println(sb.toString());
+                    //Log.e("КАТЕГОРИЯ_ЦЕЛИКОМ", sb.toString());
+                }
+//                if(a.getCreator() != null) {
+//                    //.out.println(a.getCreator());
+//                    //Log.e("КРИЭЙТОР", a.getCreator());
+//                }
+//                if(a.getCategory() != null) {
+//                    Log.e("КАТЕГОРИЯСОЛО", a.getCategory());
+//                }
+
             }
             temp.setArticles(rssFeed.getArticleList());
             mAD.insertOrUpdateRssFeedArticles(temp);

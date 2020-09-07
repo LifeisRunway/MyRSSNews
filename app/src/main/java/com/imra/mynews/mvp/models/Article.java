@@ -8,10 +8,15 @@ import androidx.room.Index;
 import androidx.room.PrimaryKey;
 import androidx.annotation.Nullable;
 
+import org.simpleframework.xml.Attribute;
 import org.simpleframework.xml.Element;
+import org.simpleframework.xml.ElementList;
+import org.simpleframework.xml.Namespace;
+import org.simpleframework.xml.Path;
 import org.simpleframework.xml.Root;
 
 import java.io.Serializable;
+import java.util.List;
 
 import static androidx.room.ForeignKey.CASCADE;
 
@@ -31,7 +36,7 @@ public class Article implements Serializable{
     @PrimaryKey(autoGenerate = true)
     private int articleId;
 
-    @ColumnInfo(name = "rssId")
+    @ColumnInfo(name = "rssId", index = true)
     private int rssId;
 
     @ColumnInfo(name = "isSaved")
@@ -39,11 +44,11 @@ public class Article implements Serializable{
 
     @Nullable
     @ColumnInfo(name = "title")
-    @Element (name = "title")
+    @Element (name = "title", required = false)
     private String title;
 
     @Nullable
-    @Element (name = "link")
+    @Element (name = "link", required = false)
     private String link;
 
     @Nullable
@@ -62,8 +67,17 @@ public class Article implements Serializable{
     private String pubDate;
 
     @Nullable
-    @Element (name = "dc:creator", required = false)
+    @ColumnInfo(name = "creator")
+    @Element(name = "creator", required = false)
     private String creator;
+
+    @Nullable
+    @ColumnInfo(name = "category")
+    private String category;
+
+    @Ignore
+    @ElementList(entry = "category", required = false, data = true, inline = true)
+    private List<String> categoryList;
 
     @Nullable
     public String getPubDate() {
@@ -149,4 +163,22 @@ public class Article implements Serializable{
     public void setSaved(boolean saved) {
         isSaved = saved;
     }
+
+    @Nullable
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(@Nullable String category) {
+        this.category = category;
+    }
+
+    public List<String> getCategoryList() {
+        return categoryList;
+    }
+
+    public void setCategoryList(List<String> categoryList) {
+        this.categoryList = categoryList;
+    }
+
 }

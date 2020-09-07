@@ -4,8 +4,6 @@ import android.animation.LayoutTransition;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -14,6 +12,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -21,10 +20,8 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.palette.graphics.Palette;
 
-import android.os.Environment;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -40,15 +37,25 @@ import com.github.florent37.glidepalette.GlidePalette;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.common.util.ArrayUtils;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldPath;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.SetOptions;
 import com.imra.mynews.R;
 import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
-import com.imra.mynews.mvp.models.RssFeedArticlesDetail;
 import com.imra.mynews.mvp.presenters.DrawerPresenter;
 import com.imra.mynews.mvp.presenters.MainPresenter;
 import com.imra.mynews.mvp.presenters.RepositoriesPresenter;
@@ -57,9 +64,9 @@ import com.imra.mynews.mvp.views.MainInterface;
 import com.imra.mynews.mvp.views.RepositoriesView;
 import com.imra.mynews.ui.adapters.RepositoriesAdapter;
 import com.imra.mynews.ui.fragments.Fragment;
+import com.imra.mynews.ui.utils.CustomDividerDrawerItem;
 import com.imra.mynews.ui.utils.CustomUrlPrimaryDrawerItem;
 import com.imra.mynews.ui.views.FrameSwipeRefreshLayout;
-import com.mikepenz.fontawesome_typeface_library.FontAwesome;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.itemanimators.AlphaCrossFadeAnimator;
 import com.mikepenz.materialdrawer.AccountHeader;
@@ -67,7 +74,6 @@ import com.mikepenz.materialdrawer.AccountHeaderBuilder;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
 import com.mikepenz.materialdrawer.holder.BadgeStyle;
-import com.mikepenz.materialdrawer.holder.StringHolder;
 import com.mikepenz.materialdrawer.model.DividerDrawerItem;
 import com.mikepenz.materialdrawer.model.ExpandableBadgeDrawerItem;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
@@ -83,11 +89,10 @@ import com.mikepenz.materialdrawer.util.DrawerImageLoader;
 import com.mikepenz.materialdrawer.util.DrawerUIUtils;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
@@ -180,6 +185,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     Disposable dis;
     private GoogleSignInOptions gso;
     private GoogleSignInClient signInClient;
+    private static final int REQUEST_CODE_SEARCH_ACTIVITY = 1;
+    private FirebaseFirestore db;
+    DocumentReference docRefUserChannels;
 
     @ProvidePresenter
     DrawerPresenter provideDrawerPresenter () { return new DrawerPresenter(mBundle); }
@@ -197,7 +205,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 .requestEmail()
                 .build();
         signInClient = GoogleSignIn.getClient(this, gso);
-
+        db = FirebaseFirestore.getInstance();
         unbinder = ButterKnife.bind(this);
         drawerImageLoader();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
@@ -217,6 +225,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             uEmail = " ";
             uIcon = Uri.parse("android.resource://com.imra.mynews/" + R.drawable.ic_user_svg);
         }
+        docRefUserChannels = db.collection("userChannels").document(uEmail);
         mToolbar.setPopupTheme(R.style.AppTheme);
         setSupportActionBar(mToolbar);
         Objects.requireNonNull(getSupportActionBar()).setElevation(1);
@@ -224,15 +233,10 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
         mDetailsFrameLayout.setVisibility(View.GONE);
 
-        oldUrl = mMainPresenter.getSP().getString(MY_URL,"");
-
-        Map<String, ?> s = mMainPresenter.getSP().getAll();
-        for(Map.Entry<String, ?> entry : s.entrySet()) {
-            System.out.println(entry.getKey() + " " + entry.getValue());
-        }
+        oldUrl = mMainPresenter.getUrlSP();
 
         mSwipeRefreshLayout.setListViewChild(mListView);
-        mSwipeRefreshLayout.setOnRefreshListener(() -> mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected()));
+        mSwipeRefreshLayout.setOnRefreshListener(() -> mRepositoriesPresenter.loadRepositories(true, oldUrl, "", isConnected()));
 
         mReposAdapter = new RepositoriesAdapter(getMvpDelegate(), this);
         mListView.setAdapter(mReposAdapter);
@@ -244,7 +248,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         });
 
 
-        mRepositoriesPresenter.loadRepositories(false, oldUrl, isConnected());
+
     }
 
     private boolean isConnected () {
@@ -276,11 +280,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     @Override
     protected void onResume() {
         super.onResume();
-        if(mMainPresenter.isUrl(oldUrl)) {
-            oldUrl = mMainPresenter.getSP().getString(MY_URL,"");
-            mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
-            isNew = true;
-        }
+//        if(mMainPresenter.isUrl(oldUrl)) {
+//            oldUrl = mMainPresenter.getSP().getString(MY_URL,"");
+//            mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
+//            isNew = true;
+//        }
     }
 
     @Override
@@ -373,11 +377,43 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             if(mChannelDescription.getVisibility() == View.GONE) { mChannelDescription.setVisibility(View.VISIBLE); }
         } else mChannelDescription.setVisibility(View.GONE);
         if(isNew) {
-            String iconUrl = mMainPresenter.getSP().getString(oldUrl, "");
-            mDrawerPresenter.addSubItem(oldUrl, iconUrl);
+            mDrawerPresenter.addSubItem(rssFeed.getUrl(), rssFeed.getIconUrl());
+            addInFirestone(rssFeed.getUrl(), rssFeed.getIconUrl());
+            changeBackCol(rssFeed.getIconUrl());
+            oldUrl = rssFeed.getUrl();
+            mMainPresenter.saveSP(oldUrl);
             isNew = false;
-            mMainPresenter.clearSP(oldUrl);
         }
+    }
+
+    private void addInFirestone (String key, String value) {
+        Map<String, Object> docData = new HashMap<>();
+        docData.put(key, value);
+        docRefUserChannels
+                .set(docData, SetOptions.merge())
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Log.e("Сэйв_прошел", "DocumentSnapshot successfully written!");
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.e("Ошибка_сэйва", "Error writing document", e);
+                    }
+                });
+    }
+
+    private void delInFirestone (String key) {
+//        Map<String, Object> docData = new HashMap<>();
+//        docData.put(key, FieldValue.delete());
+        docRefUserChannels.update(FieldPath.of(key), FieldValue.delete()).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                Log.e("Сэйв_удален", "DocumentSnapshot successfully deleted!");
+            }
+        });
     }
 
     @Override
@@ -409,7 +445,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     @Override
     public void onScrollToBottom() {
-        mRepositoriesPresenter.loadNextRepositories(mMainPresenter.getSP().getString(MY_URL,""), isConnected());
+        mRepositoriesPresenter.loadNextRepositories(oldUrl, isConnected());
     }
 
     private void drawerImageLoader () {
@@ -485,7 +521,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 .build();
 
         if(!mDrawerPresenter.getUrlRssFeeds().isEmpty()) {
-            expDrawItem = new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_book).sizeDp(48)).withTag("-").withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon)).withBadge("!").withSubItems().withTag("новости").withIsExpanded(false);
+            expDrawItem = new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_list).sizeDp(48).color(R.color.colorAccent)).withTag("-").withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon)).withBadge("!").withSubItems().withTag("новости").withIsExpanded(false);
         } else {
             expDrawItem =  new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(GoogleMaterial.Icon.gmd_book).withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon)).withTag("новости").withBadge("!").withSubItems(
                     new SecondaryDrawerItem()
@@ -508,16 +544,14 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 .withAccountHeader(mAccountHeader)
                 .withSliderBackgroundColorRes(R.color.col)
                 .addDrawerItems(
-                        new DividerDrawerItem().withEnabled(false),
+                        new CustomDividerDrawerItem().withEnabled(false),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_home).withIcon(GoogleMaterial.Icon.gmd_settings).withIdentifier(50000).withSelectable(false),
-                        new DividerDrawerItem(),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_settings).withIcon(GoogleMaterial.Icon.gmd_find_in_page).withIdentifier(50001).withSelectable(false),
-                        new DividerDrawerItem(),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_offline).withIcon(GoogleMaterial.Icon.gmd_save).withIdentifier(50002).withSelectable(false),
+                        new PrimaryDrawerItem().withName("Контакты").withIcon(GoogleMaterial.Icon.gmd_info).withIdentifier(50004).withSelectable(false),
                         new SectionDrawerItem().withName("Новости"),
                         expDrawItem,
-                        new SectionDrawerItem().withIdentifier(60000),
-                        new PrimaryDrawerItem().withName("Контакты").withIcon(GoogleMaterial.Icon.gmd_settings).withIdentifier(50004).withSelectable(false)
+                        new SectionDrawerItem().withIdentifier(60000)
                         )
                 .withOnDrawerItemClickListener((View view, int position, IDrawerItem drawerItem) -> {
 
@@ -536,15 +570,18 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                 break;
                         }
                         if (intent != null) {
-                            MainActivity.this.startActivity(intent);
+                            if((int)drawerItem.getIdentifier() == 50001) {
+                                startActivityForResult(intent,REQUEST_CODE_SEARCH_ACTIVITY);
+                            } else {
+                                MainActivity.this.startActivity(intent);
+                            }
                         }
                         if((int)drawerItem.getIdentifier() < 20000) {
                             mListView.smoothScrollToPosition(0);
                             oldUrl = drawerItem.getTag().toString();
                             changeBackCol(mDrawerPresenter.getIconUrl(oldUrl));
                             if(mDetailsFrameLayout.getVisibility() == View.VISIBLE) mDetailsFrameLayout.setVisibility(View.GONE);
-                            mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
-                            if(mMainPresenter.isUrl(oldUrl)) { mMainPresenter.saveSP(oldUrl); }
+                            mRepositoriesPresenter.loadRepositories(true, oldUrl, "", isConnected());
                             //oldUrl = sp.getString(drawerItem.getTag().toString(), "");
                         }
                     }
@@ -552,6 +589,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 })
                 .withOnDrawerItemLongClickListener((view, position, drawerItem) -> {
                     if(drawerItem != null) {
+                        //удаляем 1 элемент
                         if((int)drawerItem.getIdentifier() < 20000) {
 
                             mErrorDialog = new AlertDialog.Builder(mContext)
@@ -560,13 +598,27 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                     .setPositiveButton("Да", (dialog, which) -> {
                                         int [] testing = mDrawer.getExpandableExtension().getExpandedItems();
                                         if(oldUrl.equals(drawerItem.getTag().toString())) {
-                                            if(!expDrawItem.getSubItems().isEmpty()) {oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();}
+                                            if(!expDrawItem.getSubItems().isEmpty()) {
+                                                oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();
+                                                mMainPresenter.saveSP(oldUrl);
+                                            }
                                             else {setZeroItemDrawer ();}
                                         }
                                         mDrawer.getExpandableExtension().collapse();
                                         mDrawerPresenter.deleteSubItem(drawerItem.getTag().toString());
+                                        delInFirestone(drawerItem.getTag().toString());
                                         expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
-                                        mDrawer.removeItem(drawerItem.getIdentifier());
+                                        //mDrawer.removeItem(drawerItem.getIdentifier());
+                                        for(Object o : expDrawItem.getSubItems()) {
+                                            if(o instanceof ExpandableBadgeDrawerItem) {
+                                                ((ExpandableBadgeDrawerItem) o).getSubItems().remove(drawerItem);
+                                                if(((ExpandableBadgeDrawerItem) o).getSubItems().isEmpty()) {
+                                                    expDrawItem.getSubItems().remove(o);
+                                                } else {
+                                                    ((ExpandableBadgeDrawerItem) o).withBadge(String.valueOf(((ExpandableBadgeDrawerItem) o).getSubItems().size()));
+                                                }
+                                            }
+                                        }
                                         expDrawItem.getSubItems().remove(drawerItem);
                                         expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
                                         mDrawer.updateItem(expDrawItem);
@@ -577,7 +629,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                             setZeroItemDrawer ();
                                         }
                                         dialog.dismiss();
-                                        mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
+                                        mRepositoriesPresenter.loadRepositories(true, oldUrl, "", isConnected());
                                     })
                                     .setNegativeButton("Нет", (dialog, which) -> {
                                         dialog.dismiss();
@@ -597,6 +649,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                             list.add(((IDrawerItem) item).getTag().toString());
                                         }
                                         mDrawerPresenter.deleteManySubItems(list);
+                                        for(String key : list) {
+                                            delInFirestone(key);
+                                        }
                                         expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
                                         drawerItem.getSubItems().clear();
                                         mDrawer.removeItem(drawerItem.getIdentifier());
@@ -609,7 +664,10 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
                                         for(String tag : list) {
                                             if(oldUrl.equals(tag)) {
-                                                if(!expDrawItem.getSubItems().isEmpty()) {oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();}
+                                                if(!expDrawItem.getSubItems().isEmpty()) {
+                                                    oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();
+                                                    mMainPresenter.saveSP(oldUrl);
+                                                }
                                                 else {setZeroItemDrawer ();}
                                             }
                                         }
@@ -619,7 +677,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                         }
 
                                         dialog.dismiss();
-                                        mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
+                                        mRepositoriesPresenter.loadRepositories(true, oldUrl, "", isConnected());
                                     })
                                     .setNegativeButton("Нет", (dialog, which) -> {
                                         dialog.dismiss();
@@ -631,7 +689,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 })
                 .withSavedInstance(savedInstanceState)
                 .withShowDrawerOnFirstLaunch(true)
-                .withShowDrawerUntilDraggedOpened(true)
+                //.withShowDrawerUntilDraggedOpened(true)
                 .build();
 
         mDrawer.getAdapter().withOnPreClickListener((v, adapter, item, position1) -> {
@@ -645,8 +703,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             }
             return false;
         });
-
-        mDrawerPresenter.setSubItems();
+        getInFirestone();
     }
 
     @Override
@@ -752,13 +809,12 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     private void setZeroItemDrawer () {
         oldUrl = "";
-        mMainPresenter.saveSP("");
         expDrawItem.getSubItems().add( new SecondaryDrawerItem()
                 .withName("Нет новостных лент")
                 .withLevel(2)
                 .withTag("-")
                 .withIdentifier(20000).withSetSelected(false).withEnabled(false));
-        expDrawItem.getBadge().setText("0");
+        expDrawItem.getBadge().setText("!");
         mDrawer.updateItem(expDrawItem);
     }
 
@@ -807,7 +863,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                     if(!itemTag.equals(url)) {
                         ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
                                 .withName(tag)
-                                .withIcon(GoogleMaterial.Icon.gmd_book)
+                                .withIcon(GoogleMaterial.Icon.gmd_note)
                                 .withTag(tag)
                                 .withIdentifier(30000 + identif)
                                 .withSelectable(false)
@@ -816,11 +872,14 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                 .withSubItems()
                                 .withIsExpanded(false);
 
-                        CustomUrlPrimaryDrawerItem removedItem = (CustomUrlPrimaryDrawerItem) expDrawItem.getSubItems().get(i);
-                        expTest.getSubItems().add(removedItem.withName(title));
-                        expTest.getSubItems().add(addCUPDrawerItem(title, url, iconUrl));
+                        //CustomUrlPrimaryDrawerItem removedItem = (CustomUrlPrimaryDrawerItem) expDrawItem.getSubItems().get(i);
+                        List<RSSFeed> twoTags = mDrawerPresenter.getRssForTag(tag);
+                        //expTest.getSubItems().add(removedItem.withName(title));
+                        for(RSSFeed r : twoTags) {
+                            expTest.getSubItems().add(addCUPDrawerItem(r.getChannelTitle(), r.getUrl(), r.getIconUrl()));
+                        }
                         expTest.withBadge(String.valueOf(expTest.getSubItems().size()));
-                        expDrawItem.getSubItems().remove(removedItem);
+                        expDrawItem.getSubItems().remove(expDrawItem.getSubItems().get(i));
                         expDrawItem.getSubItems().add(expTest);
                     }
                     isChanged = true;
@@ -832,7 +891,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             if(!expDrawItem.getSubItems().isEmpty()) {
                 if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) {expDrawItem.getSubItems().remove(0);}
             }
-            expDrawItem.getSubItems().add(addCUPDrawerItem(tag,url,iconUrl));
+            expDrawItem.getSubItems().add(addCUPDrawerItem(title,url,iconUrl));
         }
 
         expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
@@ -862,95 +921,99 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         return c;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    @Override
-    public void setSubItems (List<RSSFeed> mRssFeeds) {
-        String name;
-        String iconUrl;
-        List<String> dub = new ArrayList<>();
-        List<RSSFeed> normals = new ArrayList<>();
-        List<RSSFeed> dublicates = new ArrayList<>();
-
-        expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
-
-        for (int i = 0; i < mRssFeeds.size(); i++) {
-            boolean unique = true;
-            name = mRssFeeds.get(i).getTag();
-            int j = i + 1;
-            if(j == mRssFeeds.size()) {
-                for (int k = 0; k < j; k++) {
-                    if (mRssFeeds.get(k).getTag().equals(name)) {
-                        unique = false;
-                        break;
-                    }
-                }
-            } else {
-                for(; j < mRssFeeds.size(); j++) {
-                    if(name.equals(mRssFeeds.get(j).getTag())){
-                        unique = false;
-                    }
-                }
-            }
-
-            if(unique) {
-                normals.add(mRssFeeds.get(i));
-            } else {
-                dublicates.add(mRssFeeds.get(i));
-                if(!dub.contains(name)) {dub.add(name);}
-            }
-
+    private void getInFirestone () {
+        Map<String, Object> userChannels = new HashMap<>();
+        if(mDrawerPresenter.getUser() != null) {
+            docRefUserChannels
+                    .get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            if(task.getResult() != null && task.getResult().getData() != null) {
+                                mDrawerPresenter.setSubItems(task.getResult().getData());
+                                Log.e("ДОК_АЙДИ_И_ДАТА1", task.getResult().getId() + " => " + task.getResult().getData());
+                            } else {
+                                mDrawerPresenter.setSubItems(userChannels);
+                            }
+//                                for (QueryDocumentSnapshot document : task.getResult()) {
+//                                    if(document.getId().equals(uName)){
+//                                        mDrawerPresenter.setSubItems(document.getData());
+//                                        Log.e("ДОК_АЙДИ_И_ДАТА1", document.getId() + " => " + document.getData());
+//                                    } else {
+//                                        Log.e("ДОК_АЙДИ_И_ДАТА2", document.getId() + " => " + document.getData());
+//                                    }
+//                                }
+                        } else {
+                            Log.w("ДОК_ОШИБКА", "Error getting documents.", task.getException());
+                        }
+                    });
         }
-
-        for (RSSFeed normal : normals) {
-            name = normal.getTag();
-            if(!expDrawItem.getSubItems().isEmpty()) {
-                if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) {expDrawItem.getSubItems().remove(0);}
-            }
-            iconUrl = normal.getIconUrl();
-            expDrawItem.getSubItems().add(addCUPDrawerItem(name,normal.getUrl(),iconUrl));
-        }
-        int i = 0;
-        while(i < dub.size()) {
-            List<RSSFeed> test;
-            name = dub.get(i);
-            test = gangBang(dublicates, name);
-
-            ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
-                    .withName(name)
-                    .withIcon(GoogleMaterial.Icon.gmd_book)
-                    .withTag(name)
-                    .withIdentifier(30000 + identif)
-                    .withSelectable(false)
-                    .withLevel(1)
-                    .withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon))
-                    .withBadge("0")
-                    .withSubItems()
-                    .withIsExpanded(false);
-
-            for(RSSFeed t : test) {
-                iconUrl = t.getIconUrl();
-                String title = t.getChannelTitle();
-                expTest.getSubItems().add(addCUPDrawerItem(title,t.getUrl(),iconUrl));
-            }
-            expTest.withBadge(String.valueOf(expTest.getSubItems().size()));
-            expDrawItem.getSubItems().add(expTest);
-            i++;
-        }
-
-        if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) { expDrawItem.getBadge().setText("!"); }
-        else {expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));}
-        mDrawer.updateItem(expDrawItem);
     }
 
-    private List<RSSFeed> gangBang (List<RSSFeed> dublicates, String name) {
-        List<RSSFeed> test = new ArrayList<>();
-        for(RSSFeed rf : dublicates) {
-            String nameRF = rf.getTag();
-            if(nameRF.equals(name)) {
-                test.add(rf);
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    @Override
+    public void setSubItems (List<String> tags) {
+
+        List<RSSFeed> normals;
+
+        expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
+        if(!tags.isEmpty()) {
+            for(String tag : tags) {
+                normals = mDrawerPresenter.getRssForTag(tag);
+
+                if(normals.size() == 1) {
+
+                    if(!expDrawItem.getSubItems().isEmpty()) {
+                        if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) {expDrawItem.getSubItems().remove(0);}
+                    }
+
+                    expDrawItem.getSubItems().add(addCUPDrawerItem(
+                            normals.get(0).getChannelTitle(),
+                            normals.get(0).getUrl(),
+                            normals.get(0).getIconUrl()));
+
+                } else {
+
+                    ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
+                            .withName(tag)
+                            .withIcon(GoogleMaterial.Icon.gmd_note)
+                            .withTag(tag)
+                            .withIdentifier(30000 + identif)
+                            .withSelectable(false)
+                            .withLevel(1)
+                            .withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon))
+                            .withBadge("0")
+                            .withSubItems()
+                            .withIsExpanded(false);
+
+                    for (RSSFeed r : normals) {
+                        expTest.getSubItems().add(addCUPDrawerItem(r.getChannelTitle(),r.getUrl(),r.getIconUrl()));
+                    }
+                    expTest.withBadge(String.valueOf(expTest.getSubItems().size()));
+                    expDrawItem.getSubItems().add(expTest);
+                }
+            }
+            if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) { expDrawItem.getBadge().setText("!"); }
+            else {expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));}
+
+            mDrawer.updateItem(expDrawItem);
+            mRepositoriesPresenter.loadRepositories(false, expDrawItem.getSubItems().get(0).getTag().toString(), "", isConnected());
+        } else {
+            setZeroItemDrawer();
+            mRepositoriesPresenter.loadRepositories(false, "", "", isConnected());
+        }
+
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(resultCode == RESULT_OK) {
+            if(requestCode == REQUEST_CODE_SEARCH_ACTIVITY) {
+                String url = data.getStringExtra("url");
+                String iconUrl = data.getStringExtra("iconUrl");
+                mRepositoriesPresenter.loadRepositories(true, url, iconUrl, isConnected());
+                isNew = true;
             }
         }
-        return test;
     }
 
     @Override

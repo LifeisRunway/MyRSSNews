@@ -49,23 +49,11 @@ public class MainPresenter extends MvpPresenter<MainInterface> {
         getViewState().showDetailsContainer(position, itemHtml);
     }
 
-    public SharedPreferences getSP() {
-        return mSP;
-    }
-
-    public void clearSP (String url) {
-        mSPEditor.remove(url).apply();
-    }
-
-    public SharedPreferences.Editor getEditor() {
-        return mSPEditor;
+    public String getUrlSP() {
+        return mSP.getString(MY_URL,"");
     }
 
     public void saveSP (String data) {
-        mSPEditor.putString("url", data).apply();
-    }
-
-    public boolean isUrl (String url) {
-        return !mSP.getString(MY_URL, "").equals(url);
+        mSPEditor.putString(MY_URL, data).apply();
     }
 }

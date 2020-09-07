@@ -1,5 +1,6 @@
 package com.imra.mynews.ui.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AlertDialog;
@@ -18,6 +19,7 @@ import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.presenters.MainPresenter;
 import com.imra.mynews.mvp.presenters.RepositoriesPresenter;
+import com.imra.mynews.mvp.views.DrawerView;
 import com.imra.mynews.mvp.views.MainInterface;
 import com.imra.mynews.mvp.views.RepositoriesView;
 import com.imra.mynews.ui.adapters.SearchRSSAdapter;
@@ -197,19 +199,21 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
 
     @Override
     public void showDetailsContainer(int position, ItemHtml itemHtml) {
+        Intent intent = new Intent();
         if ((itemHtml.getHref().substring(0, 1).equals("/"))) {
-            mMainPresenter.getEditor().putString(MY_URL, mUrl + itemHtml.getHref()).apply();
-            mMainPresenter.getEditor().putString(mUrl + itemHtml.getHref(), itemHtml.getIcon_url()).apply();
+            intent.putExtra("url", mUrl + itemHtml.getHref());
         } else {
-            mMainPresenter.getEditor().putString(MY_URL, itemHtml.getHref()).apply();
-            mMainPresenter.getEditor().putString(itemHtml.getHref(), itemHtml.getIcon_url()).apply();
+            intent.putExtra("url", itemHtml.getHref());
         }
-        onBackPressed();
+        intent.putExtra("iconUrl", itemHtml.getIcon_url());
+        setResult(RESULT_OK,intent);
+        this.finish();
     }
 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
+        setResult(RESULT_CANCELED);
         this.finish();
     }
 

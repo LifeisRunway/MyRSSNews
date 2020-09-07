@@ -20,6 +20,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.AuthCredential;
@@ -27,9 +29,14 @@ import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.imra.mynews.R;
 import com.imra.mynews.mvp.presenters.LoginPresenter;
 import com.imra.mynews.mvp.views.LoginView;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -69,6 +76,7 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
     private FirebaseAuth mAuth;
     private GoogleSignInOptions gso;
     private GoogleSignInClient signInClient;
+    //private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +86,8 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
         unbinder = ButterKnife.bind(this);
         mAuth = FirebaseAuth.getInstance();
         mLoginPresenter.isEnter();
+        // Access a Cloud Firestore instance from your Activity
+        //db = FirebaseFirestore.getInstance();
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
@@ -104,7 +114,6 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
     @Override
     protected void onStart() {
         super.onStart();
-
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if(currentUser != null) {
             Toast.makeText(this, "User not null", Toast.LENGTH_SHORT).show();
@@ -133,6 +142,7 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
                     .addOnCompleteListener(this, task -> {
                         if(task.isSuccessful()) {
                             Toast.makeText(getApplicationContext(), "User SignIn Successful!", Toast.LENGTH_SHORT).show();
+                            //addUserDataInFirebase();
                             startActivity(new Intent(this, MainActivity.class));
                             finishAffinity();
                         } else {
@@ -174,6 +184,7 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
                     if (task.isSuccessful()) {
                         // Sign in success, update UI with the signed-in user's information
                         Log.d(TAG, "signInWithCredential:success");
+                        //addUserDataInFirebase();
                         startActivity(new Intent(this, MainActivity.class));
                         finishAffinity();
                     } else {
@@ -183,6 +194,34 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
                 });
     }
 
+//    private void addUserDataInFirebase () {
+//        if(mAuth.getCurrentUser() != null) {
+//            String name = mAuth.getCurrentUser().getDisplayName();
+//            String email = mAuth.getCurrentUser().getEmail();
+//
+//            Map<String, Object> userChannels = new HashMap<>();
+//            assert name != null;
+//            userChannels.put("name", name);
+//            assert email != null;
+//            userChannels.put("email", email);
+//
+//            db.collection("userChannels").document(email)
+//                    .set(userChannels)
+//                    .addOnSuccessListener(new OnSuccessListener<Void>() {
+//                        @Override
+//                        public void onSuccess(Void aVoid) {
+//                            Log.d(TAG, "DocumentSnapshot successfully written!");
+//                        }
+//                    })
+//                    .addOnFailureListener(new OnFailureListener() {
+//                        @Override
+//                        public void onFailure(@NonNull Exception e) {
+//                            Log.w(TAG, "Error writing document", e);
+//                        }
+//                    });
+//
+//        }
+//    }
 
     @Override
     protected void onDestroy() {

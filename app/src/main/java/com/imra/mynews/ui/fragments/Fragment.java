@@ -1,10 +1,12 @@
 package com.imra.mynews.ui.fragments;
 
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import android.text.Html;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -58,6 +60,12 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
     @BindView(R.id.tv_title)
     TextView mTitleTextView;
 
+    @BindView(R.id.tv_category)
+    TextView mCategoryTV;
+
+    @BindView(R.id.tv_author)
+    TextView mAuthorTV;
+
     @BindView(R.id.textView)
     RepositoryWidget textView;
 
@@ -69,6 +77,9 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
 
     @BindView(R.id.image_button_save)
     ImageButton mImageButtonSave;
+
+    @BindView(R.id.image_button_share)
+    ImageButton mImageButtonShare;
 
     private Unbinder unbinder;
 
@@ -138,7 +149,6 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
             }
         }
 
-
         //mFL = (mActivity.findViewById(R.id.activity_home_frame_layout_details));
 
         mImageButton.setOnClickListener(v -> {
@@ -153,7 +163,14 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
                     .subscribe(mVG -> mVG.setVisibility(View.GONE));
         });
 
-
+        mImageButtonShare.setOnClickListener(v -> {
+            Intent sendIntent = new Intent();
+            sendIntent.setAction(Intent.ACTION_SEND);
+            String shareMessage = mArticle.getTitle() + " " + mArticle.getLink();
+            sendIntent.putExtra(Intent.EXTRA_TEXT, shareMessage);
+            sendIntent.setType("text/plain");
+            startActivity(Intent.createChooser(sendIntent,"Поделиться новостью"));
+        });
 
         mImageButtonSave.setOnClickListener(v -> {
 
@@ -179,6 +196,21 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
     public void showRepository(int position, Article article) {
         mArticle = article;
         mPosition = position;
+        if(mArticle.getCategory() != null) {
+            Log.e("КАТЕГОРИЯФРАГМЕНТА", mArticle.getCategory());
+            mCategoryTV.setText(mArticle.getCategory());
+            mCategoryTV.setVisibility(View.VISIBLE);
+        } else {
+            Log.e("КАТЕГОРИЯФРАГМЕНТА", "null!!!");
+            mCategoryTV.setVisibility(View.GONE);
+        }
+        if(mArticle.getCreator() != null) {
+            String s = "Автор - " + mArticle.getCreator();
+            mAuthorTV.setText(s);
+            mAuthorTV.setVisibility(View.VISIBLE);
+        } else {
+            mAuthorTV.setVisibility(View.GONE);
+        }
         mTitleTextView.setText(Html.fromHtml(mArticle.getTitle()));
         textView.initWidget(getMvpDelegate(), article, position);
         tvLink.initWidget(getMvpDelegate(), article, position);

@@ -23,7 +23,7 @@ public interface DrawerView extends MvpView {
     @StateStrategyType(OneExecutionStateStrategy.class)
     void setDrawer (Bundle savedInstanceState);
 
-    void setSubItems (List<RSSFeed> mRssFeeds);
+    void setSubItems (List<String> tags);
 
     void addSubItem (RSSFeed rssFeed);
 

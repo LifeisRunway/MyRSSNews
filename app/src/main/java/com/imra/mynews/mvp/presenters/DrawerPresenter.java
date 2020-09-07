@@ -41,6 +41,7 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
     Bundle bundle;
     List<String> urlRssFeeds;
     List<String> iconRssFeeds;
+    List<String> tagRssFeeds;
     List<RSSFeed> mRssFeeds;
     RSSFeed tmpRss;
     FirebaseUser user;
@@ -56,6 +57,7 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
         MyNewsApp.getAppComponent().inject3(this);
         bundle = savedInstanceState;
         urlRssFeeds = new ArrayList<>();
+        tagRssFeeds = new ArrayList<>();
         mRssFeeds = new ArrayList<>();
         urlsAndIcons = new HashMap<>();
         user = FirebaseAuth.getInstance().getCurrentUser();
@@ -69,23 +71,40 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
     }
 
     public void addSubItem(String url, String iconUrl) {
-
         tmpRss = mAD.getRssForDrawer(url);
-        tmpRss.setIconUrl(iconUrl);
-        tag = url
-                .replaceFirst("[^/]+//(www\\.)*","")
-                .replaceFirst("/.+","");
-        tmpRss.setTag(tag);
-        mAD.updateRss(tmpRss);
         getViewState().addSubItem(tmpRss);
     }
 
-    public void setSubItems() {
+    public void setSubItems(Map<String, Object> firestoneData) {
         mRssFeeds.clear();
-        mRssFeeds = mAD.getAllRssFeeds();
-        if(!mRssFeeds.isEmpty()) {
-            getViewState().setSubItems(mRssFeeds);
+        tagRssFeeds.clear();
+        if(!firestoneData.isEmpty()) {
+            for(Map.Entry e : firestoneData.entrySet()) {
+
+                if(mAD.getRssForDrawer(e.getKey().toString()) != null) {
+                    mRssFeeds.add(mAD.getRssForDrawer(e.getKey().toString()));
+                } else {
+                    RSSFeed r = new RSSFeed();
+                    r.setUrl(e.getKey().toString());
+                    r.setIconUrl(e.getValue().toString());
+                    String tag = e.getKey().toString()
+                            .replaceFirst("[^/]+//(www\\.)*","")
+                            .replaceFirst("/.+","");
+                    r.setTag(tag);
+                    mAD.insertOrUpdateRss(r);
+                    mRssFeeds.add(r);
+                }
+            }
         }
+
+        if(!mRssFeeds.isEmpty()) {
+            for(RSSFeed rssFeed : mRssFeeds) {
+                if(!tagRssFeeds.contains(rssFeed.getTag())) {
+                    tagRssFeeds.add(rssFeed.getTag());
+                }
+            }
+        }
+        getViewState().setSubItems(tagRssFeeds);
     }
 
     public List<String> getUrlRssFeeds() {
@@ -101,6 +120,10 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
                 //}
             }
         }
+    }
+
+    public List<RSSFeed> getRssForTag (String tag) {
+        return mAD.getRssAsTag(tag);
     }
 
     public void addNewNewsChannel(String name) {
