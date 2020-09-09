@@ -531,9 +531,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                             .withIdentifier(20000).withSetSelected(false).withEnabled(false)).withIsExpanded(false);
         }
 
-
-
-
         //create the drawer
         mDrawer = new DrawerBuilder()
                 .withActivity(this)
@@ -542,7 +539,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 .withItemAnimator(new AlphaCrossFadeAnimator())
                 .withActionBarDrawerToggle(true)
                 .withAccountHeader(mAccountHeader)
-                .withSliderBackgroundColorRes(R.color.col)
+                .withSliderBackgroundColorRes(R.color.md_white_1000)
                 .addDrawerItems(
                         new CustomDividerDrawerItem().withEnabled(false),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_home).withIcon(GoogleMaterial.Icon.gmd_settings).withIdentifier(50000).withSelectable(false),
@@ -577,7 +574,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                             }
                         }
                         if((int)drawerItem.getIdentifier() < 20000) {
-                            mListView.smoothScrollToPosition(0);
+                            mListView.setSelectionAfterHeaderView();
                             oldUrl = drawerItem.getTag().toString();
                             changeBackCol(mDrawerPresenter.getIconUrl(oldUrl));
                             if(mDetailsFrameLayout.getVisibility() == View.VISIBLE) mDetailsFrameLayout.setVisibility(View.GONE);

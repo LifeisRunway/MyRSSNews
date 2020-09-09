@@ -71,35 +71,19 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
     }
 
     public void setRepositories(@NonNull RSSFeed rssFeeds) {
-        //rssFeed = rssFeeds;
         if(rssFeeds.getArticleList() != null) {
             mArticles = new ArrayList<>(rssFeeds.getArticleList());
         }
-        //mArticles = new ArrayList<>(rssFeeds.getArticleList());
-//         if (rssFeeds.getChannelTitle() != null) {
-//            if(checkRssTitle.equals("")) {
-//                checkRssTitle = rssFeeds.getChannelTitle();}
-//            checkRssTitle2 = rssFeeds.getChannelTitle();
-//         }
         notifyDataSetChanged();
     }
 
     public void addRepositories (@NonNull RSSFeed rssFeeds) {
-        //rssFeed = rssFeeds;
+
         if(rssFeeds.getArticleList() != null) {
             mArticles.addAll(rssFeeds.getArticleList());
         }
-
-//        if (rssFeeds.getChannelTitle() != null) {
-//            if(checkRssTitle.equals("")) {checkRssTitle = rssFeeds.getChannelTitle();}
-//            checkRssTitle2 = rssFeeds.getChannelTitle();
-//        }
         notifyDataSetChanged();
     }
-
-//    private boolean oldRssTit () {
-//        return checkRssTitle.equals(checkRssTitle2);
-//    }
 
     public void setSelection(int selection) {
         mSelection = selection;

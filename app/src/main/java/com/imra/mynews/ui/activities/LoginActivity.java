@@ -76,7 +76,7 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
     private FirebaseAuth mAuth;
     private GoogleSignInOptions gso;
     private GoogleSignInClient signInClient;
-    //private FirebaseFirestore db;
+    private GoogleSignInAccount googleSignInAccount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,19 +85,17 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         unbinder = ButterKnife.bind(this);
         mAuth = FirebaseAuth.getInstance();
-        mLoginPresenter.isEnter();
-        // Access a Cloud Firestore instance from your Activity
-        //db = FirebaseFirestore.getInstance();
+        //mLoginPresenter.isEnter();
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
         signInClient = GoogleSignIn.getClient(this, gso);
 
-        GoogleSignInAccount googleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
-        if(signInClient != null) {
-            Toast.makeText(this, "User is logged in already!", Toast.LENGTH_SHORT).show();
-        }
+        googleSignInAccount = GoogleSignIn.getLastSignedInAccount(this);
+//        if(signInClient != null) {
+//            Toast.makeText(this, "User is logged in already!", Toast.LENGTH_SHORT).show();
+//        }
         mGoogle.setOnClickListener(v -> mLoginPresenter.onClickGoogleSignIn());
         mSignUpBtn.setOnClickListener(v -> mLoginPresenter.onClickSignUp());
         mLoginBtn.setOnClickListener(v -> mLoginPresenter.onClickSignIn());
@@ -116,11 +114,9 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
         super.onStart();
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if(currentUser != null) {
-            Toast.makeText(this, "User not null", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getApplicationContext(), "Авторизовано", Toast.LENGTH_SHORT).show();
             startActivity(new Intent(this, MainActivity.class));
             finishAffinity();
-        } else {
-            Toast.makeText(this, "User is null", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -141,8 +137,7 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
             mAuth.signInWithEmailAndPassword(mEmailET.getText().toString(), mPassET.getText().toString())
                     .addOnCompleteListener(this, task -> {
                         if(task.isSuccessful()) {
-                            Toast.makeText(getApplicationContext(), "User SignIn Successful!", Toast.LENGTH_SHORT).show();
-                            //addUserDataInFirebase();
+                            Toast.makeText(getApplicationContext(), "Пользователь успешно вошел!", Toast.LENGTH_SHORT).show();
                             startActivity(new Intent(this, MainActivity.class));
                             finishAffinity();
                         } else {
@@ -168,7 +163,7 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             try {
                 GoogleSignInAccount account = task.getResult(ApiException.class);
-                Log.d(TAG, "firebaseAuthWithGoogle:" + account.getId());
+                //Log.d(TAG, "firebaseAuthWithGoogle:" + account.getId());
                 mLoginPresenter.firebaseAuthWithGoogle(account.getIdToken());
             } catch (ApiException e) {
                 Log.w(TAG, "Google sign in failed", e);
@@ -184,7 +179,6 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
                     if (task.isSuccessful()) {
                         // Sign in success, update UI with the signed-in user's information
                         Log.d(TAG, "signInWithCredential:success");
-                        //addUserDataInFirebase();
                         startActivity(new Intent(this, MainActivity.class));
                         finishAffinity();
                     } else {
@@ -193,35 +187,6 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
                     }
                 });
     }
-
-//    private void addUserDataInFirebase () {
-//        if(mAuth.getCurrentUser() != null) {
-//            String name = mAuth.getCurrentUser().getDisplayName();
-//            String email = mAuth.getCurrentUser().getEmail();
-//
-//            Map<String, Object> userChannels = new HashMap<>();
-//            assert name != null;
-//            userChannels.put("name", name);
-//            assert email != null;
-//            userChannels.put("email", email);
-//
-//            db.collection("userChannels").document(email)
-//                    .set(userChannels)
-//                    .addOnSuccessListener(new OnSuccessListener<Void>() {
-//                        @Override
-//                        public void onSuccess(Void aVoid) {
-//                            Log.d(TAG, "DocumentSnapshot successfully written!");
-//                        }
-//                    })
-//                    .addOnFailureListener(new OnFailureListener() {
-//                        @Override
-//                        public void onFailure(@NonNull Exception e) {
-//                            Log.w(TAG, "Error writing document", e);
-//                        }
-//                    });
-//
-//        }
-//    }
 
     @Override
     protected void onDestroy() {
