@@ -101,7 +101,7 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
                     .asDrawable()
                     .load(mSource)
                     .apply(RequestOptions.centerInsideTransform())
-                    //.placeholder(R.drawable.load_animation)
+                    .placeholder(R.drawable.spinner_200px)
                     .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                     .into(drawable);
         });

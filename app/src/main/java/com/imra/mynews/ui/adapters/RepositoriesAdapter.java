@@ -57,10 +57,6 @@ public class RepositoriesAdapter extends MvpBaseAdapter  {
 
     private int mSelection = -1;
     private List<Article> mArticles;
-    private RSSFeed rssFeed;
-
-    private String checkRssTitle = "";
-    private String checkRssTitle2 = "";
 
     private OnScrollToBottomListener mScrollToBottomListener;
 

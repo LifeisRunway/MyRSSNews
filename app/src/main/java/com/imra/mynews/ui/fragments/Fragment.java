@@ -94,6 +94,7 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
 
     @ProvidePresenter
     RepositoryPresenter provideFragmentPresenter() {
+        assert getArguments() != null;
         mArticle = (Article) getArguments().get(ARGS_REPOSITORY);
         mPosition = (int) getArguments().get(ARGS_POSITION);
         return new RepositoryPresenter(mPosition,mArticle);
@@ -197,11 +198,11 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
         mArticle = article;
         mPosition = position;
         if(mArticle.getCategory() != null) {
-            Log.e("КАТЕГОРИЯФРАГМЕНТА", mArticle.getCategory());
+            //Log.e("КАТЕГОРИЯФРАГМЕНТА", mArticle.getCategory());
             mCategoryTV.setText(mArticle.getCategory());
             mCategoryTV.setVisibility(View.VISIBLE);
         } else {
-            Log.e("КАТЕГОРИЯФРАГМЕНТА", "null!!!");
+            //Log.e("КАТЕГОРИЯФРАГМЕНТА", "null!!!");
             mCategoryTV.setVisibility(View.GONE);
         }
         if(mArticle.getCreator() != null) {

@@ -4,6 +4,7 @@ import android.animation.LayoutTransition;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
@@ -211,7 +212,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             mDetailsFrameLayout.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
         }
-
+        createExpDrItem();
         //Перенести это дерьмо в какой-нибудь Presenter
         //user = FirebaseAuth.getInstance().getCurrentUser();
         if (mDrawerPresenter.getUser() != null) {
@@ -482,6 +483,19 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     }
 
+    private void createExpDrItem () {
+        if(!mDrawerPresenter.getUrlRssFeeds().isEmpty()) {
+            expDrawItem = new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_list).sizeDp(48).color(getResources().getColor(R.color.colorAccent))).withTag("-").withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon)).withBadge("!").withSubItems().withTag("новости").withIsExpanded(false);
+        } else {
+            expDrawItem =  new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(GoogleMaterial.Icon.gmd_book).withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon)).withTag("новости").withBadge("!").withSubItems(
+                    new SecondaryDrawerItem()
+                            .withName("Нет новостных лент")
+                            .withLevel(2)
+                            .withTag("-")
+                            .withIdentifier(20000).withSetSelected(false).withEnabled(false)).withIsExpanded(false);
+        }
+    }
+
     // Боковая панель
     @SuppressLint("ResourceAsColor")
     @Override
@@ -490,45 +504,68 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         // Create a sample profile
         final IProfile profile = new ProfileDrawerItem().withName(uName).withEmail(uEmail).withIcon(uIcon).withIdentifier(100000);
 
-        mAccountHeader = new AccountHeaderBuilder()
-                .withActivity(this)
-                .withTranslucentStatusBar(true) //полупрозрачная строка состояния?
-                .withHeaderBackground(R.drawable.header) //задник (фон)
-                .addProfiles(
-                        profile,
-                        //don't ask but google uses 14dp for the add account icon in gmail but 20dp for the normal icons (like manage account)
-                        new ProfileSettingDrawerItem().withName("Exit Account").withIcon(GoogleMaterial.Icon.gmd_exit_to_app).withIdentifier(100002)
-                ).withOnAccountHeaderListener((view, profile1, current) -> {
-                    if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == 100002) {
-                        mErrorDialog = new AlertDialog.Builder(mContext)
-                                .setTitle("Выйти из аккаунта")
-                                .setMessage("Вы уверены?")
-                                .setPositiveButton("Да", (dialog, which) -> {
-                                    FirebaseAuth.getInstance().signOut();
-                                    signInClient.signOut();
-                                    startActivity(new Intent(this, LoginActivity.class));
-                                    finishAffinity();
-                                })
-                                .setNegativeButton("Нет", (dialog, which) -> {
-                                    dialog.dismiss();
-                                })
-                                .show();
-                    }
-                    //false if you have not consumed the event and it should close the drawer
-                    return false;
-                })
-                .withSavedInstance(savedInstanceState)
-                .build();
-
-        if(!mDrawerPresenter.getUrlRssFeeds().isEmpty()) {
-            expDrawItem = new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_list).sizeDp(48).color(R.color.colorAccent)).withTag("-").withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon)).withBadge("!").withSubItems().withTag("новости").withIsExpanded(false);
+        int orientation = this.getResources().getConfiguration().orientation;
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            mAccountHeader = new AccountHeaderBuilder()
+                    .withActivity(this)
+                    .withCompactStyle(true)
+                    .withTranslucentStatusBar(true) //полупрозрачная строка состояния?
+                    .withHeaderBackground(R.drawable.header) //задник (фон)
+                    .addProfiles(
+                            profile,
+                            //don't ask but google uses 14dp for the add account icon in gmail but 20dp for the normal icons (like manage account)
+                            new ProfileSettingDrawerItem().withName("Exit Account").withIcon(GoogleMaterial.Icon.gmd_exit_to_app).withIdentifier(100002)
+                    ).withOnAccountHeaderListener((view, profile1, current) -> {
+                        if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == 100002) {
+                            mErrorDialog = new AlertDialog.Builder(mContext)
+                                    .setTitle("Выйти из аккаунта")
+                                    .setMessage("Вы уверены?")
+                                    .setPositiveButton("Да", (dialog, which) -> {
+                                        FirebaseAuth.getInstance().signOut();
+                                        signInClient.signOut();
+                                        startActivity(new Intent(this, LoginActivity.class));
+                                        finishAffinity();
+                                    })
+                                    .setNegativeButton("Нет", (dialog, which) -> {
+                                        dialog.dismiss();
+                                    })
+                                    .show();
+                        }
+                        //false if you have not consumed the event and it should close the drawer
+                        return false;
+                    })
+                    .withSavedInstance(savedInstanceState)
+                    .build();
         } else {
-            expDrawItem =  new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(GoogleMaterial.Icon.gmd_book).withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon)).withTag("новости").withBadge("!").withSubItems(
-                    new SecondaryDrawerItem()
-                            .withName("Нет новостных лент")
-                            .withLevel(2)
-                            .withTag("-")
-                            .withIdentifier(20000).withSetSelected(false).withEnabled(false)).withIsExpanded(false);
+            mAccountHeader = new AccountHeaderBuilder()
+                    .withActivity(this)
+                    .withTranslucentStatusBar(true) //полупрозрачная строка состояния?
+                    .withHeaderBackground(R.drawable.header) //задник (фон)
+                    .addProfiles(
+                            profile,
+                            //don't ask but google uses 14dp for the add account icon in gmail but 20dp for the normal icons (like manage account)
+                            new ProfileSettingDrawerItem().withName("Exit Account").withIcon(GoogleMaterial.Icon.gmd_exit_to_app).withIdentifier(100002)
+                    ).withOnAccountHeaderListener((view, profile1, current) -> {
+                        if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == 100002) {
+                            mErrorDialog = new AlertDialog.Builder(mContext)
+                                    .setTitle("Выйти из аккаунта")
+                                    .setMessage("Вы уверены?")
+                                    .setPositiveButton("Да", (dialog, which) -> {
+                                        FirebaseAuth.getInstance().signOut();
+                                        signInClient.signOut();
+                                        startActivity(new Intent(this, LoginActivity.class));
+                                        finishAffinity();
+                                    })
+                                    .setNegativeButton("Нет", (dialog, which) -> {
+                                        dialog.dismiss();
+                                    })
+                                    .show();
+                        }
+                        //false if you have not consumed the event and it should close the drawer
+                        return false;
+                    })
+                    .withSavedInstance(savedInstanceState)
+                    .build();
         }
 
         //create the drawer
@@ -927,18 +964,10 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                         if (task.isSuccessful()) {
                             if(task.getResult() != null && task.getResult().getData() != null) {
                                 mDrawerPresenter.setSubItems(task.getResult().getData());
-                                Log.e("ДОК_АЙДИ_И_ДАТА1", task.getResult().getId() + " => " + task.getResult().getData());
+                                //Log.e("ДОК_АЙДИ_И_ДАТА1", task.getResult().getId() + " => " + task.getResult().getData());
                             } else {
                                 mDrawerPresenter.setSubItems(userChannels);
                             }
-//                                for (QueryDocumentSnapshot document : task.getResult()) {
-//                                    if(document.getId().equals(uName)){
-//                                        mDrawerPresenter.setSubItems(document.getData());
-//                                        Log.e("ДОК_АЙДИ_И_ДАТА1", document.getId() + " => " + document.getData());
-//                                    } else {
-//                                        Log.e("ДОК_АЙДИ_И_ДАТА2", document.getId() + " => " + document.getData());
-//                                    }
-//                                }
                         } else {
                             Log.w("ДОК_ОШИБКА", "Error getting documents.", task.getException());
                         }
