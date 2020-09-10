@@ -6,7 +6,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <ImageView
-        android:id="@+id/imageView3"
+        android:id="@+id/image_avatar"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:background="@drawable/blue_bg"
@@ -14,228 +14,31 @@
         app:layout_constraintHeight_percent="0.4"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"></ImageView>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/myRss"
+        android:id="@+id/tv_author"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/poller_one"
-        android:text="@string/myrssnews"
-        android:textSize="35sp"
-        android:gravity="center"
-        app:layout_constraintBottom_toBottomOf="@+id/imageView3"
-        app:layout_constraintEnd_toEndOf="@+id/imageView3"
-        app:layout_constraintStart_toStartOf="@+id/imageView3"
-        app:layout_constraintTop_toTopOf="@+id/imageView3" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/poller_one"
-        android:text="Registration"
+        android:text="LifeIsRunway"
         android:textSize="25sp"
-        app:layout_constraintBottom_toBottomOf="@+id/imageView3"
-        app:layout_constraintEnd_toEndOf="@+id/imageView3"
-        app:layout_constraintStart_toStartOf="@+id/imageView3"
-        app:layout_constraintTop_toBottomOf="@+id/myRss"
+        android:gravity="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/image_avatar" 
         app:layout_constraintVertical_bias="0.15" />
 
-    <ImageView
-        android:id="@+id/name_image"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/blue_border_rounded_cornwe"
-        app:layout_constraintWidth_percent="0.75"
-        app:layout_constraintTop_toTopOf="@+id/name"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="@+id/name" />
-
-
-    <EditText
-        android:id="@+id/name"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:minHeight="12sp"
-        android:background="@android:color/transparent"
-        android:hint="Name"
-        android:inputType="textEmailAddress"
-        android:maxLines="1"
-        android:textColor="#6DD8C2"
-        android:textColorHint="@color/md_grey_500"
-        android:textCursorDrawable="@drawable/cursor_color"
-        android:textSize="12sp"
-        android:layout_marginTop="25dp"
-        app:layout_constraintHeight_percent="0.06"
-        app:layout_constraintWidth_percent="0.55"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView3" />
-
-    <ImageView
-        android:id="@+id/name_icon"
-        app:srcCompat="@drawable/ic_person_24"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintHeight_percent="0.06"
-        app:layout_constraintWidth_percent="0.06"
-        app:layout_constraintStart_toStartOf="@+id/name_image"
-        app:layout_constraintBottom_toBottomOf="@+id/name_image"
-        app:layout_constraintTop_toTopOf="@+id/name_image"
-        app:layout_constraintEnd_toStartOf="@+id/name" />
-
-
-    <ImageView
-        android:id="@+id/email_image"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/blue_border_rounded_cornwe"
-        app:layout_constraintBottom_toBottomOf="@+id/email"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/email"
-        app:layout_constraintVertical_bias="0.0"
-        app:layout_constraintWidth_percent="0.75" />
-
-    <EditText
-        android:id="@+id/email"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:minHeight="12sp"
-        android:background="@android:color/transparent"
-        android:hint="Email"
-        android:inputType="textEmailAddress"
-        android:maxLines="1"
-        android:textColor="#6DD8C2"
-        android:textColorHint="@color/md_grey_500"
-        android:textCursorDrawable="@drawable/cursor_color"
-        android:textSize="12sp"
-        android:layout_marginTop="15dp"
-        app:layout_constraintHeight_percent="0.06"
-        app:layout_constraintWidth_percent="0.55"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/name" />
-
-    <ImageView
-        android:id="@+id/email_icon"
-        app:srcCompat="@drawable/ic_mail_outline_24"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintHeight_percent="0.06"
-        app:layout_constraintWidth_percent="0.06"
-        app:layout_constraintStart_toStartOf="@+id/email_image"
-        app:layout_constraintBottom_toBottomOf="@+id/email_image"
-        app:layout_constraintTop_toTopOf="@+id/email_image"
-        app:layout_constraintEnd_toStartOf="@+id/email" />
-
-    <ImageView
-        android:id="@+id/pass_image"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/pass"
-        app:layout_constraintBottom_toBottomOf="@+id/pass"
-        app:layout_constraintWidth_percent="0.75"
-        android:background="@drawable/blue_border_rounded_cornwe">
-    </ImageView>
-
-    <EditText
-        android:id="@+id/pass"
-        android:hint="Password"
-        android:textColorHint="@color/md_grey_500"
-        android:textSize="12sp"
-        android:minHeight="12sp"
-        android:maxLines="1"
-        android:textColor="#6DD8C2"
-        android:inputType="textPassword"
-        android:maxLength="15"
-        android:textCursorDrawable="@drawable/cursor_color"
-        android:background="@android:color/transparent"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="15dp"
-        app:layout_constraintHeight_percent="0.06"
-        app:layout_constraintWidth_percent="0.55"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/email"/>
-
-    <!-- ICON -->
-    <ImageView
-        android:id="@+id/icon"
-        app:srcCompat="@drawable/ic_vpn_key_24"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintStart_toStartOf="@+id/pass_image"
-        app:layout_constraintBottom_toBottomOf="@+id/pass_image"
-        app:layout_constraintTop_toTopOf="@+id/pass_image"
-        app:layout_constraintEnd_toStartOf="@+id/pass"
-        app:layout_constraintWidth_percent="0.06"
-        app:layout_constraintHeight_percent="0.06"/>
-
-    <ImageView
-        android:id="@+id/pass_image2"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/pass2"
-        app:layout_constraintBottom_toBottomOf="@+id/pass2"
-        app:layout_constraintWidth_percent="0.75"
-        android:background="@drawable/blue_border_rounded_cornwe">
-    </ImageView>
-
-    <EditText
-        android:id="@+id/pass2"
-        android:hint="Password again"
-        android:textColorHint="@color/md_grey_500"
-        android:textSize="12sp"
-        android:minHeight="12sp"
-        android:maxLines="1"
-        android:textColor="#6DD8C2"
-        android:inputType="textPassword"
-        android:maxLength="15"
-        android:textCursorDrawable="@drawable/cursor_color"
-        android:background="@android:color/transparent"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="15dp"
-        app:layout_constraintHeight_percent="0.06"
-        app:layout_constraintWidth_percent="0.55"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/pass"/>
-
-    <!-- ICON -->
-    <ImageView
-        android:id="@+id/icon2"
-        app:srcCompat="@drawable/ic_vpn_key_24"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintStart_toStartOf="@+id/pass_image2"
-        app:layout_constraintBottom_toBottomOf="@+id/pass_image2"
-        app:layout_constraintTop_toTopOf="@+id/pass_image2"
-        app:layout_constraintEnd_toStartOf="@+id/pass2"
-        app:layout_constraintWidth_percent="0.06"
-        app:layout_constraintHeight_percent="0.06"/>
-
     <TextView
-        android:id="@+id/login_btn"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:textSize="12sp"
-        android:textColor="#ffffff"
-        android:text="SignUp"
-        android:gravity="center"
-        android:layout_marginTop="30dp"
-        app:layout_constraintWidth_percent="0.35"
-        app:layout_constraintHeight_percent="0.06"
-        android:background="@drawable/blue_fill__rounded_color"
-        app:layout_constraintTop_toBottomOf="@+id/pass2"
+        android:id="@+id/tv_github_url"      
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poller_one"
+        android:text="GitHub URL be here!"
+        android:textSize="25sp"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"/>
+        app:layout_constraintTop_toBottomOf="@+id/tv_author"
+        app:layout_constraintVertical_bias="0.25" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
