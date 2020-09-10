@@ -1,10 +1,17 @@
 # MyNews
 
-Application for searching and reading RSS feeds.
+Application for:
+- parsing site source code for find RSS feeds;
+- parsing RSS feeds for find articles
 
-Pet project for testing architectural components. Namely: 
-- MVP (Moxy);
+My first project for testing architectural components. Namely: 
+- MVP architecture (Moxy);
 - Dagger 2;
-- Retrofit;
+- Retrofit 2;
 - RxJava;
-- Room.
+- Room;
+- Firebase. 
+
+
+Additional libraries:
+- <a href="https://github.com/mikepenz/MaterialDrawer">Material Drawer</a>
