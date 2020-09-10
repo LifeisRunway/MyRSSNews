@@ -119,15 +119,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     @InjectPresenter
     DrawerPresenter mDrawerPresenter;
 
-//    @Inject
-//    SharedPreferences mDrawerPresenter.getSP(;
-//
-//    @Inject
-//    SharedPreferences.Editor mDrawerPresenter.getSPEditor();
-
-//    @Inject
-//    boolean isVisited;
-
     @BindView(R.id.activity_home_swipe_refresh_layout)
     FrameSwipeRefreshLayout mSwipeRefreshLayout;
     @BindView(R.id.activity_home_progress_bar_repositories)
@@ -281,11 +272,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     @Override
     protected void onResume() {
         super.onResume();
-//        if(mMainPresenter.isUrl(oldUrl)) {
-//            oldUrl = mMainPresenter.getSP().getString(MY_URL,"");
-//            mRepositoriesPresenter.loadRepositories(true, oldUrl, isConnected());
-//            isNew = true;
-//        }
     }
 
     @Override
@@ -313,8 +299,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     @Override
     public void setSelection(int position) {
         mReposAdapter.setSelection(position);
-        //Выбранный элемент становится вверху экрана
-        //mListView.smoothScrollToPositionFromTop(position,0,0);
     }
 
     @Override
@@ -407,8 +391,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     }
 
     private void delInFirestone (String key) {
-//        Map<String, Object> docData = new HashMap<>();
-//        docData.put(key, FieldValue.delete());
         docRefUserChannels.update(FieldPath.of(key), FieldValue.delete()).addOnCompleteListener(new OnCompleteListener<Void>() {
             @Override
             public void onComplete(@NonNull Task<Void> task) {
@@ -496,7 +478,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         }
     }
 
-    // Боковая панель
     @SuppressLint("ResourceAsColor")
     @Override
     public void setDrawer (Bundle savedInstanceState) {
@@ -1044,62 +1025,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     @Override
     public void addNewNewsChannel (String name) {
-//        String one;
-//        for(int i = 0; i < expDrawItem.getSubItems().size(); i++) {
-//            one = expDrawItem.getSubItems().get(i).getTag().toString().replaceFirst("[^/]+//(www\\.)*","")
-//                    .replaceFirst("/.+","");
-//            if(one.equals(name)) {
-//                if(expDrawItem.getSubItems().get(i) instanceof ExpandableBadgeDrawerItem) {
-//                    expDrawItem.getSubItems().get(i).getSubItems().add(new CustomUrlPrimaryDrawerItem()
-//                            .withName(name + identif)
-//                            .withTag(name + identif)
-//                            .withLevel(3)
-//                            .withIcon(R.drawable.youtube_icon)
-//                            .withIdentifier(identif).withSelectable(false));
-//                } else {
-//                    expDrawItem.getSubItems().remove(expDrawItem.getSubItems().get(i));
-//                    ExpandableBadgeDrawerItem ex = new ExpandableBadgeDrawerItem()
-//                            .withName(name)
-//                            .withTag(name)
-//                            .withLevel(3)
-//                            .withIcon(FontAwesome.Icon.faw_newspaper)
-//                            .withIdentifier(identif).withSelectable(false);
-//                    ex.getSubItems().add(new CustomUrlPrimaryDrawerItem()
-//                            .withName(name + identif)
-//                            .withTag(name + identif)
-//                            .withLevel(3)
-//                            .withIcon(R.drawable.youtube_icon)
-//                            .withIdentifier(identif).withSelectable(false));
-//                    expDrawItem.getSubItems().add(i, ex);
-//                }
-//                identif++;
-//                expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
-//                mDrawer.updateItem(expDrawItem);
-//            }
-//        }
-//
-//        String temp = mMainPresenter.getSP().getString(MY_URL,"")
-//                .replaceFirst("[^/]+//(www\\.)*","")
-//                .replaceFirst("/.+","");
-//        if(mMainPresenter.getSP().getString(temp,"").equals("")) {
-//
-//            mMainPresenter.getEditor().putString(temp, mMainPresenter.getSP().getString(MY_URL,"")).apply();
-//            if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) {expDrawItem.getSubItems().remove(0);}
-//
-//            expDrawItem.getSubItems().add(new SecondaryDrawerItem()
-//                    .withName(temp)
-//                    .withTag(mMainPresenter.getSP().getString(MY_URL,""))
-//                    .withLevel(2)
-//                    .withIcon(FontAwesome.Icon.faw_newspaper)
-//                    .withIdentifier(identif)
-//                    .withSelectable(false));
-//
-//            expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
-//            mDrawer.updateItem(expDrawItem);
-//            identif++;
-//            oldUrl = mMainPresenter.getSP().getString(temp, "");
-//        }
-//
-//    }
+
     }
 }
