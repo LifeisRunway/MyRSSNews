@@ -1,4 +1,6 @@
 # MyRSSNews
+![alt text](https://github.com/Imustrunaway/MyNews/blob/master/app/src/main/ic_launcher_mynews_playstore.png)
+
 MyRSSNews does:
 - Parsing site source code for find RSS feeds;
 - Parsing found RSS feeds for find articles;
@@ -12,17 +14,19 @@ Features:
 
 ## Components
 MyRSSNews is my first project for testing architectural components. Namely: 
-- MVP architecture (<a href="https://github.com/moxy-community/Moxy">Moxy</a> for AndroidX) ;
-- <a href="https://github.com/google/dagger">Dagger 2</a>;
-- <a href="https://github.com/JakeWharton/butterknife">Butterknife</a>;
-- <a href="https://square.github.io/retrofit/">Retrofit 2</a>;
-- <a href="https://github.com/ReactiveX/RxJava/tree/2.x">RxJava2;
-- <a href="https://developer.android.com/jetpack/androidx/releases/room">Room</a>;
-- <a href="https://firebase.google.com">Firebase</a>. 
+- MVP architecture ([Moxy](https://github.com/moxy-community/Moxy) for AndroidX) ;
+- [Dagger 2](https://github.com/google/dagger);
+- [Butterknife](https://github.com/JakeWharton/butterknife);
+- [Retrofit 2](https://square.github.io/retrofit/);
+- [RxJava 2](https://github.com/ReactiveX/RxJava/tree/2.x);
+- [Room](https://developer.android.com/jetpack/androidx/releases/room);
+- [Firebase](https://firebase.google.com). 
 
 Additional libraries:
-- <a href="https://github.com/mikepenz/MaterialDrawer">Material Drawer</a> by Mikepenz;
-- <a href="https://github.com/florent37/GlidePalette">GlidePalette</a> by Florent37.
+- [Material Drawer](https://github.com/mikepenz/MaterialDrawer) by Mikepenz;
+- [GlidePalette](https://github.com/florent37/GlidePalette) by Florent37.
 
 ## Contacts
-LifeIsRunway - <a href="mailto:imra027@gmail.com">imra027@gmail.com</a>
+LifeIsRunway - [imra027@gmail.com](mailto:imra027@gmail.com)
+
+
