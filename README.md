@@ -7,6 +7,7 @@ Application for:
 My first project for testing architectural components. Namely: 
 - MVP architecture (Moxy);
 - Dagger 2;
+- Butterknife;
 - Retrofit 2;
 - RxJava;
 - Room;
@@ -14,4 +15,5 @@ My first project for testing architectural components. Namely:
 
 
 Additional libraries:
-- <a href="https://github.com/mikepenz/MaterialDrawer">Material Drawer</a>
+- <a href="https://github.com/mikepenz/MaterialDrawer">Material Drawer</a> by Mikepenz;
+- <a href="https://github.com/florent37/GlidePalette">GlidePalette</a> by Florent37.
