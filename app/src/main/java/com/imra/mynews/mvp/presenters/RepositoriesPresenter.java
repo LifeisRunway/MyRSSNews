@@ -56,16 +56,15 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     @Inject
     ArticleDao mAD;
 
-    //@Inject
-    //Integer mLocalDB;
-
     private boolean mIsInLoading;
     private boolean mIsInLoading2;
     private boolean mIsInLoading3;
-    private int timer = 0;
+    
+    private FirebaseUser user;
 
     public RepositoriesPresenter() {
         MyNewsApp.getAppComponent().inject(this);
+        user = FirebaseAuth.getInstance().getCurrentUser();
     }
 
     @Override
@@ -73,12 +72,6 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         super.onFirstViewAttach();
         //loadRepositories(false, "https://");
     }
-
-
-    public void loadNextRepositories (String url, boolean isConnected) {
-        loadData(true, false, url, "", isConnected);
-    }
-
 
     public void loadRepositories (boolean isRefreshing, String url, String iconUrl, boolean isConnected) {
         loadData(false, isRefreshing, url, iconUrl, isConnected);
@@ -163,9 +156,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     }
 
     @TargetApi(Build.VERSION_CODES.O)
-    private List<Article> smallToBig (List<Article> articles) {
-
-        if(articles.isEmpty()) return articles;
+    private List<Article> smallToBig (@NonNull List<Article> articles) {
 
         if(articles.get(0).getPubDate() != null) {
             String temp2 = articles.get(0).getPubDate();
@@ -187,14 +178,17 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         }
         return articles;
     }
+    
+    private String getTag (@NonNull String url) {
+        return url
+                .replaceFirst("[^/]+//(www\\.)*","")
+                .replaceFirst("/.+","");    
+    }
 
     private void saveRssToDB (RSSFeed rssFeed, String url, String iconUrl) {
             rssFeed.setUrl(url);
             if(!iconUrl.equals("")) {rssFeed.setIconUrl(iconUrl);}
-            String tag = url
-                .replaceFirst("[^/]+//(www\\.)*","")
-                .replaceFirst("/.+","");
-            rssFeed.setTag(tag);
+            rssFeed.setTag(getTag(url));
 
             StringBuilder sb = new StringBuilder();
             mAD.insertRssFeed(rssFeed);
@@ -218,20 +212,9 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                 if(a.getCategoryList() != null && !a.getCategoryList().isEmpty()) {
                     for(String s : a.getCategoryList()) {
                         sb.append(s).append(", ");
-                        //Log.e("КАТЕГОРИЯ", s);
                     }
                     a.setCategory(sb.substring(0, sb.length() - 2));
-                    //System.out.println(sb.toString());
-                    //Log.e("КАТЕГОРИЯ_ЦЕЛИКОМ", sb.toString());
                 }
-//                if(a.getCreator() != null) {
-//                    //.out.println(a.getCreator());
-//                    //Log.e("КРИЭЙТОР", a.getCreator());
-//                }
-//                if(a.getCategory() != null) {
-//                    Log.e("КАТЕГОРИЯСОЛО", a.getCategory());
-//                }
-
             }
             temp.setArticles(rssFeed.getArticleList());
             mAD.insertOrUpdateRssFeedArticles(temp);
@@ -302,14 +285,14 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     }
 
 
-    private List<ItemHtml> findRssUrl (String stringHtml, String url) {
+    private List<RSSFeed> findRssUrl (String stringHtml, String url) {
         String sRssFeed = "<\\s*link\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*/*>";
         String mRegex2 = "<\\s*link[^>]+(type\\s*=\\s*['\"]*image[^'\"]['\"]*[^>]+href\\s*=(\\s*['\"]*[^\"']+['\"]*)|href\\s*=(\\s*['\"]*[^\"']+['\"]*)[^>]+type\\s*=\\s*['\"]*image[^'\"]['\"]*)[^>]+";
 
         String smallIcon = "<\\s*link\\s*.+?(rel)\\s*=\\s*['\"]*([^'\"]*icon[^'\"]*)['\"]*\\s*.+?(href)\\s*=\\s*['\"]*([^'\"]+)['\"]*\\s*.+?\\/*>";
 
         Map<String, String> map = new HashMap<>();
-        List<ItemHtml> itemHtmls = new ArrayList<>();
+        List<RSSFeed> rssFeeds = new ArrayList<>();
 
         if(!stringHtml.equals("") && !url.equals("")) {
             Pattern pattern = Pattern.compile(sRssFeed);
@@ -323,18 +306,17 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
                 if (map.get("rel").equals("alternate")) {
                     if(map.get("type").equals("application/atom+xml") || map.get("type").equals("application/rss+xml")){
-                        ItemHtml itemHtml = new ItemHtml();
-                        if(map.get("href").substring(0,1).equals("/")) itemHtml.setHref(url + map.get("href"));
-                        else itemHtml.setHref(map.get("href"));
-                        itemHtml.setTitle(map.get("title"));
-                        itemHtmls.add(itemHtml);
+                        RSSFeed r = new RSSFeed();
+                        if(map.get("href").substring(0,1).equals("/")) {r.setChannelDescription(url + map.get("href"));}
+                        else {r.setChannelDescription(map.get("href"));}
+                        r.setChannelTitle(map.get("title"));
+                        rssFeeds.add(r);
                     }
                 }
-
                 map.clear();
             }
 
-            if(!itemHtmls.isEmpty()) {
+            if(!rssFeeds.isEmpty()) {
                 pattern = Pattern.compile(smallIcon);
                 matcher = pattern.matcher(stringHtml);
                 if(matcher.find()) {
@@ -351,14 +333,14 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                                 url + map.get("href") :
                                 map.get("href");
 
-                        for(ItemHtml itemHtml : itemHtmls) {
-                            itemHtml.setIcon_url(tmp);
+                        for(RSSFeed r : rssFeeds) {
+                            r.setIconUrl(tmp);
                         }
                     }
                 }
             }
         }
-        return new ArrayList<>(itemHtmls);
+        return new ArrayList<>(rssFeeds);
     }
 
 
@@ -407,14 +389,14 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         }
     }
 
-    private void onLoadingSuccess (boolean isPageLoading, List<ItemHtml> itemHtml) {
+//     private void onLoadingSuccess (boolean isPageLoading, List<ItemHtml> itemHtml) {
 
-        if (isPageLoading) {
-            getViewState().addRepositories(itemHtml);
-        } else {
-            getViewState().setRepositories(itemHtml);
-        }
-    }
+//         if (isPageLoading) {
+//             getViewState().addRepositories(itemHtml);
+//         } else {
+//             getViewState().setRepositories(itemHtml);
+//         }
+//     }
 
     private void onLoadingFailed(Throwable error, String url) {
         String fixError = error.toString();
