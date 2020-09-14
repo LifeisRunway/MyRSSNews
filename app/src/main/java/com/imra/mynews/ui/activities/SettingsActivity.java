@@ -86,7 +86,7 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
             if(searchRSSAdapter.getItemViewType(pos) != 0) {
                 return;
             }
-            mMainPresenter.onRSSSelection(pos, (ItemHtml) searchRSSAdapter.getItem(pos));
+            mMainPresenter.onRSSSelection(pos, searchRSSAdapter.getItem(pos));
         });
         mSearchButton.setOnClickListener(new Button.OnClickListener() {
             @Override
@@ -163,13 +163,14 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
 
     @Override
     public void setRepositories(RSSFeed repositories) {
-
+        mListView.setEmptyView(mNoRepositoriesTextView);
+        searchRSSAdapter.setRepositories(repositories);
     }
 
     @Override
     public void setRepositories(List<ItemHtml> itemHtml) {
-        mListView.setEmptyView(mNoRepositoriesTextView);
-        searchRSSAdapter.setRepositories(itemHtml);
+//         mListView.setEmptyView(mNoRepositoriesTextView);
+//         searchRSSAdapter.setRepositories(itemHtml);
     }
 
     @Override
@@ -184,13 +185,14 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
 
     @Override
     public void addRepositories(RSSFeed repositories) {
-
+        mListView.setEmptyView(mNoRepositoriesTextView);
+        searchRSSAdapter.addRepositories(repositories);
     }
 
     @Override
     public void addRepositories(List<ItemHtml> itemHtml) {
-        mListView.setEmptyView(mNoRepositoriesTextView);
-        searchRSSAdapter.addRepositories(itemHtml);
+//         mListView.setEmptyView(mNoRepositoriesTextView);
+//         searchRSSAdapter.addRepositories(itemHtml);
     }
 
     @Override
@@ -204,14 +206,14 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
     }
 
     @Override
-    public void showDetailsContainer(int position, ItemHtml itemHtml) {
+    public void showDetailsContainer(int position, RSSFeed rssFeed) {
         Intent intent = new Intent();
-        if ((itemHtml.getHref().substring(0, 1).equals("/"))) {
-            intent.putExtra("url", mUrl + itemHtml.getHref());
+        if ((rssFeed.getChannelDescription().substring(0, 1).equals("/"))) {
+            intent.putExtra("url", mUrl + itemHtml.getChannelDescription());
         } else {
-            intent.putExtra("url", itemHtml.getHref());
+            intent.putExtra("url", rssFeed.getChannelDescription());
         }
-        intent.putExtra("iconUrl", itemHtml.getIcon_url());
+        intent.putExtra("iconUrl", rssFeed.getIconUrl());
         setResult(RESULT_OK,intent);
         this.finish();
     }
