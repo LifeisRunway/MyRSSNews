@@ -61,10 +61,11 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     private boolean mIsInLoading3;
     
     private FirebaseUser user;
+    private FirebaseFirestore db;
+    private DocumentReference docRefUserChannels;
 
     public RepositoriesPresenter() {
         MyNewsApp.getAppComponent().inject(this);
-        user = FirebaseAuth.getInstance().getCurrentUser();
     }
 
     @Override
@@ -344,29 +345,62 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     }
 
 
-    private void loadDataForDrawer (Map<String, Object> firestoneData) {
+    private void loadDataForDrawer () {
 
+            user = FirebaseAuth.getInstance().getCurrentUser();
+            db = FirebaseFirestore.getInstance();
+            Map<String, Object> userChannels = new HashMap<>();
+            
+            if(user != null) {
+                docRefUserChannels = db.collection("userChannels").document(user.getEmail());
+                docRefUserChannels
+                    .get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            if(task.getResult() != null && task.getResult().getData() != null) {
+                               loadDataForDrawer2(task.getResult().getData());
+                                //mDrawerPresenter.setSubItems(task.getResult().getData());
+                                Log.e("getInFire task not null", task.getResult().getId() + " => " + task.getResult().getData());
+                            } else {
+                                mDrawerPresenter.setSubItems(userChannels);
+                            }
+                        } else {
+                            Log.w("ДОК_ОШИБКА", "Error getting documents.", task.getException());
+                        }
+                    });
+            }
+       
+    }
+    
+    private void loadDataForDrawer2 (Map<String, Object> firestoneData) {
+    
             if(!firestoneData.isEmpty()) {
 
                 for(Map.Entry e : firestoneData.entrySet()) {
                     if(!e.getKey().equals("")) {
+                        
+                        if(mAD.getRssFeed(e.getKey()) == null) {
+                        
+                           Observable<RSSFeed> observable = myNewsService.getRSSFeed(e.getKey().toString());
 
-                        Observable<RSSFeed> observable = myNewsService.getRSSFeed(e.getKey().toString());
-
-                        Disposable disposable = observable
+                            Disposable disposable = observable
                                 .subscribeOn(Schedulers.io())
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe((RSSFeed rssFeed) -> {
                                     saveRssToDB(rssFeed, e.getKey().toString(), e.getValue().toString());
-                                    setDrawerItems(getRssInDB(e.getKey().toString()));
                                 }, error -> {
                                     onLoadingFailed(error, e.getKey().toString());
                                 });
-                        unsubscribeOnDestroy(disposable);
+                            unsubscribeOnDestroy(disposable); 
+                        
+                        }
+
+                        
                     }
                 }
-                //setDrawerItems(firestoneData);
+               
             }
+    
     }
 
     private void onLoadingFinish(boolean isPageLoading, boolean isRefreshing) {
