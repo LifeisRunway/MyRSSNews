@@ -13,7 +13,6 @@ import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
 import com.imra.mynews.R;
 import com.imra.mynews.mvp.models.Article;
-import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.presenters.MainPresenter;
 import com.imra.mynews.mvp.presenters.RepositoriesPresenter;
@@ -21,11 +20,8 @@ import com.imra.mynews.mvp.views.MainInterface;
 import com.imra.mynews.mvp.views.RepositoriesView;
 import com.imra.mynews.ui.adapters.RepositoriesAdapter;
 import com.imra.mynews.ui.fragments.Fragment;
-import com.imra.mynews.ui.views.FrameSwipeRefreshLayout;
 import com.imra.mynews.ui.views.ListViewFrameSwipeRefreshLayout;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -79,7 +75,7 @@ public class SavedNewsActivity extends MvpAppCompatActivity implements Repositor
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_offline);
+        setContentView(R.layout.activity_saved_news);
 
         unbinder = ButterKnife.bind(this);
 
@@ -151,11 +147,6 @@ public class SavedNewsActivity extends MvpAppCompatActivity implements Repositor
     }
 
     @Override
-    public void showDetailsContainer(int position, ItemHtml itemHtml) {
-
-    }
-
-    @Override
     public void showDetails(int position, Article article) {
         getSupportFragmentManager()
                 .beginTransaction()
@@ -219,17 +210,7 @@ public class SavedNewsActivity extends MvpAppCompatActivity implements Repositor
     }
 
     @Override
-    public void setRepositories(List<ItemHtml> itemHtml) {
-
-    }
-
-    @Override
     public void setChannelTitle(RSSFeed rssFeed) {
-
-    }
-
-    @Override
-    public void setDrawerItems(Map<String, Object> firestoneData) {
 
     }
 
@@ -237,11 +218,6 @@ public class SavedNewsActivity extends MvpAppCompatActivity implements Repositor
     public void addRepositories(RSSFeed repositories) {
         mListView.setEmptyView(mNoRepositoriesTextView);
         mReposAdapter.addRepositories(repositories);
-    }
-
-    @Override
-    public void addRepositories(List<ItemHtml> itemHtml) {
-
     }
 
     @Override

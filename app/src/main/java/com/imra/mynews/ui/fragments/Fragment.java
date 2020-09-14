@@ -25,6 +25,7 @@ import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.presenters.RepositoryPresenter;
 import com.imra.mynews.mvp.views.RepositoryView;
+import com.imra.mynews.ui.activities.MainActivity;
 import com.imra.mynews.ui.views.LinkWidget;
 import com.imra.mynews.ui.views.RepositoryWidget;
 
@@ -109,7 +110,6 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
         return fragment;
     }
 
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -125,7 +125,7 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
         super.onViewCreated(view, savedInstanceState);
         unbinder = ButterKnife.bind(this, view);
 
-        mFragmentPresenter.greenOrNot(mArticle);
+        mFragmentPresenter.greenOrNot();
 
         if(mArticle != null) {
             if(mArticle.isEnclosure()) {
@@ -152,6 +152,8 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
                     .duration(duration)
                     .playOn(mVG);
 
+
+
             disposable = Observable.just(mVG)
                     .subscribeOn(Schedulers.io())
                     .delay(duration, TimeUnit.MILLISECONDS)
@@ -169,13 +171,10 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
         });
 
         mImageButtonSave.setOnClickListener(v -> {
-
             disposable2 = Observable.just(mFragmentPresenter)
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(mFragmentPresenter -> {
-                        mFragmentPresenter.clickSave(mArticle);
-                    });
+                    .subscribe(RepositoryPresenter::clickSave);
         });
 
     }
@@ -208,6 +207,7 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
         mTitleTextView.setText(Html.fromHtml(mArticle.getTitle()));
         textView.initWidget(getMvpDelegate(), article, position);
         tvLink.initWidget(getMvpDelegate(), article, position);
+        System.out.println("Тест");
     }
 
     @Override

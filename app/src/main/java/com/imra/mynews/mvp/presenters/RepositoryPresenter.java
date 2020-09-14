@@ -24,9 +24,6 @@ public class RepositoryPresenter extends MvpPresenter<RepositoryView> {
     @Inject
     ArticleDao mAD;
 
-    //@Inject
-    //Integer mLocalDB;
-
     private Article mArticle;
     private int mPos;
 
@@ -38,35 +35,22 @@ public class RepositoryPresenter extends MvpPresenter<RepositoryView> {
         mPos = position;
     }
 
-    public void clickSave (@NonNull Article article) {
-        //RssFeedArticlesDetail mRFAD = mAD.getRssFeedArticleDetail(mLocalDB);
-
-//        if (mAD.getArticle(article.getTitle()) != null) {
-//            mAD.deleteArticle(mLocalDB, article.getTitle());
-//            getViewState().saveOrDelete(false);
-//        } else {
-//            article.setRssId(mLocalDB);
-//            //mRFAD.setArticle(article);
-//            mAD.saveArticles(article);
-//            //mAD.insertRssFeedArticles(mRFAD);
-//            getViewState().saveOrDelete(true);
-//        }
-
-        if (mAD.getArticle(article.getTitle()).isSaved()) {
-            article.setSaved(false);
-            mAD.updateArticle(article);
+    public void clickSave () {
+        if (mAD.getArticle(mArticle.getTitle()).isSaved()) {
+            mArticle.setSaved(false);
+            mAD.updateArticle(mArticle);
             getViewState().saveOrDelete(false);
             getViewState().greenOrNot(false);
         } else {
-            article.setSaved(true);
-            mAD.updateArticle(article);
+            mArticle.setSaved(true);
+            mAD.updateArticle(mArticle);
             getViewState().saveOrDelete(true);
             getViewState().greenOrNot(true);
         }
     }
 
-    public void greenOrNot (@NonNull Article article) {
-        if (mAD.getArticle(article.getTitle()).isSaved()) {
+    public void greenOrNot () {
+        if (mAD.getArticle(mArticle.getTitle()).isSaved()) {
             getViewState().greenOrNot(true);
         } else {
             getViewState().greenOrNot(false);

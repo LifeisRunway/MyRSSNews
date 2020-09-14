@@ -38,16 +38,10 @@ public interface RepositoriesView extends MvpView {
     void hideError();
 
     void setRepositories(RSSFeed repositories);
-    void setRepositories(List<ItemHtml> itemHtml);
 
     void setChannelTitle(RSSFeed rssFeed);
 
-    void setDrawerItems(RSSFeed rssFeed);
-
     @StateStrategyType(AddToEndStrategy.class)
     void addRepositories(RSSFeed repositories);
-
-    @StateStrategyType(AddToEndStrategy.class)
-    void addRepositories(List<ItemHtml> itemHtml);
 
 }

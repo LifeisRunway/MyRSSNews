@@ -31,7 +31,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
 import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.daimajia.androidanimations.library.Techniques;
@@ -56,7 +55,6 @@ import com.imra.mynews.R;
 import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.di.modules.GlideRequests;
 import com.imra.mynews.mvp.models.Article;
-import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.presenters.DrawerPresenter;
 import com.imra.mynews.mvp.presenters.MainPresenter;
@@ -65,14 +63,13 @@ import com.imra.mynews.mvp.views.DrawerView;
 import com.imra.mynews.mvp.views.MainInterface;
 import com.imra.mynews.mvp.views.RepositoriesView;
 import com.imra.mynews.ui.adapters.ReposRecyclerAdapter;
-import com.imra.mynews.ui.adapters.RepositoriesAdapter;
 import com.imra.mynews.ui.fragments.Fragment;
 import com.imra.mynews.ui.utils.CustomDividerDrawerItem;
 import com.imra.mynews.ui.utils.CustomUrlPrimaryDrawerItem;
 import com.imra.mynews.ui.utils.ItemClickSupport;
 import com.imra.mynews.ui.views.FrameSwipeRefreshLayout;
 import com.mikepenz.iconics.IconicsDrawable;
-import com.mikepenz.itemanimators.AlphaCrossFadeAnimator;
+import com.mikepenz.itemanimators.ScaleYAnimator;
 import com.mikepenz.materialdrawer.AccountHeader;
 import com.mikepenz.materialdrawer.AccountHeaderBuilder;
 import com.mikepenz.materialdrawer.Drawer;
@@ -126,7 +123,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     @BindView(R.id.activity_home_progress_bar_repositories)
     ProgressBar mRepositoriesProgressBar;
     @BindView(R.id.activity_home_list_view_repositories)
-    RecyclerView mListView;
+    RecyclerView mRecyclerView;
     @BindView(R.id.activity_home_text_view_no_repositories)
     TextView mNoRepositoriesTextView;
     @BindView(R.id.toolbar)
@@ -143,33 +140,19 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     private AlertDialog mErrorDialog;
     private Unbinder unbinder;
-    private int visible = View.VISIBLE;
     private boolean isNew;
 
-    private RepositoriesAdapter mReposAdapter;
     private ReposRecyclerAdapter mReposRecyclerAdapter;
 
     private Drawer mDrawer = null;
     private AccountHeader mAccountHeader = null;
-    private static final int PROFILE_SETTING = 100000;
-    int num = 1;
     View view ;
 
-    //SharedPreferences sp;
-
     private String oldUrl;
-
-    private static final String MY_URL = "url";
-    private static final String MY_SETTINGS = "settings";
-
-    private int mCheck = -1;
 
     Disposable disposable;
     Context mContext;
     int identif = 1;
-
-    int sizeStart = 0;
-    int sizeEnd = 0;
 
     ExpandableBadgeDrawerItem expDrawItem;
     Bundle mBundle;
@@ -177,7 +160,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     String uName;
     String uEmail;
     Uri uIcon;
-    Disposable dis;
     private GoogleSignInOptions gso;
     private GoogleSignInClient signInClient;
     private static final int REQUEST_CODE_SEARCH_ACTIVITY = 1;
@@ -209,7 +191,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             mDetailsFrameLayout.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
         }
         createExpDrItem();
-        mRepositoriesPresenter.loadDataForDrawer();
+        mRepositoriesPresenter.forDrawer();
         //Перенести это дерьмо в какой-нибудь Presenter
         //user = FirebaseAuth.getInstance().getCurrentUser();
         if (mDrawerPresenter.getUser() != null) {
@@ -219,8 +201,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                     Uri.parse("android.resource://com.imra.mynews/" + R.drawable.ic_user_svg) :
                     mDrawerPresenter.getUser().getPhotoUrl();
         } else {
-            uName = " ";
-            uEmail = " ";
+            uName = "Unknown user";
+            uEmail = "Unknown email";
             uIcon = Uri.parse("android.resource://com.imra.mynews/" + R.drawable.ic_user_svg);
         }
         docRefUserChannels = db.collection("userChannels").document(uEmail);
@@ -236,15 +218,19 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         GlideRequests glideRequests = GlideApp.with(this);
         mReposRecyclerAdapter = new ReposRecyclerAdapter(mContext, getMvpDelegate(), this, glideRequests);
         mReposRecyclerAdapter.setHasStableIds(true);
-        RecyclerViewPreloader<Article> preload = new RecyclerViewPreloader<Article>(glideRequests, mReposRecyclerAdapter,mReposRecyclerAdapter,10);
-        mListView.setLayoutManager(new LinearLayoutManager(this));
-        mListView.addOnScrollListener(preload);
-        mListView.setAdapter(mReposRecyclerAdapter);
-        ItemClickSupport.addTo(mListView).setOnItemClickListener((recyclerView, position, v) -> {
+        RecyclerViewPreloader<Article> preload = new RecyclerViewPreloader<Article>(glideRequests, mReposRecyclerAdapter,mReposRecyclerAdapter,6);
+        if(this.getResources().getConfiguration().orientation == 1) {
+            mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        } else {
+            mRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+        }
+        mRecyclerView.addOnScrollListener(preload);
+        mRecyclerView.setAdapter(mReposRecyclerAdapter);
+        ItemClickSupport.addTo(mRecyclerView).setOnItemClickListener((recyclerView, position, v) -> {
             mMainPresenter.onRepositorySelection(position, mReposRecyclerAdapter.getItem(position));
         });
 
-        mSwipeRefreshLayout.setListViewChild(mListView);
+        mSwipeRefreshLayout.setListViewChild(mRecyclerView);
         mSwipeRefreshLayout.setOnRefreshListener(() -> mRepositoriesPresenter.loadRepositories(true, oldUrl, "", isConnected()));
 
     }
@@ -304,13 +290,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     }
 
     @Override
-    public void showDetailsContainer(int position, ItemHtml itemHtml) {
-
-    }
-
-    @Override
     public void setSelection(int position) {
-        //mReposAdapter.setSelection(position);
         mReposRecyclerAdapter.setSelection(position);
     }
 
@@ -346,29 +326,29 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     @Override
     public void showListProgress() {
-        mListView.setVisibility(View.GONE);
+        mRecyclerView.setVisibility(View.GONE);
         mNoRepositoriesTextView.setVisibility(View.GONE);
         mRepositoriesProgressBar.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void hideListProgress() {
-        mListView.setVisibility(View.VISIBLE);
+        mRecyclerView.setVisibility(View.VISIBLE);
         mRepositoriesProgressBar.setVisibility(View.GONE);
     }
 
     @Override
     public void setRepositories(RSSFeed repositories) {
-        //mListView.setEmptyView(mNoRepositoriesTextView);
-        //mReposAdapter.setRepositories(repositories);
+        if(repositories.getArticleList().isEmpty()) {
+            mNoRepositoriesTextView.setVisibility(View.VISIBLE);
+            mRecyclerView.setVisibility(View.GONE);
+        } else {
+            mNoRepositoriesTextView.setVisibility(View.GONE);
+            mRecyclerView.setVisibility(View.VISIBLE);
+        }
+        Objects.requireNonNull(mRecyclerView.getLayoutManager()).scrollToPosition(0);
         mReposRecyclerAdapter.setRepositories(repositories);
-        //mDrawerPresenter.setSubItems();
-}
-
-    @Override
-    public void setRepositories(List<ItemHtml> itemHtml) {
-
-    } //времянка
+    }
 
     @Override
     public void setChannelTitle(RSSFeed rssFeed) {
@@ -385,11 +365,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             mMainPresenter.saveSP(oldUrl);
             isNew = false;
         }
-    }
-
-    @Override
-    public void setDrawerItems(RSSFeed rssFeed) {
-        expDrawItem
     }
 
     private void addInFirestone (String key, String value) {
@@ -422,15 +397,15 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     @Override
     public void addRepositories(RSSFeed repositories) {
-        //mListView.setEmptyView(mNoRepositoriesTextView);
-        //mReposAdapter.addRepositories(repositories);
+        if(repositories.getArticleList().isEmpty()) {
+            mNoRepositoriesTextView.setVisibility(View.VISIBLE);
+            mRecyclerView.setVisibility(View.GONE);
+        } else {
+            mNoRepositoriesTextView.setVisibility(View.GONE);
+            mRecyclerView.setVisibility(View.VISIBLE);
+        }
         mReposRecyclerAdapter.addRepositories(repositories);
     }
-
-    @Override
-    public void addRepositories(List<ItemHtml> itemHtml) {
-
-    } //времянка
 
     @Override
     public void showError(String message) {
@@ -576,7 +551,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 .withActivity(this)
                 .withToolbar(mToolbar)
                 .withHasStableIds(true)
-                .withItemAnimator(new AlphaCrossFadeAnimator())
+                .withItemAnimator(new ScaleYAnimator())
                 .withActionBarDrawerToggle(true)
                 .withAccountHeader(mAccountHeader)
                 .withSliderBackgroundColorRes(R.color.md_white_1000)
@@ -587,8 +562,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                         new PrimaryDrawerItem().withName(R.string.drawer_item_offline).withIcon(GoogleMaterial.Icon.gmd_save).withIdentifier(50002).withSelectable(false),
                         new PrimaryDrawerItem().withName(R.string.Contacts).withIcon(GoogleMaterial.Icon.gmd_info).withIdentifier(50004).withSelectable(false),
                         new SectionDrawerItem().withName("Новости"),
-                        expDrawItem,
-                        new SectionDrawerItem().withIdentifier(60000)
+                        expDrawItem
+                        //new SectionDrawerItem().withIdentifier(60000)
                         )
                 .withOnDrawerItemClickListener((View view, int position, IDrawerItem drawerItem) -> {
 
@@ -596,7 +571,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                         Intent intent = null;
                         switch ((int)drawerItem.getIdentifier()) {
                             case 50001 :
-                                intent = new Intent(MainActivity.this, SettingsActivity.class);
+                                intent = new Intent(MainActivity.this, FindRSSActivity.class);
                                 break;
                             case 50002 :
                                 intent = new Intent(MainActivity.this, SavedNewsActivity.class);
@@ -621,9 +596,10 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                             if(mDetailsFrameLayout.getVisibility() == View.VISIBLE) mDetailsFrameLayout.setVisibility(View.GONE);
                             mRepositoriesPresenter.loadRepositories(true, oldUrl, "", isConnected());
                             //oldUrl = sp.getString(drawerItem.getTag().toString(), "");
+                            return false;
                         }
                     }
-                    return false;
+                    return true;
                 })
                 .withOnDrawerItemLongClickListener((view, position, drawerItem) -> {
                     if(drawerItem != null) {
@@ -779,7 +755,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                             mToolbar.setBackgroundColor(tem);
                                             mToolbarFrame.setBackgroundColor(tem);
                                             int temp = manipulateColor(ps.getRgb());
-                                            mListView.setBackgroundColor(temp);
+                                            mRecyclerView.setBackgroundColor(temp);
                                             mDetailsFrameLayout.setBackgroundColor(temp);
                                             col2 = ((ColorDrawable) mToolbar.getBackground()).getColor();
 
@@ -821,7 +797,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                             mToolbar.setBackgroundColor(tem);
                                             mToolbarFrame.setBackgroundColor(tem);
                                             int temp = manipulateColor(ps.getRgb());
-                                            mListView.setBackgroundColor(temp);
+                                            mRecyclerView.setBackgroundColor(temp);
                                             mDetailsFrameLayout.setBackgroundColor(temp);
                                             col2 = ((ColorDrawable) mToolbar.getBackground()).getColor();
                                         }
@@ -829,7 +805,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                             if(col == col2) {
                                                 mToolbar.setBackgroundColor(colorTemporaly);
                                                 mToolbarFrame.setBackgroundColor(colorTemporaly);
-                                                mListView.setBackgroundColor(colorTemporaly);
+                                                mRecyclerView.setBackgroundColor(colorTemporaly);
                                             }
                                         }
                                     }
@@ -974,9 +950,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             if(task.getResult() != null && task.getResult().getData() != null) {
-                                mRepositoriesPresenter.forDrawer(task.getResult().getData());
-                                //mDrawerPresenter.setSubItems(task.getResult().getData());
-                                Log.e("getInFire task not null", task.getResult().getId() + " => " + task.getResult().getData());
+                                //mRepositoriesPresenter.forDrawer(task.getResult().getData());
+                                mDrawerPresenter.setSubItems(task.getResult().getData());
+                                //Log.e("getInFire task not null", task.getResult().getId() + " => " + task.getResult().getData());
                             } else {
                                 mDrawerPresenter.setSubItems(userChannels);
                             }

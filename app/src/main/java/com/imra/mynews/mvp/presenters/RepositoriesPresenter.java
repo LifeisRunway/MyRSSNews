@@ -4,6 +4,12 @@ import android.annotation.TargetApi;
 import android.os.Build;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.imra.mynews.app.MyNewsApp;
 import com.imra.mynews.di.common.ArticleDao;
 import com.imra.mynews.mvp.MyNewsService;
@@ -86,8 +92,8 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         loadOfflineNews(false, isRefreshing);
     }
 
-    public void forDrawer (Map<String, Object> firestoneData) {
-        loadDataForDrawer (firestoneData);
+    public void forDrawer () {
+        loadDataForDrawer();
     }
 
 
@@ -203,10 +209,12 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                     a.setEnclosure(true);
                 } else {
                     Pattern p2 = Pattern.compile("https*://[^\"']+\\.(png|jpg|jpeg|gif)");
-                    Matcher m2 = p2.matcher(a.getDescription());
-                    if(m2.find()) {
-                        a.setEclos(m2.group());
-                        a.setEnclosure(false);
+                    if(a.getDescription() != null) {
+                        Matcher m2 = p2.matcher(a.getDescription());
+                        if(m2.find()) {
+                            a.setEclos(m2.group());
+                            a.setEnclosure(false);
+                        }
                     }
                 }
                 sb.setLength(0);
@@ -286,14 +294,15 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     }
 
 
-    private List<RSSFeed> findRssUrl (String stringHtml, String url) {
+    private RSSFeed findRssUrl (String stringHtml, String url) {
         String sRssFeed = "<\\s*link\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*/*>";
         String mRegex2 = "<\\s*link[^>]+(type\\s*=\\s*['\"]*image[^'\"]['\"]*[^>]+href\\s*=(\\s*['\"]*[^\"']+['\"]*)|href\\s*=(\\s*['\"]*[^\"']+['\"]*)[^>]+type\\s*=\\s*['\"]*image[^'\"]['\"]*)[^>]+";
 
         String smallIcon = "<\\s*link\\s*.+?(rel)\\s*=\\s*['\"]*([^'\"]*icon[^'\"]*)['\"]*\\s*.+?(href)\\s*=\\s*['\"]*([^'\"]+)['\"]*\\s*.+?\\/*>";
 
         Map<String, String> map = new HashMap<>();
-        List<RSSFeed> rssFeeds = new ArrayList<>();
+        List<Article> articles = new ArrayList<>();
+        RSSFeed rssFeeds = new RSSFeed();
 
         if(!stringHtml.equals("") && !url.equals("")) {
             Pattern pattern = Pattern.compile(sRssFeed);
@@ -307,17 +316,17 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
                 if (map.get("rel").equals("alternate")) {
                     if(map.get("type").equals("application/atom+xml") || map.get("type").equals("application/rss+xml")){
-                        RSSFeed r = new RSSFeed();
-                        if(map.get("href").substring(0,1).equals("/")) {r.setChannelDescription(url + map.get("href"));}
-                        else {r.setChannelDescription(map.get("href"));}
-                        r.setChannelTitle(map.get("title"));
-                        rssFeeds.add(r);
+                        Article article = new Article();
+                        if(map.get("href").substring(0,1).equals("/")) {article.setDescription(url + map.get("href"));}
+                        else {article.setDescription(map.get("href"));}
+                        article.setTitle(map.get("title"));
+                        articles.add(article);
                     }
                 }
                 map.clear();
             }
 
-            if(!rssFeeds.isEmpty()) {
+            if(!articles.isEmpty()) {
                 pattern = Pattern.compile(smallIcon);
                 matcher = pattern.matcher(stringHtml);
                 if(matcher.find()) {
@@ -334,14 +343,15 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                                 url + map.get("href") :
                                 map.get("href");
 
-                        for(RSSFeed r : rssFeeds) {
-                            r.setIconUrl(tmp);
+                        for(Article article : articles) {
+                            article.setLink(tmp);
                         }
                     }
                 }
             }
         }
-        return new ArrayList<>(rssFeeds);
+        rssFeeds.setArticleList(articles);
+        return rssFeeds;
     }
 
 
@@ -362,7 +372,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                                 //mDrawerPresenter.setSubItems(task.getResult().getData());
                                 Log.e("getInFire task not null", task.getResult().getId() + " => " + task.getResult().getData());
                             } else {
-                                mDrawerPresenter.setSubItems(userChannels);
+                                //mDrawerPresenter.setSubItems(userChannels);
                             }
                         } else {
                             Log.w("ДОК_ОШИБКА", "Error getting documents.", task.getException());
@@ -379,7 +389,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                 for(Map.Entry e : firestoneData.entrySet()) {
                     if(!e.getKey().equals("")) {
                         
-                        if(mAD.getRssFeed(e.getKey()) == null) {
+                        if(mAD.getRssFeed(e.getKey().toString()) == null) {
                         
                            Observable<RSSFeed> observable = myNewsService.getRSSFeed(e.getKey().toString());
 
@@ -474,9 +484,4 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     private void setChannelTitle (RSSFeed rssFeed) {
         getViewState().setChannelTitle(rssFeed);
     }
-
-    private void setDrawerItems(RSSFeed rssFeed) {
-       getViewState().setDrawerItems(rssFeed);
-    }
-
 }

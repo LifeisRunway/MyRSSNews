@@ -59,23 +59,23 @@
         android:layout_height="match_parent"
         android:layout_below="@+id/v_toolbar_extension">
 
-        <ScrollView
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:fillViewport="true">
+            android:layout_height="match_parent">
 
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 tools:ignore="ScrollViewSize">
 
-                <ListView
+                <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/activity_home_list_view_repositories"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:choiceMode="singleChoice"
                     android:dividerHeight="1dp"
-                    tools:ignore="NestedScrolling" />
+                    tools:ignore="NestedScrolling"
+                    tools:listitem="@layout/item_layout" />
 
                 <TextView
                     android:id="@+id/activity_home_text_view_no_repositories"
@@ -94,7 +94,7 @@
 
             </FrameLayout>
 
-        </ScrollView>
+        </LinearLayout>
 
     </com.imra.mynews.ui.views.FrameSwipeRefreshLayout>
 

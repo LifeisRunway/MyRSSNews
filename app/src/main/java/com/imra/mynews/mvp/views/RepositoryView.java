@@ -4,6 +4,7 @@ import com.imra.mynews.mvp.models.Article;
 
 import moxy.MvpView;
 import moxy.viewstate.strategy.AddToEndSingleStrategy;
+import moxy.viewstate.strategy.OneExecutionStateStrategy;
 import moxy.viewstate.strategy.StateStrategyType;
 
 /**
@@ -17,8 +18,10 @@ public interface RepositoryView extends MvpView {
 
     void showRepository(int position, Article article);
 
+    @StateStrategyType(OneExecutionStateStrategy.class)
     void saveOrDelete(boolean isSave);
 
+    @StateStrategyType(OneExecutionStateStrategy.class)
     void greenOrNot (boolean isSave);
 
 }

@@ -6,7 +6,6 @@ import android.os.Bundle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
@@ -15,17 +14,13 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import com.imra.mynews.R;
 import com.imra.mynews.mvp.models.Article;
-import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.presenters.MainPresenter;
 import com.imra.mynews.mvp.presenters.RepositoriesPresenter;
-import com.imra.mynews.mvp.views.DrawerView;
 import com.imra.mynews.mvp.views.MainInterface;
 import com.imra.mynews.mvp.views.RepositoriesView;
 import com.imra.mynews.ui.adapters.SearchRSSAdapter;
 
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import butterknife.BindView;
@@ -40,7 +35,7 @@ import moxy.presenter.InjectPresenter;
  *
  * @author IMRA027
  */
-public class SettingsActivity extends MvpAppCompatActivity implements RepositoriesView, MainInterface {
+public class FindRSSActivity extends MvpAppCompatActivity implements RepositoriesView, MainInterface {
 
     @InjectPresenter
     RepositoriesPresenter mRepositoriesPresenter;
@@ -72,7 +67,7 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.settings_activity);
+        setContentView(R.layout.activity_find_rss);
 
         unbinder = ButterKnife.bind(this);
         //getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
@@ -86,7 +81,7 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
             if(searchRSSAdapter.getItemViewType(pos) != 0) {
                 return;
             }
-            mMainPresenter.onRSSSelection(pos, searchRSSAdapter.getItem(pos));
+            mMainPresenter.onRepositorySelection(pos, searchRSSAdapter.getItem(pos));
         });
         mSearchButton.setOnClickListener(new Button.OnClickListener() {
             @Override
@@ -168,18 +163,7 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
     }
 
     @Override
-    public void setRepositories(List<ItemHtml> itemHtml) {
-//         mListView.setEmptyView(mNoRepositoriesTextView);
-//         searchRSSAdapter.setRepositories(itemHtml);
-    }
-
-    @Override
     public void setChannelTitle(RSSFeed rssFeed) {
-
-    }
-
-    @Override
-    public void setDrawerItems(Map<String, Object> firestoneData) {
 
     }
 
@@ -187,12 +171,6 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
     public void addRepositories(RSSFeed repositories) {
         mListView.setEmptyView(mNoRepositoriesTextView);
         searchRSSAdapter.addRepositories(repositories);
-    }
-
-    @Override
-    public void addRepositories(List<ItemHtml> itemHtml) {
-//         mListView.setEmptyView(mNoRepositoriesTextView);
-//         searchRSSAdapter.addRepositories(itemHtml);
     }
 
     @Override
@@ -206,19 +184,6 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
     }
 
     @Override
-    public void showDetailsContainer(int position, RSSFeed rssFeed) {
-        Intent intent = new Intent();
-        if ((rssFeed.getChannelDescription().substring(0, 1).equals("/"))) {
-            intent.putExtra("url", mUrl + itemHtml.getChannelDescription());
-        } else {
-            intent.putExtra("url", rssFeed.getChannelDescription());
-        }
-        intent.putExtra("iconUrl", rssFeed.getIconUrl());
-        setResult(RESULT_OK,intent);
-        this.finish();
-    }
-
-    @Override
     public void onBackPressed() {
         super.onBackPressed();
         setResult(RESULT_CANCELED);
@@ -227,7 +192,18 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
 
     @Override
     public void showDetails(int position, Article article) {
-
+        Intent intent = new Intent();
+        String description = article.getDescription();
+        if (description != null) {
+            if ((description.substring(0, 1).equals("/"))) {
+                intent.putExtra("url", mUrl + description);
+            } else {
+                intent.putExtra("url", description);
+            }
+        }
+        intent.putExtra("iconUrl", article.getLink());
+        setResult(RESULT_OK,intent);
+        this.finish();
     }
 
 }

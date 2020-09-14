@@ -29,8 +29,8 @@
 
         <ImageView
             android:id="@+id/item_image_view"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_gravity="top"
             android:src="@drawable/ckeck_box_like_background"
             tools:ignore="ContentDescription" />

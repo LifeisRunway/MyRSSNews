@@ -130,7 +130,7 @@ public class ReposRecyclerAdapter extends MvpBaseRecyclerAdapter<ReposRecyclerAd
         final View view = inflater.inflate(R.layout.item_layout, parent, false);
         view.getLayoutParams().width = screenWidth;
 
-        Log.e("Таг", "viewType " + viewType);
+        //Log.e("Таг", "viewType " + viewType);
 
         if (actualDimensions == null) {
             view.getViewTreeObserver()

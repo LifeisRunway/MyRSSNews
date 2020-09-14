@@ -11,6 +11,8 @@ import javax.inject.Inject;
 
 import moxy.InjectViewState;
 import moxy.MvpPresenter;
+import moxy.viewstate.strategy.OneExecutionStateStrategy;
+import moxy.viewstate.strategy.StateStrategyType;
 
 /**
  * Date: 27.07.2019
@@ -41,12 +43,6 @@ public class MainPresenter extends MvpPresenter<MainInterface> {
         getViewState().showDetails(position, article);
 
         getViewState().showDetailsContainer(position);
-    }
-
-    public void onRSSSelection (int position, ItemHtml itemHtml) {
-        getViewState().setSelection(position);
-
-        getViewState().showDetailsContainer(position, itemHtml);
     }
 
     public String getUrlSP() {

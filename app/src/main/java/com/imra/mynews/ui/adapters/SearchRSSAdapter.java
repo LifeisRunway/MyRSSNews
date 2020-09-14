@@ -13,6 +13,7 @@ import com.imra.mynews.R;
 import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.ItemHtml;
+import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.presenters.RepositoryPresenter;
 import com.imra.mynews.mvp.views.RepositoryView;
 
@@ -36,21 +37,21 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
     private static final int REPOSITORY_VIEW_TYPE = 0;
     private static final int PROGRESS_VIEW_TYPE = 1;
 
-    private List<RSSFeed> mItemHtml;
+    private List<Article> mArticles;
     private int mSelection = -1;
 
     public SearchRSSAdapter(MvpDelegate<?> parentDelegate, String childId) {
         super(parentDelegate, String.valueOf(0));
-        mItemHtml = new ArrayList<>();
+        mArticles = new ArrayList<>();
     }
 
-    public void setRepositories(List<RSSFeed> itemHtml) {
-        mItemHtml = new ArrayList<>(itemHtml);
+    public void setRepositories(RSSFeed itemHtml) {
+        mArticles = new ArrayList<>(itemHtml.getArticleList());
         notifyDataSetChanged();
     }
 
-    public void addRepositories (List<RSSFeed> itemHtml) {
-        mItemHtml.addAll(itemHtml);
+    public void addRepositories (RSSFeed itemHtml) {
+        mArticles = new ArrayList<>(itemHtml.getArticleList());
         notifyDataSetChanged();
     }
 
@@ -63,17 +64,17 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
     //Тип макета по позиции
     @Override
     public int getItemViewType(int position) {
-        return position == mItemHtml.size() ? PROGRESS_VIEW_TYPE : REPOSITORY_VIEW_TYPE;
+        return position == mArticles.size() ? PROGRESS_VIEW_TYPE : REPOSITORY_VIEW_TYPE;
     }
 
     @Override
     public int getCount() {
-        return mItemHtml.size();
+        return mArticles.size();
     }
 
     @Override
-    public Object getItem(int position) {
-        return mItemHtml.get(position);
+    public Article getItem(int position) {
+        return mArticles.get(position);
     }
 
     @Override
@@ -89,7 +90,7 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        if(mItemHtml.isEmpty()) {return null;}
+        if(mArticles.isEmpty()) {return null;}
 
         if (getItemViewType(position) == PROGRESS_VIEW_TYPE) {
             return new ProgressBar(parent.getContext());
@@ -104,13 +105,11 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
             convertView.setTag(holder);
         }
 
-        final RSSFeed item = getItem(position);
+        final Article item = getItem(position);
 
         holder.bind(position, item);
 
         return convertView;
-
-
     }
 
     public class RepositoryHolder implements RepositoryView {
@@ -118,7 +117,7 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
         @InjectPresenter
         RepositoryPresenter mRepositoryPresenter;
 
-        private RSSFeed mItemHtml;
+        private Article mArticle;
         private int mPosition;
 
         @BindView(R.id.item_title)
@@ -136,7 +135,7 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
 
         @ProvidePresenter
         RepositoryPresenter provideRepositoryPresenter() {
-            return new RepositoryPresenter(mPosition, new Article()); //ставим заглушку Артикль
+            return new RepositoryPresenter(mPosition, mArticle); //ставим заглушку Артикль
         }
 
         RepositoryHolder(View view) {
@@ -145,7 +144,7 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
             ButterKnife.bind(this, view);
         }
 
-        void bind(int position, RSSFeed itemHtml) {
+        void bind(int position, Article article) {
 
             mPosition = position;
 
@@ -156,7 +155,7 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
                 mMvpDelegate = null;
             }
 
-            mItemHtml = itemHtml;
+            mArticle = article;
 
             getMvpDelegate().onCreate();
             getMvpDelegate().onAttach();
@@ -170,11 +169,11 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
         @TargetApi(Build.VERSION_CODES.O)
         @Override
         public void showRepository(int position, Article article) {
-            titleTextView.setText(mItemHtml.getChannelTitle());
-            urlTextView.setText(mItemHtml.getChannelDescription());
+            titleTextView.setText(mArticle.getTitle());
+            urlTextView.setText(mArticle.getDescription());
             GlideApp
                     .with(view)
-                    .load(mItemHtml.getIconUrl())
+                    .load(mArticle.getLink())
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .skipMemoryCache(true)
                     .fitCenter()
@@ -193,7 +192,7 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
 
 
         MvpDelegate getMvpDelegate() {
-            if (mItemHtml == null) {
+            if (mArticle == null) {
                 return null;
             }
 
