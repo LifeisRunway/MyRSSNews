@@ -209,6 +209,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             mDetailsFrameLayout.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
         }
         createExpDrItem();
+        mRepositoriesPresenter.loadDataForDrawer();
         //Перенести это дерьмо в какой-нибудь Presenter
         //user = FirebaseAuth.getInstance().getCurrentUser();
         if (mDrawerPresenter.getUser() != null) {
