@@ -38,9 +38,9 @@ public interface ArticleDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     Long insert (Article article);
 
-    @Transaction
-    @Query("SELECT * FROM rssfeeds WHERE rssFeedId = :rssFeedId")
-    RssFeedArticlesDetail getRssFeedArticleDetail (Integer rssFeedId);
+//     @Transaction
+//     @Query("SELECT * FROM rssfeeds WHERE rssFeedId = :rssFeedId")
+//     RssFeedArticlesDetail getRssFeedArticleDetail (Integer rssFeedId);
     
     @Transaction
     @Query("SELECT * FROM rssfeeds")
