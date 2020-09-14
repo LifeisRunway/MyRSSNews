@@ -36,7 +36,7 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
     private static final int REPOSITORY_VIEW_TYPE = 0;
     private static final int PROGRESS_VIEW_TYPE = 1;
 
-    private List<ItemHtml> mItemHtml;
+    private List<RSSFeed> mItemHtml;
     private int mSelection = -1;
 
     public SearchRSSAdapter(MvpDelegate<?> parentDelegate, String childId) {
@@ -44,12 +44,12 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
         mItemHtml = new ArrayList<>();
     }
 
-    public void setRepositories(List<ItemHtml> itemHtml) {
+    public void setRepositories(List<RSSFeed> itemHtml) {
         mItemHtml = new ArrayList<>(itemHtml);
         notifyDataSetChanged();
     }
 
-    public void addRepositories (List<ItemHtml> itemHtml) {
+    public void addRepositories (List<RSSFeed> itemHtml) {
         mItemHtml.addAll(itemHtml);
         notifyDataSetChanged();
     }
@@ -104,7 +104,7 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
             convertView.setTag(holder);
         }
 
-        final ItemHtml item = (ItemHtml) getItem(position);
+        final RSSFeed item = getItem(position);
 
         holder.bind(position, item);
 
@@ -118,7 +118,7 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
         @InjectPresenter
         RepositoryPresenter mRepositoryPresenter;
 
-        private ItemHtml mItemHtml;
+        private RSSFeed mItemHtml;
         private int mPosition;
 
         @BindView(R.id.item_title)
@@ -145,7 +145,7 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
             ButterKnife.bind(this, view);
         }
 
-        void bind(int position, ItemHtml itemHtml) {
+        void bind(int position, RSSFeed itemHtml) {
 
             mPosition = position;
 
@@ -170,11 +170,11 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
         @TargetApi(Build.VERSION_CODES.O)
         @Override
         public void showRepository(int position, Article article) {
-            titleTextView.setText(mItemHtml.getTitle());
-            urlTextView.setText(mItemHtml.getHref());
+            titleTextView.setText(mItemHtml.getChannelTitle());
+            urlTextView.setText(mItemHtml.getChannelDescription());
             GlideApp
                     .with(view)
-                    .load(mItemHtml.getIcon_url())
+                    .load(mItemHtml.getIconUrl())
                     .diskCacheStrategy(DiskCacheStrategy.NONE)
                     .skipMemoryCache(true)
                     .fitCenter()
