@@ -27,10 +27,11 @@
             </intent-filter>
         </activity>
         <activity android:name=".ui.activities.SettingsActivity" />
-        <activity android:name=".ui.activities.OfflineActivity" />
+        <activity android:name=".ui.activities.SavedNewsActivity" />
         <activity android:name=".ui.activities.MainActivity" />
         <activity android:name=".ui.activities.SignUpActivity"
             android:windowSoftInputMode="adjustPan"/>
+        <activity android:name=".ui.activities.ContactsActivity" />
 
         <meta-data
             android:name="preloaded_fonts"

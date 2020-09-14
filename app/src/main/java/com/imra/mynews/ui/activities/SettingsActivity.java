@@ -25,6 +25,7 @@ import com.imra.mynews.mvp.views.RepositoriesView;
 import com.imra.mynews.ui.adapters.SearchRSSAdapter;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import butterknife.BindView;
@@ -173,6 +174,11 @@ public class SettingsActivity extends MvpAppCompatActivity implements Repositori
 
     @Override
     public void setChannelTitle(RSSFeed rssFeed) {
+
+    }
+
+    @Override
+    public void setDrawerItems(Map<String, Object> firestoneData) {
 
     }
 

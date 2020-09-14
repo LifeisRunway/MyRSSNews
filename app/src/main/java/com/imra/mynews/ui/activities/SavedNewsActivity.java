@@ -22,8 +22,10 @@ import com.imra.mynews.mvp.views.RepositoriesView;
 import com.imra.mynews.ui.adapters.RepositoriesAdapter;
 import com.imra.mynews.ui.fragments.Fragment;
 import com.imra.mynews.ui.views.FrameSwipeRefreshLayout;
+import com.imra.mynews.ui.views.ListViewFrameSwipeRefreshLayout;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -43,7 +45,7 @@ import moxy.presenter.InjectPresenter;
  *
  * @author IMRA027
  */
-public class OfflineActivity extends MvpAppCompatActivity implements RepositoriesView, MainInterface, RepositoriesAdapter.OnScrollToBottomListener {
+public class SavedNewsActivity extends MvpAppCompatActivity implements RepositoriesView, MainInterface, RepositoriesAdapter.OnScrollToBottomListener {
 
     @InjectPresenter
     MainPresenter mMainPresenter;
@@ -63,7 +65,7 @@ public class OfflineActivity extends MvpAppCompatActivity implements Repositorie
     TextView mChannelTitle;
 
     @BindView(R.id.activity_home_swipe_refresh_layout2)
-    FrameSwipeRefreshLayout mSwipeRefreshLayout;
+    ListViewFrameSwipeRefreshLayout mSwipeRefreshLayout;
 
     @BindView(R.id.activity_home_frame_layout_details2)
     FrameLayout mDetailsFragmeLayout;
@@ -223,6 +225,11 @@ public class OfflineActivity extends MvpAppCompatActivity implements Repositorie
 
     @Override
     public void setChannelTitle(RSSFeed rssFeed) {
+
+    }
+
+    @Override
+    public void setDrawerItems(Map<String, Object> firestoneData) {
 
     }
 

@@ -4,6 +4,7 @@ import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
 
 import java.util.List;
+import java.util.Map;
 
 import moxy.MvpView;
 import moxy.viewstate.strategy.AddToEndSingleStrategy;
@@ -40,6 +41,8 @@ public interface RepositoriesView extends MvpView {
     void setRepositories(List<ItemHtml> itemHtml);
 
     void setChannelTitle(RSSFeed rssFeed);
+
+    void setDrawerItems(RSSFeed rssFeed);
 
     @StateStrategyType(AddToEndStrategy.class)
     void addRepositories(RSSFeed repositories);

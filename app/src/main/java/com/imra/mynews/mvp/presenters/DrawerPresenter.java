@@ -80,7 +80,6 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
         tagRssFeeds.clear();
         if(!firestoneData.isEmpty()) {
             for(Map.Entry e : firestoneData.entrySet()) {
-
                 if(mAD.getRssForDrawer(e.getKey().toString()) != null) {
                     mRssFeeds.add(mAD.getRssForDrawer(e.getKey().toString()));
                 } else {
@@ -91,7 +90,7 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
                             .replaceFirst("[^/]+//(www\\.)*","")
                             .replaceFirst("/.+","");
                     r.setTag(tag);
-                    mAD.insertOrUpdateRss(r);
+                    //mAD.insertOrUpdateRss(r);
                     mRssFeeds.add(r);
                 }
             }

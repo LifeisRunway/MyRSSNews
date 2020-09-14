@@ -20,17 +20,19 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
 import androidx.palette.graphics.Palette;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.Log;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
-import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
@@ -42,18 +44,17 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.firestore.SetOptions;
 import com.imra.mynews.R;
 import com.imra.mynews.di.modules.GlideApp;
+import com.imra.mynews.di.modules.GlideRequests;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
@@ -63,10 +64,12 @@ import com.imra.mynews.mvp.presenters.RepositoriesPresenter;
 import com.imra.mynews.mvp.views.DrawerView;
 import com.imra.mynews.mvp.views.MainInterface;
 import com.imra.mynews.mvp.views.RepositoriesView;
+import com.imra.mynews.ui.adapters.ReposRecyclerAdapter;
 import com.imra.mynews.ui.adapters.RepositoriesAdapter;
 import com.imra.mynews.ui.fragments.Fragment;
 import com.imra.mynews.ui.utils.CustomDividerDrawerItem;
 import com.imra.mynews.ui.utils.CustomUrlPrimaryDrawerItem;
+import com.imra.mynews.ui.utils.ItemClickSupport;
 import com.imra.mynews.ui.views.FrameSwipeRefreshLayout;
 import com.mikepenz.iconics.IconicsDrawable;
 import com.mikepenz.itemanimators.AlphaCrossFadeAnimator;
@@ -75,7 +78,6 @@ import com.mikepenz.materialdrawer.AccountHeaderBuilder;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
 import com.mikepenz.materialdrawer.holder.BadgeStyle;
-import com.mikepenz.materialdrawer.model.DividerDrawerItem;
 import com.mikepenz.materialdrawer.model.ExpandableBadgeDrawerItem;
 import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
@@ -108,7 +110,7 @@ import moxy.presenter.InjectPresenter;
 import moxy.presenter.ProvidePresenter;
 
 
-public class MainActivity extends MvpAppCompatActivity implements MainInterface, RepositoriesView, DrawerView, RepositoriesAdapter.OnScrollToBottomListener{
+public class MainActivity extends MvpAppCompatActivity implements MainInterface, RepositoriesView, DrawerView, ReposRecyclerAdapter.OnScrollToBottomListener{
 
     @InjectPresenter
     MainPresenter mMainPresenter;
@@ -124,7 +126,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     @BindView(R.id.activity_home_progress_bar_repositories)
     ProgressBar mRepositoriesProgressBar;
     @BindView(R.id.activity_home_list_view_repositories)
-    ListView mListView;
+    RecyclerView mListView;
     @BindView(R.id.activity_home_text_view_no_repositories)
     TextView mNoRepositoriesTextView;
     @BindView(R.id.toolbar)
@@ -145,6 +147,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     private boolean isNew;
 
     private RepositoriesAdapter mReposAdapter;
+    private ReposRecyclerAdapter mReposRecyclerAdapter;
 
     private Drawer mDrawer = null;
     private AccountHeader mAccountHeader = null;
@@ -179,6 +182,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     private GoogleSignInClient signInClient;
     private static final int REQUEST_CODE_SEARCH_ACTIVITY = 1;
     private FirebaseFirestore db;
+    private FirebaseAnalytics mFirebaseAnalytics;
     DocumentReference docRefUserChannels;
 
     @ProvidePresenter
@@ -198,6 +202,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 .build();
         signInClient = GoogleSignIn.getClient(this, gso);
         db = FirebaseFirestore.getInstance();
+        mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         unbinder = ButterKnife.bind(this);
         drawerImageLoader();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
@@ -227,20 +232,26 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
         oldUrl = mMainPresenter.getUrlSP();
 
+        GlideRequests glideRequests = GlideApp.with(this);
+        mReposRecyclerAdapter = new ReposRecyclerAdapter(mContext, getMvpDelegate(), this, glideRequests);
+        mReposRecyclerAdapter.setHasStableIds(true);
+        RecyclerViewPreloader<Article> preload = new RecyclerViewPreloader<Article>(glideRequests, mReposRecyclerAdapter,mReposRecyclerAdapter,10);
+        mListView.setLayoutManager(new LinearLayoutManager(this));
+        mListView.addOnScrollListener(preload);
+        mListView.setAdapter(mReposRecyclerAdapter);
+        ItemClickSupport.addTo(mListView).setOnItemClickListener((recyclerView, position, v) -> {
+            mMainPresenter.onRepositorySelection(position, mReposRecyclerAdapter.getItem(position));
+        });
+
         mSwipeRefreshLayout.setListViewChild(mListView);
         mSwipeRefreshLayout.setOnRefreshListener(() -> mRepositoriesPresenter.loadRepositories(true, oldUrl, "", isConnected()));
 
-        mReposAdapter = new RepositoriesAdapter(getMvpDelegate(), this);
-        mListView.setAdapter(mReposAdapter);
-        mListView.setOnItemClickListener((AdapterView<?> parent, View view, int pos, long id) -> {
-            if(mReposAdapter.getItemViewType(pos) != 0) {
-                return;
-            }
-            mMainPresenter.onRepositorySelection(pos, mReposAdapter.getItem(pos));
-        });
+    }
 
-
-
+    private void sendAnalyticsReadArticle() {
+        Bundle bundle = new Bundle();
+        bundle.putString(FirebaseAnalytics.Param.CONTENT_TYPE, "article");
+        mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.SELECT_CONTENT, bundle);
     }
 
     private boolean isConnected () {
@@ -298,7 +309,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     @Override
     public void setSelection(int position) {
-        mReposAdapter.setSelection(position);
+        //mReposAdapter.setSelection(position);
+        mReposRecyclerAdapter.setSelection(position);
     }
 
     @Override
@@ -307,6 +319,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 .beginTransaction()
                 .replace(R.id.activity_home_frame_layout_details, Fragment.getInstance(position, article))
                 .commit();
+        if(isConnected()) {
+            sendAnalyticsReadArticle();}
     }
 
     @Override
@@ -344,8 +358,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     @Override
     public void setRepositories(RSSFeed repositories) {
-        mListView.setEmptyView(mNoRepositoriesTextView);
-        mReposAdapter.setRepositories(repositories);
+        //mListView.setEmptyView(mNoRepositoriesTextView);
+        //mReposAdapter.setRepositories(repositories);
+        mReposRecyclerAdapter.setRepositories(repositories);
         //mDrawerPresenter.setSubItems();
 }
 
@@ -369,6 +384,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             mMainPresenter.saveSP(oldUrl);
             isNew = false;
         }
+    }
+
+    @Override
+    public void setDrawerItems(RSSFeed rssFeed) {
+        expDrawItem
     }
 
     private void addInFirestone (String key, String value) {
@@ -401,8 +421,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     @Override
     public void addRepositories(RSSFeed repositories) {
-        mListView.setEmptyView(mNoRepositoriesTextView);
-        mReposAdapter.addRepositories(repositories);
+        //mListView.setEmptyView(mNoRepositoriesTextView);
+        //mReposAdapter.addRepositories(repositories);
+        mReposRecyclerAdapter.addRepositories(repositories);
     }
 
     @Override
@@ -428,7 +449,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     @Override
     public void onScrollToBottom() {
-        mRepositoriesPresenter.loadNextRepositories(oldUrl, isConnected());
+        //mRepositoriesPresenter.loadNextRepositories(oldUrl, isConnected());
     }
 
     private void drawerImageLoader () {
@@ -437,7 +458,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         DrawerImageLoader.init(new AbstractDrawerImageLoader() {
             @Override
             public void set(ImageView imageView, Uri uri, Drawable placeholder, String tag) {
-                GlideApp.with(imageView.getContext()).load(uri).placeholder(placeholder).error(R.drawable.ic_my_news_playstore).diskCacheStrategy(DiskCacheStrategy.DATA).into(imageView);
+                GlideApp.with(imageView.getContext()).load(uri).placeholder(placeholder).error(R.drawable.ic_my_news_playstore).diskCacheStrategy(DiskCacheStrategy.AUTOMATIC).into(imageView);
             }
 
             @Override
@@ -563,7 +584,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                         new PrimaryDrawerItem().withName(R.string.drawer_item_home).withIcon(GoogleMaterial.Icon.gmd_settings).withIdentifier(50000).withSelectable(false),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_settings).withIcon(GoogleMaterial.Icon.gmd_find_in_page).withIdentifier(50001).withSelectable(false),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_offline).withIcon(GoogleMaterial.Icon.gmd_save).withIdentifier(50002).withSelectable(false),
-                        new PrimaryDrawerItem().withName("Контакты").withIcon(GoogleMaterial.Icon.gmd_info).withIdentifier(50004).withSelectable(false),
+                        new PrimaryDrawerItem().withName(R.string.Contacts).withIcon(GoogleMaterial.Icon.gmd_info).withIdentifier(50004).withSelectable(false),
                         new SectionDrawerItem().withName("Новости"),
                         expDrawItem,
                         new SectionDrawerItem().withIdentifier(60000)
@@ -577,10 +598,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                 intent = new Intent(MainActivity.this, SettingsActivity.class);
                                 break;
                             case 50002 :
-                                intent = new Intent(MainActivity.this, OfflineActivity.class);
+                                intent = new Intent(MainActivity.this, SavedNewsActivity.class);
                                 break;
                             case 50004:
-                                return true;
+                                intent = new Intent(MainActivity.this, ContactsActivity.class);
+                                break;
                             default:
                                 break;
                         }
@@ -592,7 +614,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                             }
                         }
                         if((int)drawerItem.getIdentifier() < 20000) {
-                            mListView.setSelectionAfterHeaderView();
+                            //mListView.setSelectionAfterHeaderView();
                             oldUrl = drawerItem.getTag().toString();
                             changeBackCol(mDrawerPresenter.getIconUrl(oldUrl));
                             if(mDetailsFrameLayout.getVisibility() == View.VISIBLE) mDetailsFrameLayout.setVisibility(View.GONE);
@@ -614,10 +636,13 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                         int [] testing = mDrawer.getExpandableExtension().getExpandedItems();
                                         if(oldUrl.equals(drawerItem.getTag().toString())) {
                                             if(!expDrawItem.getSubItems().isEmpty()) {
-                                                oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();
+                                                if(expDrawItem.getSubItems().get(0) instanceof ExpandableBadgeDrawerItem) {
+                                                    oldUrl = ((ExpandableBadgeDrawerItem)expDrawItem.getSubItems().get(0)).getSubItems().get(0).getTag().toString();
+                                                } else {
+                                                    oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();
+                                                }
                                                 mMainPresenter.saveSP(oldUrl);
-                                            }
-                                            else {setZeroItemDrawer ();}
+                                            } else {setZeroItemDrawer ();}
                                         }
                                         mDrawer.getExpandableExtension().collapse();
                                         mDrawerPresenter.deleteSubItem(drawerItem.getTag().toString());
@@ -680,7 +705,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                         for(String tag : list) {
                                             if(oldUrl.equals(tag)) {
                                                 if(!expDrawItem.getSubItems().isEmpty()) {
-                                                    oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();
+                                                    if(expDrawItem.getSubItems().get(0) instanceof ExpandableBadgeDrawerItem) {
+                                                        oldUrl = ((ExpandableBadgeDrawerItem)expDrawItem.getSubItems().get(0)).getSubItems().get(0).getTag().toString();
+                                                    } else {
+                                                        oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();
+                                                    }
                                                     mMainPresenter.saveSP(oldUrl);
                                                 }
                                                 else {setZeroItemDrawer ();}
@@ -944,8 +973,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             if(task.getResult() != null && task.getResult().getData() != null) {
-                                mDrawerPresenter.setSubItems(task.getResult().getData());
-                                //Log.e("ДОК_АЙДИ_И_ДАТА1", task.getResult().getId() + " => " + task.getResult().getData());
+                                mRepositoriesPresenter.forDrawer(task.getResult().getData());
+                                //mDrawerPresenter.setSubItems(task.getResult().getData());
+                                Log.e("getInFire task not null", task.getResult().getId() + " => " + task.getResult().getData());
                             } else {
                                 mDrawerPresenter.setSubItems(userChannels);
                             }
@@ -955,6 +985,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                     });
         }
     }
+
+
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
@@ -1003,12 +1035,15 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             else {expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));}
 
             mDrawer.updateItem(expDrawItem);
-            mRepositoriesPresenter.loadRepositories(false, expDrawItem.getSubItems().get(0).getTag().toString(), "", isConnected());
+            if ((expDrawItem.getSubItems().get(0) instanceof ExpandableBadgeDrawerItem)) {
+                oldUrl =  ((ExpandableBadgeDrawerItem)expDrawItem.getSubItems().get(0)).getSubItems().get(0).getTag().toString();
+            } else {
+                oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();
+            }
         } else {
             setZeroItemDrawer();
-            mRepositoriesPresenter.loadRepositories(false, "", "", isConnected());
         }
-
+        mRepositoriesPresenter.loadRepositories(false, oldUrl, "", isConnected());
     }
 
     @Override
@@ -1027,4 +1062,5 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     public void addNewNewsChannel (String name) {
 
     }
+
 }

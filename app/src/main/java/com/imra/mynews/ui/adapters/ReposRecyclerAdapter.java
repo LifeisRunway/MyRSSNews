@@ -1,26 +1,36 @@
 package com.imra.mynews.ui.adapters;
 
-import android.annotation.TargetApi;
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-
 import android.text.Html;
+import android.util.Log;
+import android.view.Display;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.core.util.Preconditions;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.ListPreloader;
 import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
-import com.bumptech.glide.signature.MediaStoreSignature;
 import com.imra.mynews.R;
 import com.imra.mynews.di.modules.GlideApp;
+import com.imra.mynews.di.modules.GlideRequest;
+import com.imra.mynews.di.modules.GlideRequests;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.presenters.RepositoryPresenter;
@@ -34,43 +44,41 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.reactivex.disposables.Disposable;
 import moxy.MvpDelegate;
 import moxy.presenter.InjectPresenter;
 import moxy.presenter.ProvidePresenter;
 
-import static com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade;
-
 /**
- * Date: 28.07.2019
- * Time: 14:28
+ * Date: 13.09.2020
+ * Time: 14:34
  *
  * @author IMRA027
- *
- * 
  */
-public class RepositoriesAdapter extends MvpBaseAdapter {
+public class ReposRecyclerAdapter extends MvpBaseRecyclerAdapter<ReposRecyclerAdapter.ListViewHolder> implements ListPreloader.PreloadSizeProvider<Article>, ListPreloader.PreloadModelProvider<Article> {
+
     private static final int REPOSITORY_VIEW_TYPE = 0;
     private static final int PROGRESS_VIEW_TYPE = 1;
-
-//    @InjectPresenter(type = PresenterType.WEAK, tag = RepositoryLikesPresenter.TAG)
-//    RepositoryLikesPresenter mRepositoryLikesPresenter;
-
     private int mSelection = -1;
     private List<Article> mArticles;
-    private int[] actualDimensions = {480, 360};
+    private final GlideRequest<Drawable> request;
+    private final int screenWidth;
+    private Context mContext;
 
-    private OnScrollToBottomListener mScrollToBottomListener;
+    private int[] actualDimensions;
 
-    public RepositoriesAdapter(MvpDelegate<?> parentDelegate, OnScrollToBottomListener scrollToBottomListener) {
+    private ReposRecyclerAdapter.OnScrollToBottomListener mScrollToBottomListener;
+
+    public ReposRecyclerAdapter (Context context, MvpDelegate<?> parentDelegate, ReposRecyclerAdapter.OnScrollToBottomListener scrollToBottomListener, GlideRequests glideRequests) {
         super(parentDelegate, String.valueOf(0));
         mScrollToBottomListener = scrollToBottomListener;
         mArticles = new ArrayList<>();
+        request = glideRequests.asDrawable().centerCrop();
+        setHasStableIds(true);
+        screenWidth = getScreenWidth(context);
+        mContext = context;
     }
 
     public void setRepositories(@NonNull RSSFeed rssFeeds) {
@@ -81,7 +89,6 @@ public class RepositoriesAdapter extends MvpBaseAdapter {
     }
 
     public void addRepositories (@NonNull RSSFeed rssFeeds) {
-
         if(rssFeeds.getArticleList() != null) {
             mArticles.addAll(rssFeeds.getArticleList());
         }
@@ -90,27 +97,15 @@ public class RepositoriesAdapter extends MvpBaseAdapter {
 
     public void setSelection(int selection) {
         mSelection = selection;
-
         notifyDataSetChanged();
     }
 
-    public int getRepositoriesCount() {
-        return mArticles.size();
-    }
-
-    //Тип макета по позиции
     @Override
     public int getItemViewType(int position) {
         return position == mArticles.size() ? PROGRESS_VIEW_TYPE : REPOSITORY_VIEW_TYPE;
     }
 
-    @Override
-    public int getCount() {
-        return mArticles.size();
-    }
-
-    @Override
-    public Article getItem(int position) {
+    public Article getItem (int position) {
         return mArticles.get(position);
     }
 
@@ -119,43 +114,54 @@ public class RepositoriesAdapter extends MvpBaseAdapter {
         return position;
     }
 
-    //Количество типов строк в списке
+    @SuppressWarnings("deprecation")
+    private static int getScreenWidth(Context context) {
+        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        @SuppressLint("RestrictedApi") Display display = Preconditions.checkNotNull(wm).getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        return size.x;
+    }
+
+    @NonNull
     @Override
-    public int getViewTypeCount() {
-        return 2;
+    public ListViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        LayoutInflater inflater = LayoutInflater.from(parent.getContext());
+        final View view = inflater.inflate(R.layout.item_layout, parent, false);
+        view.getLayoutParams().width = screenWidth;
+
+        Log.e("Таг", "viewType " + viewType);
+
+        if (actualDimensions == null) {
+            view.getViewTreeObserver()
+                    .addOnPreDrawListener(
+                            new ViewTreeObserver.OnPreDrawListener() {
+                                @Override
+                                public boolean onPreDraw() {
+                                    if (actualDimensions == null) {
+                                        actualDimensions = new int[] {view.getWidth(), view.getHeight()};
+                                    }
+                                    view.getViewTreeObserver().removeOnPreDrawListener(this);
+                                    return true;
+                                }
+                            });
+        }
+
+        return new ListViewHolder(view);
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-
-        if(mArticles.isEmpty()) return null;
-
-        if (getItemViewType(position) == PROGRESS_VIEW_TYPE) {
-            if (mScrollToBottomListener != null) {
-                mScrollToBottomListener.onScrollToBottom();
-            }
-            return new ProgressBar(parent.getContext());
-        }
-
-        RepositoryHolder holder;
-
-        if (convertView != null) {
-            holder = (RepositoryHolder) convertView.getTag();
-        } else {
-            convertView = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_layout, parent, false);
-            holder = new RepositoryHolder(convertView);
-            convertView.setTag(holder);
-        }
-
-        final Article item = getItem(position);
-        //holder.setSize();
-        holder.bind(position, item);
-
-        return convertView;
-
+    public void onBindViewHolder(@NonNull ListViewHolder holder, int position) {
+        Article a = mArticles.get(position);
+        holder.bind(a,position);
     }
 
-    public class RepositoryHolder implements RepositoryView {
+    @Override
+    public int getItemCount() {
+        return mArticles.size();
+    }
+
+    public class ListViewHolder extends RecyclerView.ViewHolder implements RepositoryView{
 
         @InjectPresenter
         RepositoryPresenter mRepositoryPresenter;
@@ -178,41 +184,22 @@ public class RepositoriesAdapter extends MvpBaseAdapter {
         @BindView(R.id.llOne)
         LinearLayout llOne;
 
-        View view;
-
         private MvpDelegate mMvpDelegate;
-
-        int maxWidth;
-        int widthIV;
-        int heightIV;
-        LinearLayout.LayoutParams param;
-        Disposable disposable;
 
         @ProvidePresenter
         RepositoryPresenter provideRepositoryPresenter() {
             return new RepositoryPresenter(mPosition, mArticle);
         }
 
-        RepositoryHolder(View view) {
-            this.view = view;
+        private View view;
 
+        ListViewHolder(View itemView) {
+            super(itemView);
+            this.view = itemView;
             ButterKnife.bind(this, view);
-            setSize();
         }
 
-        void setSize() {
-            view.post(() -> {
-                param = (LinearLayout.LayoutParams) llOne.getLayoutParams();
-                maxWidth = view.getMeasuredWidth();
-                widthIV = (int) (maxWidth * 0.375);
-                heightIV = (int) (widthIV * 0.75);
-                param.height = heightIV;
-                param.width = widthIV;
-                llOne.setLayoutParams(param);});
-        }
-
-        void bind(int position, Article article) {
-
+        void bind (Article article, int position) {
             mPosition = position;
 
             if (getMvpDelegate() != null) {
@@ -226,32 +213,16 @@ public class RepositoriesAdapter extends MvpBaseAdapter {
 
             getMvpDelegate().onCreate();
             getMvpDelegate().onAttach();
-
-            //Выделение выбранного элемента
-            //view.setBackgroundResource(position == mSelection ? R.color.colorAppMyNews : android.R.color.transparent);
-//            if(position == mSelection) {
-//                mRepositoryPresenter.testMyIdea(rssFeed, article);
-//            }
-            //Сохранить в Room
-            //imageButton.setOnClickListener(v -> );
         }
 
-        @TargetApi(Build.VERSION_CODES.O)
+        @RequiresApi(api = Build.VERSION_CODES.O)
         @Override
         public void showRepository(int position, Article article) {
-                if(llOne.getVisibility() == View.GONE) llOne.setVisibility(View.VISIBLE);
-                if(mArticle.getEclos() != null) {
-                    GlideApp
-                            .with(view)
-                            .asDrawable()
-                            .load(mArticle.getEclos())
-                            //.transition(withCrossFade())
-                            .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
-                            .centerCrop()
-                            .override(480,360)
-                            //.thumbnail(0.5f)
-                            .into(imageView);
-                } else { llOne.setVisibility(View.GONE);}
+
+            if(llOne.getVisibility() == View.GONE) llOne.setVisibility(View.VISIBLE);
+            if(mArticle.getEclos() != null) {
+                request.clone().load(mArticle.getEclos()).override(480,360).into(imageView);
+            } else { llOne.setVisibility(View.GONE);}
 
             titleTextView.setText(Html.fromHtml(mArticle.getTitle()));
             DateTimeFormatter fmt;
@@ -272,7 +243,6 @@ public class RepositoriesAdapter extends MvpBaseAdapter {
                 mTimeTextView.setText(fmtOut.format(time));
                 mPubDate.setText(fmtOut2.format(time));
             }
-
         }
 
         @Override
@@ -285,7 +255,6 @@ public class RepositoriesAdapter extends MvpBaseAdapter {
 
         }
 
-
         MvpDelegate getMvpDelegate() {
             if (mArticle == null) {
                 return null;
@@ -293,14 +262,33 @@ public class RepositoriesAdapter extends MvpBaseAdapter {
 
             if (mMvpDelegate == null) {
                 mMvpDelegate = new MvpDelegate<>(this);
-                mMvpDelegate.setParentDelegate(RepositoriesAdapter.this.getMvpDelegate(), String.valueOf(mPosition));
+                mMvpDelegate.setParentDelegate(ReposRecyclerAdapter.this.getMvpDelegate(), String.valueOf(mPosition));
             }
             return mMvpDelegate;
         }
     }
 
+    @NonNull
+    @Override
+    public List<Article> getPreloadItems(int position) {
+        return mArticles.isEmpty() ?
+                Collections.<Article>emptyList() :
+                Collections.singletonList(mArticles.get(position));
+    }
+
+    @Nullable
+    @Override
+    public RequestBuilder<Drawable> getPreloadRequestBuilder(@NonNull Article item) {
+        return request.clone().load(item.getEclos()).override(480,360);
+    }
+
+    @Nullable
+    @Override
+    public int[] getPreloadSize(@NonNull Article item, int adapterPosition, int perItemPosition) {
+        return actualDimensions;
+    }
+
     public interface OnScrollToBottomListener {
         void onScrollToBottom();
     }
-
 }

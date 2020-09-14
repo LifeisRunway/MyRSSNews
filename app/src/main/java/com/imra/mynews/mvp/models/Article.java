@@ -62,6 +62,17 @@ public class Article implements Serializable{
     @Nullable
     private String eclos;
 
+    public boolean isEnclosure() {
+        return isEnclosure;
+    }
+
+    public void setEnclosure(boolean enclosure) {
+        isEnclosure = enclosure;
+    }
+
+    @ColumnInfo(name = "isEnclosure")
+    private boolean isEnclosure;
+
     @Nullable
     @Element (name = "pubDate", required = false)
     private String pubDate;

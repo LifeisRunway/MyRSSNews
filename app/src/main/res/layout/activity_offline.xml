@@ -40,7 +40,7 @@
             android:layout_marginEnd="18dp" />
     </FrameLayout>
 
-    <com.imra.mynews.ui.views.FrameSwipeRefreshLayout
+    <com.imra.mynews.ui.views.ListViewFrameSwipeRefreshLayout
         android:id="@+id/activity_home_swipe_refresh_layout2"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -83,7 +83,7 @@
 
         </ScrollView>
 
-    </com.imra.mynews.ui.views.FrameSwipeRefreshLayout>
+    </com.imra.mynews.ui.views.ListViewFrameSwipeRefreshLayout>
 
     <FrameLayout
         android:id="@+id/activity_home_frame_layout_details2"

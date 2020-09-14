@@ -1,24 +1,22 @@
 package com.imra.mynews.ui.adapters;
 
-import android.widget.BaseAdapter;
-
 import androidx.recyclerview.widget.RecyclerView;
 
 import moxy.MvpDelegate;
 
 /**
- * Date: 28.07.2019
- * Time: 14:29
+ * Date: 13.09.2020
+ * Time: 14:38
  *
  * @author IMRA027
  */
-public abstract class MvpBaseAdapter extends BaseAdapter {
+public abstract class MvpBaseRecyclerAdapter<L extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<ReposRecyclerAdapter.ListViewHolder> {
 
-    private MvpDelegate<? extends MvpBaseAdapter> mMvpDelegate;
+    private MvpDelegate<? extends MvpBaseRecyclerAdapter> mMvpDelegate;
     private MvpDelegate<?> mParentDelegate;
     private String mChildId;
 
-    public MvpBaseAdapter(MvpDelegate<?> parentDelegate, String childId) {
+    public MvpBaseRecyclerAdapter (MvpDelegate<?> parentDelegate, String childId) {
         mParentDelegate = parentDelegate;
         mChildId = childId;
 

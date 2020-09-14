@@ -21,7 +21,7 @@ import java.util.List;
  *
  * @author IMRA027
  */
-@Entity(tableName = "rssfeeds", indices = {@Index(value = "title", unique = true)})
+@Entity(tableName = "rssfeeds", indices = {@Index(value = "url", unique = true)})
 @Root(name = "rss", strict = false)
 public class RSSFeed {
 
@@ -34,7 +34,6 @@ public class RSSFeed {
     @ColumnInfo(name = "tag")
     private String tag;
 
-    @Nullable
     @ColumnInfo(name = "title")
     @Element(name="title")
     @Path("channel")

@@ -1,29 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar_contacts"
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:background="?attr/colorPrimary"
+        android:minHeight="?attr/actionBarSize"
+        android:theme="?attr/actionBarTheme"
+        app:title="@string/app_name"
+        app:titleTextColor="@color/colorText"
+        tools:ignore="MissingConstraints" />
+
     <ImageView
         android:id="@+id/image_avatar"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:background="@drawable/blue_bg"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:background="@drawable/lifeisrunway_avatar_icon"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_percent="0.4"
-        app:layout_constraintHorizontal_bias="0.0"
+        android:layout_marginTop="20dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/toolbar_contacts" />
 
     <TextView
         android:id="@+id/tv_author"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/poller_one"
-        android:text="LifeIsRunway"
+        android:text="@string/lifeisrunway"
         android:textSize="25sp"
         android:gravity="center"
+        android:layout_marginTop="15dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/image_avatar" 
@@ -34,11 +46,29 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/poller_one"
-        android:text="GitHub URL be here!"
-        android:textSize="25sp"
+        android:text="@string/imra027_github"
+        android:layout_marginBottom="15dp"
+        android:textSize="20sp"
+        android:autoLink="web"
+        android:linksClickable="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tv_author"
+        app:layout_constraintBottom_toTopOf="@+id/tv_github_email"
         app:layout_constraintVertical_bias="0.25" />
+
+    <TextView
+        android:id="@+id/tv_github_email"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/poller_one"
+        android:text="@string/imra027_email"
+        android:layout_marginBottom="85dp"
+        android:textSize="20sp"
+        android:autoLink="web"
+        android:linksClickable="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintVertical_bias="0.55" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

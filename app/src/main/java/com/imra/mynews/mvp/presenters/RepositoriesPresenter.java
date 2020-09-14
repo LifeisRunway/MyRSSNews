@@ -8,6 +8,7 @@ import com.imra.mynews.app.MyNewsApp;
 import com.imra.mynews.di.common.ArticleDao;
 import com.imra.mynews.mvp.MyNewsService;
 import com.imra.mynews.mvp.models.Article;
+import com.imra.mynews.mvp.models.ArticleDetail;
 import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.models.RssFeedArticlesDetail;
@@ -61,6 +62,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     private boolean mIsInLoading;
     private boolean mIsInLoading2;
     private boolean mIsInLoading3;
+    private int timer = 0;
 
     public RepositoriesPresenter() {
         MyNewsApp.getAppComponent().inject(this);
@@ -88,6 +90,10 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
     public void offlineNews (boolean isRefreshing) {
         loadOfflineNews(false, isRefreshing);
+    }
+
+    public void forDrawer (Map<String, Object> firestoneData) {
+        loadDataForDrawer (firestoneData);
     }
 
 
@@ -189,16 +195,24 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                 .replaceFirst("[^/]+//(www\\.)*","")
                 .replaceFirst("/.+","");
             rssFeed.setTag(tag);
-            StringBuilder sb = new StringBuilder();
 
+            StringBuilder sb = new StringBuilder();
             mAD.insertRssFeed(rssFeed);
             RssFeedArticlesDetail temp = new RssFeedArticlesDetail();
-            RSSFeed tempRss = mAD.getRssFeed(rssFeed.getChannelTitle());
+            int tempRssID = mAD.getRssFeed(rssFeed.getUrl()).getRssFeedId();
             temp.setRssFeed(rssFeed);
             for(Article a : rssFeed.getArticleList()) {
-                a.setRssId(tempRss.getRssFeedId());
+                a.setRssId(tempRssID);
                 if(a.getEnclosure() != null) {
                     a.setEclos(a.getEnclosure().getUrl());
+                    a.setEnclosure(true);
+                } else {
+                    Pattern p2 = Pattern.compile("https*://[^\"']+\\.(png|jpg|jpeg|gif)");
+                    Matcher m2 = p2.matcher(a.getDescription());
+                    if(m2.find()) {
+                        a.setEclos(m2.group());
+                        a.setEnclosure(false);
+                    }
                 }
                 sb.setLength(0);
                 if(a.getCategoryList() != null && !a.getCategoryList().isEmpty()) {
@@ -206,7 +220,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                         sb.append(s).append(", ");
                         //Log.e("КАТЕГОРИЯ", s);
                     }
-                    a.setCategory(sb.toString());
+                    a.setCategory(sb.substring(0, sb.length() - 2));
                     //System.out.println(sb.toString());
                     //Log.e("КАТЕГОРИЯ_ЦЕЛИКОМ", sb.toString());
                 }
@@ -347,6 +361,32 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         return new ArrayList<>(itemHtmls);
     }
 
+
+    private void loadDataForDrawer (Map<String, Object> firestoneData) {
+
+            if(!firestoneData.isEmpty()) {
+
+                for(Map.Entry e : firestoneData.entrySet()) {
+                    if(!e.getKey().equals("")) {
+
+                        Observable<RSSFeed> observable = myNewsService.getRSSFeed(e.getKey().toString());
+
+                        Disposable disposable = observable
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe((RSSFeed rssFeed) -> {
+                                    saveRssToDB(rssFeed, e.getKey().toString(), e.getValue().toString());
+                                    setDrawerItems(getRssInDB(e.getKey().toString()));
+                                }, error -> {
+                                    onLoadingFailed(error, e.getKey().toString());
+                                });
+                        unsubscribeOnDestroy(disposable);
+                    }
+                }
+                //setDrawerItems(firestoneData);
+            }
+    }
+
     private void onLoadingFinish(boolean isPageLoading, boolean isRefreshing) {
         mIsInLoading = false;
         mIsInLoading2 = false;
@@ -419,5 +459,8 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         getViewState().setChannelTitle(rssFeed);
     }
 
+    private void setDrawerItems(RSSFeed rssFeed) {
+       getViewState().setDrawerItems(rssFeed);
+    }
 
 }

@@ -128,25 +128,20 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
         mFragmentPresenter.greenOrNot(mArticle);
 
         if(mArticle != null) {
-            if(mArticle.getEnclosure() != null) {
-                if(mArticle.getEclos() == null) mArticle.setEclos(mArticle.getEnclosure().getUrl());
-                GlideApp
-                        .with(view)
-                        .asBitmap()
-                        .load(mArticle.getEnclosure().getUrl())
-                        .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
-                        //.override(480,360)
-                        .fitCenter()
-                        .into(mImageView);
-            } else {
+            if(mArticle.isEnclosure()) {
+                if(mImageView.getVisibility() == View.GONE) {
+                    mImageView.setVisibility(View.VISIBLE);
+                }
                 GlideApp
                         .with(view)
                         .asBitmap()
                         .load(mArticle.getEclos())
-                        .diskCacheStrategy(DiskCacheStrategy.RESOURCE)
+                        .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                         //.override(480,360)
                         .fitCenter()
                         .into(mImageView);
+            } else {
+                mImageView.setVisibility(View.GONE);
             }
         }
 
@@ -198,11 +193,9 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
         mArticle = article;
         mPosition = position;
         if(mArticle.getCategory() != null) {
-            //Log.e("КАТЕГОРИЯФРАГМЕНТА", mArticle.getCategory());
             mCategoryTV.setText(mArticle.getCategory());
             mCategoryTV.setVisibility(View.VISIBLE);
         } else {
-            //Log.e("КАТЕГОРИЯФРАГМЕНТА", "null!!!");
             mCategoryTV.setVisibility(View.GONE);
         }
         if(mArticle.getCreator() != null) {

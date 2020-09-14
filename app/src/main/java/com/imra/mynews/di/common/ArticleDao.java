@@ -9,6 +9,7 @@ import androidx.room.Transaction;
 import androidx.room.Update;
 
 import com.imra.mynews.mvp.models.Article;
+import com.imra.mynews.mvp.models.ArticleDetail;
 import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.models.RssFeedArticlesDetail;
 
@@ -66,6 +67,19 @@ public interface ArticleDao {
         if (temp == -1L) updateRss(rssFeed);
     }
 
+//    @Transaction
+//    default void insertOrUpdateArticleDetail (List<ArticleDetail> articleDetails) {
+//        List<Long> insertResultAD
+//        List<Long> insertResultEnclos =
+//
+//        for(ArticleDetail ad : articleDetails) {
+//
+//        }
+//
+//
+//
+//    }
+
     @Transaction
     default void insertOrUpdateRssFeedArticles (RssFeedArticlesDetail rssFeedArticlesDetail) {
         insertOrUpdateRss(rssFeedArticlesDetail.getRssFeed());
@@ -109,8 +123,8 @@ public interface ArticleDao {
     @Query("SELECT * FROM articles WHERE title = :title")
     Article getArticle (String title);
 
-    @Query("SELECT * FROM rssfeeds WHERE title = :title")
-    RSSFeed getRssFeed (String title);
+    @Query("SELECT * FROM rssfeeds WHERE url = :url")
+    RSSFeed getRssFeed (String url);
 
     //@Query("DELETE FROM articles WHERE rssId = :rssId AND title = :title")
     //void deleteArticle (Integer rssId, String title);

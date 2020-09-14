@@ -1,31 +1,30 @@
 package com.imra.mynews.ui.views;
 
 import android.content.Context;
-
-import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import android.util.AttributeSet;
 import android.widget.ListView;
 
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
 /**
- * Date: 04.08.2019
- * Time: 14:33
+ * Date: 13.09.2020
+ * Time: 15:41
  *
  * @author IMRA027
  */
-public class FrameSwipeRefreshLayout extends SwipeRefreshLayout {
+public class ListViewFrameSwipeRefreshLayout extends SwipeRefreshLayout {
 
-    private RecyclerView mListViewChild;
+    private ListView mListViewChild;
 
-    public FrameSwipeRefreshLayout(Context context) {
+    public ListViewFrameSwipeRefreshLayout(Context context) {
         super(context);
     }
 
-    public FrameSwipeRefreshLayout(Context context, AttributeSet attrs) {
+    public ListViewFrameSwipeRefreshLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public void setListViewChild(RecyclerView listViewChild) {
+    public void setListViewChild(ListView listViewChild) {
         mListViewChild = listViewChild;
     }
 
