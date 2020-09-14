@@ -50,14 +50,6 @@ public interface ArticleDao {
     @Query("SELECT * FROM rssfeeds WHERE url = :url")
     RssFeedArticlesDetail getRssFeedArticleDetail2 (String url);
 
-//    @Transaction
-//    default void insertRssFeedArticles(RssFeedArticlesDetail rssFeedArticlesDetail) {
-//        insertRssFeed(rssFeedArticlesDetail.getRssFeed());
-//        for(Article article : rssFeedArticlesDetail.getArticles()) {
-//            insertArticles(article);
-//        }
-//    }
-
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     List<Long> insertArticles (List<Article> articles);
 
@@ -66,19 +58,6 @@ public interface ArticleDao {
         Long temp = insertRssFeed(rssFeed);
         if (temp == -1L) updateRss(rssFeed);
     }
-
-//    @Transaction
-//    default void insertOrUpdateArticleDetail (List<ArticleDetail> articleDetails) {
-//        List<Long> insertResultAD
-//        List<Long> insertResultEnclos =
-//
-//        for(ArticleDetail ad : articleDetails) {
-//
-//        }
-//
-//
-//
-//    }
 
     @Transaction
     default void insertOrUpdateRssFeedArticles (RssFeedArticlesDetail rssFeedArticlesDetail) {
@@ -117,17 +96,11 @@ public interface ArticleDao {
     @Delete
     void delete (Article article);
 
-    //@Query("SELECT * FROM articles WHERE rssId = :rssId AND title = :title")
-    //Article getArticle (Integer rssId, String title);
-
     @Query("SELECT * FROM articles WHERE title = :title")
     Article getArticle (String title);
 
     @Query("SELECT * FROM rssfeeds WHERE url = :url")
     RSSFeed getRssFeed (String url);
-
-    //@Query("DELETE FROM articles WHERE rssId = :rssId AND title = :title")
-    //void deleteArticle (Integer rssId, String title);
 
     @Query("DELETE FROM articles WHERE  title = :title")
     void deleteArticle (String title);
