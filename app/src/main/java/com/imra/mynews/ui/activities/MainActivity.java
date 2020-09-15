@@ -359,40 +359,12 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         } else mChannelDescription.setVisibility(View.GONE);
         if(isNew) {
             mDrawerPresenter.addSubItem(rssFeed.getUrl(), rssFeed.getIconUrl());
-            addInFirestone(rssFeed.getUrl(), rssFeed.getIconUrl());
+            mRepositoriesPresenter.addInFirestone(rssFeed.getUrl(), rssFeed.getIconUrl());
             changeBackCol(rssFeed.getIconUrl());
             oldUrl = rssFeed.getUrl();
             mMainPresenter.saveSP(oldUrl);
             isNew = false;
         }
-    }
-
-    private void addInFirestone (String key, String value) {
-        Map<String, Object> docData = new HashMap<>();
-        docData.put(key, value);
-        docRefUserChannels
-                .set(docData, SetOptions.merge())
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.e("Сэйв_прошел", "DocumentSnapshot successfully written!");
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.e("Ошибка_сэйва", "Error writing document", e);
-                    }
-                });
-    }
-
-    private void delInFirestone (String key) {
-        docRefUserChannels.update(FieldPath.of(key), FieldValue.delete()).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                Log.e("Сэйв_удален", "DocumentSnapshot successfully deleted!");
-            }
-        });
     }
 
     @Override
@@ -623,7 +595,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                         }
                                         mDrawer.getExpandableExtension().collapse();
                                         mDrawerPresenter.deleteSubItem(drawerItem.getTag().toString());
-                                        delInFirestone(drawerItem.getTag().toString());
+                                        mRepositoriesPresenter.delInFirestone(drawerItem.getTag().toString());
                                         expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
                                         //mDrawer.removeItem(drawerItem.getIdentifier());
                                         for(Object o : expDrawItem.getSubItems()) {
@@ -667,7 +639,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                         }
                                         mDrawerPresenter.deleteManySubItems(list);
                                         for(String key : list) {
-                                            delInFirestone(key);
+                                            mRepositoriesPresenter.delInFirestone(key);
                                         }
                                         expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
                                         drawerItem.getSubItems().clear();
@@ -724,7 +696,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             }
             return false;
         });
-        getInFirestone();
+         mRepositoriesPresenter.getInFirestone();
     }
 
     @Override
@@ -941,29 +913,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         identif++;
         return c;
     }
-
-    private void getInFirestone () {
-        Map<String, Object> userChannels = new HashMap<>();
-        if(mDrawerPresenter.getUser() != null) {
-            docRefUserChannels
-                    .get()
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            if(task.getResult() != null && task.getResult().getData() != null) {
-                                //mRepositoriesPresenter.forDrawer(task.getResult().getData());
-                                mDrawerPresenter.setSubItems(task.getResult().getData());
-                                //Log.e("getInFire task not null", task.getResult().getId() + " => " + task.getResult().getData());
-                            } else {
-                                mDrawerPresenter.setSubItems(userChannels);
-                            }
-                        } else {
-                            Log.w("ДОК_ОШИБКА", "Error getting documents.", task.getException());
-                        }
-                    });
-        }
-    }
-
-
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
