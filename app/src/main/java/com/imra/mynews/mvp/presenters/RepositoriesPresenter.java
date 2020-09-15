@@ -411,14 +411,10 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     private void loadDataForDrawer2 (Map<String, Object> firestoneData) {
     
             if(!firestoneData.isEmpty()) {
-
                 for(Map.Entry e : firestoneData.entrySet()) {
                     if(!e.getKey().equals("")) {
-                        
                         if(mAD.getRssFeed(e.getKey().toString()) == null) {
-                        
                            Observable<RSSFeed> observable = myNewsService.getRSSFeed(e.getKey().toString());
-
                             Disposable disposable = observable
                                 .subscribeOn(Schedulers.io())
                                 .observeOn(AndroidSchedulers.mainThread())
@@ -428,15 +424,59 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                                     onLoadingFailed(error, e.getKey().toString());
                                 });
                             unsubscribeOnDestroy(disposable); 
-                        
                         }
-
-                        
                     }
                 }
-               
             }
-    
+   }
+
+    public void getInFirestone () {
+        Map<String, Object> userChannels = new HashMap<>();
+        if(mDrawerPresenter.getUser() != null) {
+            docRefUserChannels
+                    .get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful()) {
+                            if(task.getResult() != null && task.getResult().getData() != null) {
+                                //mRepositoriesPresenter.forDrawer(task.getResult().getData());
+                                mDrawerPresenter.setSubItems(task.getResult().getData());
+                                //Log.e("getInFire task not null", task.getResult().getId() + " => " + task.getResult().getData());
+                            } else {
+                                mDrawerPresenter.setSubItems(userChannels);
+                            }
+                        } else {
+                            Log.w("ДОК_ОШИБКА", "Error getting documents.", task.getException());
+                        }
+                    });
+        }
+    }
+   
+   public void addInFirestone (String key, String value) {
+        Map<String, Object> docData = new HashMap<>();
+        docData.put(key, value);
+        docRefUserChannels
+                .set(docData, SetOptions.merge())
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void aVoid) {
+                        Log.e("Сэйв_прошел", "DocumentSnapshot successfully written!");
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.e("Ошибка_сэйва", "Error writing document", e);
+                    }
+                });
+    }
+
+    public void delInFirestone (String key) {
+        docRefUserChannels.update(FieldPath.of(key), FieldValue.delete()).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                Log.e("Сэйв_удален", "DocumentSnapshot successfully deleted!");
+            }
+        });
     }
 
     private void onLoadingFinish(boolean isPageLoading, boolean isRefreshing) {
@@ -458,15 +498,6 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
             setChannelTitle(rssFeeds);
         }
     }
-
-//     private void onLoadingSuccess (boolean isPageLoading, List<ItemHtml> itemHtml) {
-
-//         if (isPageLoading) {
-//             getViewState().addRepositories(itemHtml);
-//         } else {
-//             getViewState().setRepositories(itemHtml);
-//         }
-//     }
 
     private void onLoadingFailed(Throwable error, String url) {
         String fixError = error.toString();
