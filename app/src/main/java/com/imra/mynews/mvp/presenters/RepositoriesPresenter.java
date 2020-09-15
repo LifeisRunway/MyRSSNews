@@ -168,18 +168,23 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         
         if(articles.size() <= maxArticles) {
             return smallToBig(articles);
-        } 
-        else {
+        } else {
             List<Article> saved = new ArrayList<>();
             List<Article> normals = new ArrayList<>();
         
             for (Article a : smallToBig(articles)) {
                 (a.isSaved) ? saved.add(a) : normals.add(a);
             }
-            mAD.deleteArticles(normals.subList(101, normals.size());
-            normals = new ArrayList<>(normals.subList(0, normals.size() - saved.size());
-            normals.addAll(saved);
-            return smallToBig(normals);
+            
+            if(saved.isEmpty()) {
+                mAD.deleteArticles(normals.subList(maxArticles + 1, normals.size());
+                return normals.subList(0, maxArticles);
+            } else {
+                mAD.deleteArticles(normals.subList(maxArticles + 1, normals.size());
+                normals = new ArrayList<>(normals.subList(0, maxArticles - saved.size());
+                normals.addAll(saved);
+                return smallToBig(normals);
+            }
         }       
     }
 
