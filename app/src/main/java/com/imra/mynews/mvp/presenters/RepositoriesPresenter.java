@@ -154,7 +154,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         RssFeedArticlesDetail tempRFAD = mAD.getRssFeedArticleDetail2(url);
         if(tempRFAD != null) {
             rssFeed = tempRFAD.getRssFeed();
-            List<Article> aList = checkAndClearArticlesInDB(smallToBig(tempRFAD.getArticles()));
+            List<Article> aList = checkAndClearArticlesInDB(tempRFAD.getArticles());
             rssFeed.setArticleList(aList);
         } else {
             rssFeed = new RSSFeed();
@@ -164,12 +164,22 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     }
     
     private List<Article> checkAndClearArticlesInDB (List<Article> articles) {
-        if(articles.size() <= 100) {
-            return articles;
+        int maxArticles = 100;
+        
+        if(articles.size() <= maxArticles) {
+            return smallToBig(articles);
         } 
         else {
-            mAD.deleteArticles(articles.subList(101, article.size());
-            return articles.subList(0, 100);
+            List<Article> saved = new ArrayList<>();
+            List<Article> normals = new ArrayList<>();
+        
+            for (Article a : smallToBig(articles)) {
+                (a.isSaved) ? saved.add(a) : normals.add(a);
+            }
+            mAD.deleteArticles(normals.subList(101, normals.size());
+            normals = new ArrayList<>(normals.subList(0, normals.size() - saved.size());
+            normals.addAll(saved);
+            return smallToBig(normals);
         }       
     }
 
