@@ -27,6 +27,6 @@ Additional libraries:
 - [GlidePalette](https://github.com/florent37/GlidePalette) by Florent37.
 
 ## Contacts
-LifeIsRunway - [lifeisrunway027@gmail.com](mailto:imra027@gmail.com)
+LifeIsRunway - [lifeisrunway027@gmail.com](mailto:lifeisrunway027@gmail.com)
 
 
