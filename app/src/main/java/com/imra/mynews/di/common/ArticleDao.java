@@ -95,6 +95,9 @@ public interface ArticleDao {
 
     @Delete
     void delete (Article article);
+    
+    @Delete
+    void deleteArticles (List<Article> articles);
 
     @Query("SELECT * FROM articles WHERE title = :title")
     Article getArticle (String title);
