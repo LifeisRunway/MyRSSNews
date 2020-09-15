@@ -150,16 +150,27 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     }
 
     private RSSFeed getRssInDB (String url) {
-        RSSFeed tempRssFeed;
+        RSSFeed rssFeed;
         RssFeedArticlesDetail tempRFAD = mAD.getRssFeedArticleDetail2(url);
         if(tempRFAD != null) {
-            tempRssFeed = tempRFAD.getRssFeed();
-            tempRssFeed.setArticleList(smallToBig(tempRFAD.getArticles()));
+            rssFeed = tempRFAD.getRssFeed();
+            List<Article> aList = checkAndClearArticlesInDB(smallToBig(tempRFAD.getArticles()));
+            rssFeed.setArticleList(aList);
         } else {
-            tempRssFeed = new RSSFeed();
-            tempRssFeed.setArticleList(new ArrayList<>());
+            rssFeed = new RSSFeed();
+            rssFeed.setArticleList(new ArrayList<>());
         }
-        return tempRssFeed;
+        return rssFeed;
+    }
+    
+    private List<Article> checkAndClearArticlesInDB (List<Article> articles) {
+        if(articles.size() <= 100) {
+            return articles;
+        } 
+        else {
+            mAD.deleteArticles(articles.subList(101, article.size());
+            return articles.subList(0, 100);
+        }       
     }
 
     @TargetApi(Build.VERSION_CODES.O)
