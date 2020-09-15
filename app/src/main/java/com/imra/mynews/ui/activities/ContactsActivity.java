@@ -54,9 +54,9 @@ public class ContactsActivity extends MvpAppCompatActivity {
         unbinder = ButterKnife.bind(this);
         setSupportActionBar(mToolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
-        mGithub.setText(clickableSpan(getResources().getString(R.string.imra027_github), R.color.colorPrimaryDark));
+        mGithub.setText(clickableSpan(getResources().getString(R.string.lifeisrunway_github), R.color.colorPrimaryDark));
         mGithub.setMovementMethod(LinkMovementMethod.getInstance());
-        mEmail.setText(clickableSpan(getResources().getString(R.string.imra027_email), R.color.colorPrimaryDark));
+        mEmail.setText(clickableSpan(getResources().getString(R.string.lifeisrunway_email), R.color.colorPrimaryDark));
         mEmail.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
