@@ -145,8 +145,11 @@
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
         android:autoLink="web"
+        android:fontFamily="@font/poller_one"
         android:linksClickable="true"
+        android:paddingTop="8dp"
         android:paddingBottom="16dp"
+        android:gravity="center"
         android:textColor="@color/md_black_1000"
         android:textSize="16sp"
         android:typeface="serif"
@@ -154,6 +157,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        tools:text="TextView" />
+        tools:text="Читать далее" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

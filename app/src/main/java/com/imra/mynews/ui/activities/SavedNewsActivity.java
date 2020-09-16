@@ -58,8 +58,6 @@ public class SavedNewsActivity extends MvpAppCompatActivity implements Repositor
     TextView mNoRepositoriesTextView;
     @BindView(R.id.toolbar2)
     Toolbar mToolbar;
-    @BindView (R.id.tvChanTitle2)
-    TextView mChannelTitle;
 
     @BindView(R.id.activity_home_swipe_refresh_layout2)
     ListViewFrameSwipeRefreshLayout mSwipeRefreshLayout;
@@ -82,6 +80,7 @@ public class SavedNewsActivity extends MvpAppCompatActivity implements Repositor
 
         setSupportActionBar(mToolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
+        mToolbar.setTitle("Сохраненные новости");
 
         mSwipeRefreshLayout.setListViewChild(mListView);
         mSwipeRefreshLayout.setOnRefreshListener(() -> {

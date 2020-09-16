@@ -20,7 +20,7 @@ import moxy.viewstate.strategy.StateStrategyType;
 @StateStrategyType(AddToEndSingleStrategy.class)
 public interface DrawerView extends MvpView {
 
-    //@StateStrategyType(OneExecutionStateStrategy.class)
+    @StateStrategyType(OneExecutionStateStrategy.class)
     void setDrawer (Bundle savedInstanceState);
 
     @StateStrategyType(OneExecutionStateStrategy.class)

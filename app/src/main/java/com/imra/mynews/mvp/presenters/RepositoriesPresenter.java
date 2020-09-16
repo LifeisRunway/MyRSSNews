@@ -199,7 +199,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     @TargetApi(Build.VERSION_CODES.O)
     private List<Article> smallToBig (@NonNull List<Article> articles) {
 
-        if(articles.get(0).getPubDate() != null) {
+        if(!articles.isEmpty() && articles.get(0).getPubDate() != null) {
             String temp2 = articles.get(0).getPubDate();
             assert temp2 != null;
             DateTimeFormatter format2 = (temp2.substring(temp2.length()-3, temp2.length()).equals("GMT")) ?

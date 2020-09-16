@@ -14,6 +14,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -171,6 +172,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     float dpHeight;
     float dpWidth;
 
+    @ColorInt
+    int color;
+
     @ProvidePresenter
     DrawerPresenter provideDrawerPresenter () { return new DrawerPresenter(mBundle); }
 
@@ -185,6 +189,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         displayMetrics = getResources().getDisplayMetrics();
         dpWidth = ((displayMetrics.widthPixels / displayMetrics.density) / 3) * 10;
         dpHeight = (float) (dpWidth * 0.75);
+        color = getResources().getColor(R.color.colorAppMyNews);
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
@@ -278,6 +283,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     @Override
     protected void onResume() {
         super.onResume();
+        colorMod(oldUrl);
     }
 
     @Override
@@ -360,27 +366,41 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     @Override
     public void setChannelTitle(RSSFeed rssFeed) {
-        mChannelTitle.setText(rssFeed.getChannelTitle());
-        if(rssFeed.getChannelDescription() != null) {
+        //mChannelTitle.setText(rssFeed.getChannelTitle());
+        mToolbar.setTitle(rssFeed.getChannelTitle());
+        if(rssFeed.getChannelDescription() != null && !rssFeed.getChannelDescription().equals(rssFeed.getChannelTitle())) {
             mChannelDescription.setText(rssFeed.getChannelDescription());
             if(mChannelDescription.getVisibility() == View.GONE) { mChannelDescription.setVisibility(View.VISIBLE); }
         } else mChannelDescription.setVisibility(View.GONE);
         if(isNew) {
-            mDrawerPresenter.addSubItem(rssFeed.getUrl(), rssFeed.getIconUrl());
+            mDrawerPresenter.addSubItem(rssFeed.getUrl());
             mRepositoriesPresenter.addInFirestone(rssFeed.getUrl(), rssFeed.getIconUrl());
-            colorMod(rssFeed.getUrl());
             oldUrl = rssFeed.getUrl();
             mMainPresenter.saveSP(oldUrl);
+            colorMod(rssFeed.getUrl());
             isNew = false;
         }
     }
 
     private void colorMod (String url) {
         if(mMainPresenter.getColorModSP()) {
-            int color = mDrawerPresenter.changeBackCol(this, url);
+            if(mDrawerPresenter.getColorChannel(url) != 0 && color != mDrawerPresenter.getColorChannel(url)) {
+                color = mDrawerPresenter.getColorChannel(url);
+            } else {
+                color = getResources().getColor(R.color.colorAppMyNews);
+            }
+            mToolbarFrame.setBackgroundColor(color);
             mToolbar.setBackgroundColor(color);
-            mRecyclerView.setBackgroundColor(color);
+            mRecyclerView.setBackgroundColor(mDrawerPresenter.manipulateColor(color));
             mDetailsFrameLayout.setBackgroundColor(color);
+        } else {
+            if(color != getResources().getColor(R.color.colorAppMyNews)) {
+                color = getResources().getColor(R.color.colorAppMyNews);
+                mToolbarFrame.setBackgroundColor(color);
+                mToolbar.setBackgroundColor(color);
+                mRecyclerView.setBackgroundColor(mDrawerPresenter.manipulateColor(color));
+                mDetailsFrameLayout.setBackgroundColor(color);
+            }
         }
     }
 
@@ -398,7 +418,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     @Override
     public void setFirestoneMap(Map<String, Object> firestoneMap) {
-        mDrawerPresenter.setSubItems(firestoneMap);
+        mDrawerPresenter.setSubItems(firestoneMap, this);
     }
 
     @Override
@@ -489,7 +509,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                             new ProfileSettingDrawerItem().withName("Exit Account").withIcon(GoogleMaterial.Icon.gmd_exit_to_app).withIdentifier(100002)
                     ).withOnAccountHeaderListener((view, profile1, current) -> {
                         if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == 100002) {
-                            mErrorDialog = new AlertDialog.Builder(mContext)
+                            mErrorDialog = new AlertDialog.Builder(this)
                                     .setTitle("Выйти из аккаунта")
                                     .setMessage("Вы уверены?")
                                     .setPositiveButton("Да", (dialog, which) -> {
@@ -519,7 +539,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                             new ProfileSettingDrawerItem().withName("Exit Account").withIcon(GoogleMaterial.Icon.gmd_exit_to_app).withIdentifier(100002)
                     ).withOnAccountHeaderListener((view, profile1, current) -> {
                         if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == 100002) {
-                            mErrorDialog = new AlertDialog.Builder(mContext)
+                            mErrorDialog = new AlertDialog.Builder(this)
                                     .setTitle("Выйти из аккаунта")
                                     .setMessage("Вы уверены?")
                                     .setPositiveButton("Да", (dialog, which) -> {
@@ -603,7 +623,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                         //удаляем 1 элемент
                         if((int)drawerItem.getIdentifier() < 20000) {
 
-                            mErrorDialog = new AlertDialog.Builder(mContext)
+                            mErrorDialog = new AlertDialog.Builder(this)
                                     .setTitle(drawerItem.getTag().toString()  + " " + drawerItem.getIdentifier())
                                     .setMessage("Удалить?")
                                     .setPositiveButton("Да", (dialog, which) -> {
@@ -652,7 +672,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                         }
                         if((int)drawerItem.getIdentifier() > 30000 && (int)drawerItem.getIdentifier() < 50000) {
 
-                            mErrorDialog = new AlertDialog.Builder(mContext)
+                            mErrorDialog = new AlertDialog.Builder(this)
                                     .setTitle(drawerItem.getTag().toString() + " " + drawerItem.getIdentifier())
                                     .setMessage("Удалить список?")
                                     .setPositiveButton("Да", (dialog, which) -> {

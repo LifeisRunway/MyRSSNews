@@ -49,6 +49,7 @@ public class SettingsActivity extends MvpAppCompatActivity implements MainInterf
         unbinder = ButterKnife.bind(this);
         setSupportActionBar(mToolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
+        mToolbar.setTitle("Настройки");
         if(mMainPresenter.getColorModSP()) {
             colorSwitch.setChecked(true);
         }

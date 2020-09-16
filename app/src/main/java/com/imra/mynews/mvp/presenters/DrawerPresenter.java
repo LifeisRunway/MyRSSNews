@@ -2,8 +2,11 @@ package com.imra.mynews.mvp.presenters;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.util.Log;
+
+import androidx.annotation.ColorInt;
 
 import com.github.florent37.glidepalette.GlidePalette;
 import com.google.firebase.auth.FirebaseAuth;
@@ -12,6 +15,7 @@ import com.imra.mynews.R;
 import com.imra.mynews.app.MyNewsApp;
 import com.imra.mynews.di.common.ArticleDao;
 import com.imra.mynews.di.modules.GlideApp;
+import com.imra.mynews.di.modules.GlideRequest;
 import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.views.DrawerView;
 import java.util.ArrayList;
@@ -47,7 +51,9 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
     List<RSSFeed> mRssFeeds;
     RSSFeed tmpRss;
     FirebaseUser user;
-    //Context mContext;
+    @ColorInt
+    private int colorRss;
+    Context mContext;
 
     Map<String, String> urlsAndIcons;
 
@@ -59,7 +65,6 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
         mRssFeeds = new ArrayList<>();
         urlsAndIcons = new HashMap<>();
         user = FirebaseAuth.getInstance().getCurrentUser();
-        //mContext = context;
         setTemp();
     }
 
@@ -69,17 +74,22 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
         getViewState().setDrawer(bundle);
     }
 
-    public void addSubItem(String url, String iconUrl) {
+    public void addSubItem(String url) {
+        changeBackCol(url);
         tmpRss = mAD.getRssForDrawer(url);
         getViewState().addSubItem(tmpRss);
     }
 
-    public void setSubItems(Map<String, Object> firestoneData) {
+    public void setSubItems(Map<String, Object> firestoneData, Context context) {
+        mContext = context;
         mRssFeeds.clear();
         tagRssFeeds.clear();
         if(!firestoneData.isEmpty()) {
             for(Map.Entry e : firestoneData.entrySet()) {
                 if(mAD.getRssForDrawer(e.getKey().toString()) != null) {
+                    if(mAD.getRssForDrawer(e.getKey().toString()).getColorChannel() == 0) {
+                        changeBackCol(e.getKey().toString());
+                    }
                     mRssFeeds.add(mAD.getRssForDrawer(e.getKey().toString()));
                 } else {
                     RSSFeed r = new RSSFeed();
@@ -152,6 +162,11 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
         return mAD.getRssForDrawer(url).getIconUrl();
     }
 
+    @ColorInt
+    public int getColorChannel (String url) {
+        return mAD.getRssForDrawer(url).getColorChannel();
+    }
+
     public void deleteSubItem(String url) {
         mAD.deleteRssFeed(url);
     }
@@ -164,48 +179,53 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
         return user;
     }
 
-    public int changeBackCol(Context context, String url) {
+    public void changeBackCol(String url) {
         RSSFeed rssFeed = mAD.getRssForDrawer(url);
         if (rssFeed != null) {
             if(rssFeed.getColorChannel() == 0) {
-                if(rssFeed.getIconUrl() != null && !rssFeed.getIconUrl().equals("")) {
-                    GlideApp.with(context).load(rssFeed.getIconUrl())
-                            .listener(GlidePalette.with(rssFeed.getIconUrl())
-                                    .use(GlidePalette.Profile.VIBRANT_DARK)
-                                    .intoCallBack(palette -> {
-                                        assert palette != null;
-                                        rssFeed.setColorChannel(Objects.requireNonNull(palette.getVibrantSwatch()).getRgb());
-                                        Log.e("Таг", rssFeed.getChannelTitle() + " это rssfeed цвет 1 " + rssFeed.getColorChannel());
-                                    })
-                                    .crossfade(false))
-                            .submit();
-                }
-
-                if(rssFeed.getIconUrl() != null && !rssFeed.getIconUrl().equals("") && rssFeed.getColorChannel() == 0) {
-                    GlideApp.with(context).load(rssFeed.getIconUrl())
-                            .listener(GlidePalette.with(rssFeed.getIconUrl())
-                                    .use(GlidePalette.Profile.VIBRANT)
-                                    .intoCallBack(palette -> {
-                                        assert palette != null;
-                                        rssFeed.setColorChannel(Objects.requireNonNull(palette.getVibrantSwatch()).getRgb());
-                                        Log.e("Таг", rssFeed.getChannelTitle() + " это rssfeed цвет 2 " + rssFeed.getColorChannel());
-                                    })
-                                    .crossfade(false))
-                            .submit();
-                }
-
-                if(rssFeed.getIconUrl() != null && !rssFeed.getIconUrl().equals("") && rssFeed.getColorChannel() == 0) {
-                    rssFeed.setColorChannel(context.getResources().getColor(R.color.colorAppMyNews));
-                    Log.e("Таг", rssFeed.getChannelTitle() + " это rssfeed цвет 3 ");
-                }
-                mAD.updateRss(rssFeed);
+                GlideRequest<Drawable> request = GlideApp.with(mContext).load(rssFeed.getIconUrl());
+                getColorGlidePalette(request,rssFeed,0);
             }
-            return rssFeed.getColorChannel();
-        } else Log.e("Таг", "этот rssfeed null");
-        return context.getResources().getColor(R.color.colorAppMyNews);
+        }
     }
 
-    private int manipulateColor(int color) {
+    private void getColorGlidePalette (GlideRequest<Drawable> request, RSSFeed rssFeed, int glideProfile ) {
+
+        switch(glideProfile) {
+            case 0 :
+                request
+                        .listener(GlidePalette.with(rssFeed.getIconUrl())
+                                .use(GlidePalette.Profile.VIBRANT_DARK)
+                                .intoCallBack(palette -> {
+                                    if(palette != null && palette.getVibrantSwatch() != null) {
+                                        setColorRss(palette.getVibrantSwatch().getRgb());
+                                        rssFeed.setColorChannel(getColorRss());
+                                        mAD.updateRss(rssFeed);
+                                        Log.e("Таг", rssFeed.getChannelTitle() + " это rssfeed цвет 0 " + getColorRss());
+                                    } else getColorGlidePalette(request, rssFeed, 1);
+                                })
+                                .crossfade(false))
+                        .submit();
+                break;
+            case 1 :
+                request
+                        .listener(GlidePalette.with(rssFeed.getIconUrl())
+                                .use(GlidePalette.Profile.VIBRANT)
+                                .intoCallBack(palette -> {
+                                    if(palette != null && palette.getVibrantSwatch() != null) {
+                                        setColorRss(palette.getVibrantSwatch().getRgb());
+                                        rssFeed.setColorChannel(getColorRss());
+                                        mAD.updateRss(rssFeed);
+                                        Log.e("Таг", rssFeed.getChannelTitle() + " это rssfeed цвет 1 " + getColorRss());
+                                    }
+                                })
+                                .crossfade(false))
+                        .submit();
+                break;
+        }
+    }
+
+    public int manipulateColor(int color) {
         //float factor = 0.5f;
         int r = Math.round(Color.red(color));
         int g = Math.round(Color.green(color));
@@ -217,4 +237,11 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
                 Math.min(b, 255));
     }
 
+    public int getColorRss() {
+        return colorRss;
+    }
+
+    public void setColorRss(@ColorInt int colorRss) {
+        this.colorRss = colorRss;
+    }
 }

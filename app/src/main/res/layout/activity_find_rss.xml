@@ -75,6 +75,7 @@
                     android:layout_height="match_parent"
                     android:paddingTop="50dp"
                     android:gravity="top|center"
+                    android:fontFamily="@font/poller_one"
                     android:textSize="25sp"
                     android:text="@string/how_to_find"
                     android:visibility="visible" />
