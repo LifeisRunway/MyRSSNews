@@ -22,6 +22,7 @@ import com.imra.mynews.ui.adapters.RepositoriesAdapter;
 import com.imra.mynews.ui.fragments.Fragment;
 import com.imra.mynews.ui.views.ListViewFrameSwipeRefreshLayout;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
@@ -218,6 +219,11 @@ public class SavedNewsActivity extends MvpAppCompatActivity implements Repositor
     public void addRepositories(RSSFeed repositories) {
         mListView.setEmptyView(mNoRepositoriesTextView);
         mReposAdapter.addRepositories(repositories);
+    }
+
+    @Override
+    public void setFirestoneMap(Map<String, Object> firestoneMap) {
+
     }
 
     @Override

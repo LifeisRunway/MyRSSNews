@@ -23,6 +23,7 @@ import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -163,9 +164,12 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     private GoogleSignInOptions gso;
     private GoogleSignInClient signInClient;
     private static final int REQUEST_CODE_SEARCH_ACTIVITY = 1;
-    private FirebaseFirestore db;
+    //private FirebaseFirestore db;
     private FirebaseAnalytics mFirebaseAnalytics;
     DocumentReference docRefUserChannels;
+    DisplayMetrics displayMetrics;
+    float dpHeight;
+    float dpWidth;
 
     @ProvidePresenter
     DrawerPresenter provideDrawerPresenter () { return new DrawerPresenter(mBundle); }
@@ -178,12 +182,15 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         mContext = this;
         view = new View(this);
         view.setBackgroundColor(getResources().getColor(R.color.colorAppMyNews));
+        displayMetrics = getResources().getDisplayMetrics();
+        dpWidth = ((displayMetrics.widthPixels / displayMetrics.density) / 3) * 10;
+        dpHeight = (float) (dpWidth * 0.75);
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
         signInClient = GoogleSignIn.getClient(this, gso);
-        db = FirebaseFirestore.getInstance();
+        //db = FirebaseFirestore.getInstance();
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         unbinder = ButterKnife.bind(this);
         drawerImageLoader();
@@ -205,7 +212,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             uEmail = "Unknown email";
             uIcon = Uri.parse("android.resource://com.imra.mynews/" + R.drawable.ic_user_svg);
         }
-        docRefUserChannels = db.collection("userChannels").document(uEmail);
+        //docRefUserChannels = db.collection("userChannels").document(uEmail);
         mToolbar.setPopupTheme(R.style.AppTheme);
         setSupportActionBar(mToolbar);
         Objects.requireNonNull(getSupportActionBar()).setElevation(1);
@@ -219,11 +226,12 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         mReposRecyclerAdapter = new ReposRecyclerAdapter(mContext, getMvpDelegate(), this, glideRequests);
         mReposRecyclerAdapter.setHasStableIds(true);
         RecyclerViewPreloader<Article> preload = new RecyclerViewPreloader<Article>(glideRequests, mReposRecyclerAdapter,mReposRecyclerAdapter,6);
-        if(this.getResources().getConfiguration().orientation == 1) {
+        //if(this.getResources().getConfiguration().orientation == 1) {
             mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        } else {
-            mRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-        }
+        //}
+//        else {
+//            mRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+//        }
         mRecyclerView.addOnScrollListener(preload);
         mRecyclerView.setAdapter(mReposRecyclerAdapter);
         ItemClickSupport.addTo(mRecyclerView).setOnItemClickListener((recyclerView, position, v) -> {
@@ -360,10 +368,19 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         if(isNew) {
             mDrawerPresenter.addSubItem(rssFeed.getUrl(), rssFeed.getIconUrl());
             mRepositoriesPresenter.addInFirestone(rssFeed.getUrl(), rssFeed.getIconUrl());
-            changeBackCol(rssFeed.getIconUrl());
+            colorMod(rssFeed.getUrl());
             oldUrl = rssFeed.getUrl();
             mMainPresenter.saveSP(oldUrl);
             isNew = false;
+        }
+    }
+
+    private void colorMod (String url) {
+        if(mMainPresenter.getColorModSP()) {
+            int color = mDrawerPresenter.changeBackCol(this, url);
+            mToolbar.setBackgroundColor(color);
+            mRecyclerView.setBackgroundColor(color);
+            mDetailsFrameLayout.setBackgroundColor(color);
         }
     }
 
@@ -377,6 +394,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             mRecyclerView.setVisibility(View.VISIBLE);
         }
         mReposRecyclerAdapter.addRepositories(repositories);
+    }
+
+    @Override
+    public void setFirestoneMap(Map<String, Object> firestoneMap) {
+        mDrawerPresenter.setSubItems(firestoneMap);
     }
 
     @Override
@@ -536,12 +558,15 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                         new SectionDrawerItem().withName("Новости"),
                         expDrawItem
                         //new SectionDrawerItem().withIdentifier(60000)
-                        )
+                )
                 .withOnDrawerItemClickListener((View view, int position, IDrawerItem drawerItem) -> {
 
                     if(drawerItem != null) {
                         Intent intent = null;
                         switch ((int)drawerItem.getIdentifier()) {
+                            case 50000 :
+                                intent = new Intent(MainActivity.this, SettingsActivity.class);
+                                break;
                             case 50001 :
                                 intent = new Intent(MainActivity.this, FindRSSActivity.class);
                                 break;
@@ -564,7 +589,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                         if((int)drawerItem.getIdentifier() < 20000) {
                             //mListView.setSelectionAfterHeaderView();
                             oldUrl = drawerItem.getTag().toString();
-                            changeBackCol(mDrawerPresenter.getIconUrl(oldUrl));
+                            colorMod(oldUrl);
                             if(mDetailsFrameLayout.getVisibility() == View.VISIBLE) mDetailsFrameLayout.setVisibility(View.GONE);
                             mRepositoriesPresenter.loadRepositories(true, oldUrl, "", isConnected());
                             //oldUrl = sp.getString(drawerItem.getTag().toString(), "");
@@ -706,98 +731,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         //add the values which need to be saved from the accountHeader to the bundle
         outState = mAccountHeader.saveInstanceState(outState);
         super.onSaveInstanceState(outState);
-    }
-
-    @SuppressLint({"ResourceAsColor", "ResourceType"})
-    private void changeBackCol(String iconUrl) {
-        if (iconUrl != null) {
-            if(!iconUrl.equals("")) {
-                GlideApp.with(this).load(iconUrl)
-                        .listener(GlidePalette.with(iconUrl)
-                                .use(GlidePalette.Profile.VIBRANT_DARK)
-                                .intoCallBack(new GlidePalette.CallBack() {
-                                    @Override
-                                    public void onPaletteLoaded(@Nullable Palette palette) {
-                                        int col = ((ColorDrawable) mToolbar.getBackground()).getColor();
-                                        int col2 = -1;
-                                        assert palette != null;
-                                        Palette.Swatch ps = palette.getVibrantSwatch();
-                                        if(ps != null) {
-                                            int tem = ps.getRgb();
-                                            mToolbar.setBackgroundColor(tem);
-                                            mToolbarFrame.setBackgroundColor(tem);
-                                            int temp = manipulateColor(ps.getRgb());
-                                            mRecyclerView.setBackgroundColor(temp);
-                                            mDetailsFrameLayout.setBackgroundColor(temp);
-                                            col2 = ((ColorDrawable) mToolbar.getBackground()).getColor();
-
-                                        }
-                                        if(col2 != -1) {
-                                            if(col == col2) {
-                                                changeBackCol2(iconUrl);
-                                            }
-                                        }
-                                    }
-                                })
-                                .crossfade(false))
-                        .submit();
-            } else {
-                Toast.makeText(this, "IconUrl is empty!", Toast.LENGTH_SHORT).show();
-            }
-        } else {
-            Toast.makeText(this, "IconUrl is null!", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private void changeBackCol2(String iconUrl) {
-        if (iconUrl != null) {
-            if(!iconUrl.equals("")) {
-
-                int colorTemporaly = getResources().getColor(R.color.colorAppMyNews);
-                GlideApp.with(this).load(iconUrl)
-                        .listener(GlidePalette.with(iconUrl)
-                                .use(GlidePalette.Profile.VIBRANT)
-                                .intoCallBack(new GlidePalette.CallBack() {
-                                    @Override
-                                    public void onPaletteLoaded(@Nullable Palette palette) {
-                                        int col = ((ColorDrawable) mToolbar.getBackground()).getColor();
-                                        int col2 = -1;
-                                        assert palette != null;
-                                        Palette.Swatch ps = palette.getVibrantSwatch();
-                                        if(ps != null) {
-                                            int tem = ps.getRgb();
-                                            mToolbar.setBackgroundColor(tem);
-                                            mToolbarFrame.setBackgroundColor(tem);
-                                            int temp = manipulateColor(ps.getRgb());
-                                            mRecyclerView.setBackgroundColor(temp);
-                                            mDetailsFrameLayout.setBackgroundColor(temp);
-                                            col2 = ((ColorDrawable) mToolbar.getBackground()).getColor();
-                                        }
-                                        if(col2 != -1) {
-                                            if(col == col2) {
-                                                mToolbar.setBackgroundColor(colorTemporaly);
-                                                mToolbarFrame.setBackgroundColor(colorTemporaly);
-                                                mRecyclerView.setBackgroundColor(colorTemporaly);
-                                            }
-                                        }
-                                    }
-                                })
-                                .crossfade(false))
-                        .submit();
-            }
-        }
-    }
-
-    private int manipulateColor(int color) {
-        //float factor = 0.5f;
-        int r = Math.round(Color.red(color));
-        int g = Math.round(Color.green(color));
-        int b = Math.round(Color.blue(color));
-
-        return Color.argb(210,
-                Math.min(r, 255),
-                Math.min(g, 255),
-                Math.min(b, 255));
     }
 
     private void setZeroItemDrawer () {
@@ -965,6 +898,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 oldUrl =  ((ExpandableBadgeDrawerItem)expDrawItem.getSubItems().get(0)).getSubItems().get(0).getTag().toString();
             } else {
                 oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();
+            }
+            if(mMainPresenter.getColorModSP()) {
+                colorMod(oldUrl);
             }
         } else {
             setZeroItemDrawer();

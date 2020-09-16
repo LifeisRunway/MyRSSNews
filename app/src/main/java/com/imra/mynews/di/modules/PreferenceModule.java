@@ -20,28 +20,13 @@ import dagger.Provides;
 @Module
 public class PreferenceModule {
 
-//    private final Application mApp;
-//
-//    public PreferenceModule (Application application) {
-//        mApp = application;
-//    }
-//
-//    @Provides
-//    @Singleton
-//    Application application() {return mApp;}
-
-//    private Context mContext;
-//
-//    public PreferenceModule(Context context) {
-//        mContext = context;
-//    }
-
     @Provides
     @Singleton
     SharedPreferences provideSharedPreference (Context context) {
         SharedPreferences sp = context.getSharedPreferences("settings", Context.MODE_PRIVATE);
         boolean hasVisited = sp.getBoolean("hasVisited", false);
-        if (!hasVisited) { sp.edit().putBoolean("hasVisited", true).putString("url", "").apply(); }
+        if (!hasVisited) {
+            sp.edit().putBoolean("hasVisited", true).putString("url", "").putBoolean("color", false).apply(); }
         return sp;
     }
 

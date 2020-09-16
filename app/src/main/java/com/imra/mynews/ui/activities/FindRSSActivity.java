@@ -21,6 +21,7 @@ import com.imra.mynews.mvp.views.MainInterface;
 import com.imra.mynews.mvp.views.RepositoriesView;
 import com.imra.mynews.ui.adapters.SearchRSSAdapter;
 
+import java.util.Map;
 import java.util.Objects;
 
 import butterknife.BindView;
@@ -171,6 +172,11 @@ public class FindRSSActivity extends MvpAppCompatActivity implements Repositorie
     public void addRepositories(RSSFeed repositories) {
         mListView.setEmptyView(mNoRepositoriesTextView);
         searchRSSAdapter.addRepositories(repositories);
+    }
+
+    @Override
+    public void setFirestoneMap(Map<String, Object> firestoneMap) {
+
     }
 
     @Override

@@ -52,6 +52,9 @@ public class RSSFeed {
     @Path("channel/image")
     private String iconUrl;
 
+    @ColumnInfo(name = "colorChannel")
+    private int colorChannel;
+
     @Nullable
     public String getChannelTitle() {
         return channelTitle;
@@ -109,5 +112,13 @@ public class RSSFeed {
 
     public void setTag(String tag) {
         this.tag = tag;
+    }
+
+    public int getColorChannel() {
+        return colorChannel;
+    }
+
+    public void setColorChannel(int colorChannel) {
+        this.colorChannel = colorChannel;
     }
 }

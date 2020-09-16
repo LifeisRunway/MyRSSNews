@@ -44,4 +44,6 @@ public interface RepositoriesView extends MvpView {
     @StateStrategyType(AddToEndStrategy.class)
     void addRepositories(RSSFeed repositories);
 
+    void setFirestoneMap(Map<String, Object> firestoneMap);
+
 }

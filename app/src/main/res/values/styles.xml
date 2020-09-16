@@ -1,12 +1,12 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorAppMyNews</item>
-        <item name="colorPrimaryDark">@color/md_grey_850</item>
+        <item name="colorPrimaryDark">@color/md_light_disabled</item>
         <item name="colorAccent">@color/colorAppMyNews</item>
-        <item name="android:windowBackground">@color/md_grey_600</item>
+        <item name="android:windowBackground">@color/md_teal_A100</item>
     </style>
 
     <style name="Toolbar.TitleText" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">

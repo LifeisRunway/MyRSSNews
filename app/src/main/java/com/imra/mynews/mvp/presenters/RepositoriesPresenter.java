@@ -6,10 +6,17 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldPath;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 import com.imra.mynews.app.MyNewsApp;
 import com.imra.mynews.di.common.ArticleDao;
 import com.imra.mynews.mvp.MyNewsService;
@@ -173,15 +180,16 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
             List<Article> normals = new ArrayList<>();
         
             for (Article a : smallToBig(articles)) {
-                (a.isSaved) ? saved.add(a) : normals.add(a);
+                if (a.isSaved()) saved.add(a);
+                else normals.add(a);
             }
             
             if(saved.isEmpty()) {
-                mAD.deleteArticles(normals.subList(maxArticles + 1, normals.size());
+                mAD.deleteArticles(normals.subList(maxArticles + 1, normals.size()));
                 return normals.subList(0, maxArticles);
             } else {
-                mAD.deleteArticles(normals.subList(maxArticles + 1, normals.size());
-                normals = new ArrayList<>(normals.subList(0, maxArticles - saved.size());
+                mAD.deleteArticles(normals.subList(maxArticles + 1, normals.size()));
+                normals = new ArrayList<>(normals.subList(0, maxArticles - saved.size()));
                 normals.addAll(saved);
                 return smallToBig(normals);
             }
@@ -432,17 +440,17 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
     public void getInFirestone () {
         Map<String, Object> userChannels = new HashMap<>();
-        if(mDrawerPresenter.getUser() != null) {
+        if(user != null) {
             docRefUserChannels
                     .get()
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             if(task.getResult() != null && task.getResult().getData() != null) {
                                 //mRepositoriesPresenter.forDrawer(task.getResult().getData());
-                                mDrawerPresenter.setSubItems(task.getResult().getData());
+                                getViewState().setFirestoneMap(task.getResult().getData());
                                 //Log.e("getInFire task not null", task.getResult().getId() + " => " + task.getResult().getData());
                             } else {
-                                mDrawerPresenter.setSubItems(userChannels);
+                                getViewState().setFirestoneMap(userChannels);
                             }
                         } else {
                             Log.w("ДОК_ОШИБКА", "Error getting documents.", task.getException());

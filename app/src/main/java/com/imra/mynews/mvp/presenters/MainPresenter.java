@@ -31,6 +31,7 @@ public class MainPresenter extends MvpPresenter<MainInterface> {
     SharedPreferences.Editor mSPEditor;
 
     static final String MY_URL = "url";
+    static final String COLOR_MOD = "color";
 
     public MainPresenter() {
         MyNewsApp.getAppComponent().inject4(this);
@@ -49,7 +50,15 @@ public class MainPresenter extends MvpPresenter<MainInterface> {
         return mSP.getString(MY_URL,"");
     }
 
+    public boolean getColorModSP() {
+        return mSP.getBoolean(COLOR_MOD,false);
+    }
+
     public void saveSP (String data) {
         mSPEditor.putString(MY_URL, data).apply();
+    }
+
+    public void saveColorModSP (boolean data) {
+        mSPEditor.putBoolean(COLOR_MOD, data).apply();
     }
 }

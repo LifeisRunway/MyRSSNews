@@ -1,22 +1,30 @@
 package com.imra.mynews.mvp.presenters;
 
+import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 
+import com.github.florent37.glidepalette.GlidePalette;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.imra.mynews.R;
 import com.imra.mynews.app.MyNewsApp;
 import com.imra.mynews.di.common.ArticleDao;
+import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.views.DrawerView;
-
-import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.Objects;
 import javax.inject.Inject;
 
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import moxy.InjectViewState;
 import moxy.MvpPresenter;
 
@@ -32,12 +40,6 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
     @Inject
     ArticleDao mAD;
 
-//    @Inject
-//    SharedPreferences mSP;
-//
-//    @Inject
-//    SharedPreferences.Editor mSPEditor;
-
     Bundle bundle;
     List<String> urlRssFeeds;
     List<String> iconRssFeeds;
@@ -45,11 +47,7 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
     List<RSSFeed> mRssFeeds;
     RSSFeed tmpRss;
     FirebaseUser user;
-    String tag;
-
-    public String getIcon(String key) {
-        return urlsAndIcons.get(key);
-    }
+    //Context mContext;
 
     Map<String, String> urlsAndIcons;
 
@@ -61,6 +59,7 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
         mRssFeeds = new ArrayList<>();
         urlsAndIcons = new HashMap<>();
         user = FirebaseAuth.getInstance().getCurrentUser();
+        //mContext = context;
         setTemp();
     }
 
@@ -165,5 +164,57 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
         return user;
     }
 
+    public int changeBackCol(Context context, String url) {
+        RSSFeed rssFeed = mAD.getRssForDrawer(url);
+        if (rssFeed != null) {
+            if(rssFeed.getColorChannel() == 0) {
+                if(rssFeed.getIconUrl() != null && !rssFeed.getIconUrl().equals("")) {
+                    GlideApp.with(context).load(rssFeed.getIconUrl())
+                            .listener(GlidePalette.with(rssFeed.getIconUrl())
+                                    .use(GlidePalette.Profile.VIBRANT_DARK)
+                                    .intoCallBack(palette -> {
+                                        assert palette != null;
+                                        rssFeed.setColorChannel(Objects.requireNonNull(palette.getVibrantSwatch()).getRgb());
+                                        Log.e("Таг", rssFeed.getChannelTitle() + " это rssfeed цвет 1 " + rssFeed.getColorChannel());
+                                    })
+                                    .crossfade(false))
+                            .submit();
+                }
+
+                if(rssFeed.getIconUrl() != null && !rssFeed.getIconUrl().equals("") && rssFeed.getColorChannel() == 0) {
+                    GlideApp.with(context).load(rssFeed.getIconUrl())
+                            .listener(GlidePalette.with(rssFeed.getIconUrl())
+                                    .use(GlidePalette.Profile.VIBRANT)
+                                    .intoCallBack(palette -> {
+                                        assert palette != null;
+                                        rssFeed.setColorChannel(Objects.requireNonNull(palette.getVibrantSwatch()).getRgb());
+                                        Log.e("Таг", rssFeed.getChannelTitle() + " это rssfeed цвет 2 " + rssFeed.getColorChannel());
+                                    })
+                                    .crossfade(false))
+                            .submit();
+                }
+
+                if(rssFeed.getIconUrl() != null && !rssFeed.getIconUrl().equals("") && rssFeed.getColorChannel() == 0) {
+                    rssFeed.setColorChannel(context.getResources().getColor(R.color.colorAppMyNews));
+                    Log.e("Таг", rssFeed.getChannelTitle() + " это rssfeed цвет 3 ");
+                }
+                mAD.updateRss(rssFeed);
+            }
+            return rssFeed.getColorChannel();
+        } else Log.e("Таг", "этот rssfeed null");
+        return context.getResources().getColor(R.color.colorAppMyNews);
+    }
+
+    private int manipulateColor(int color) {
+        //float factor = 0.5f;
+        int r = Math.round(Color.red(color));
+        int g = Math.round(Color.green(color));
+        int b = Math.round(Color.blue(color));
+
+        return Color.argb(210,
+                Math.min(r, 255),
+                Math.min(g, 255),
+                Math.min(b, 255));
+    }
 
 }

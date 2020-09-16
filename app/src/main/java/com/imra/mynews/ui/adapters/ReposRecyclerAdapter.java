@@ -6,6 +6,7 @@ import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.text.Html;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.LayoutInflater;
@@ -67,6 +68,10 @@ public class ReposRecyclerAdapter extends MvpBaseRecyclerAdapter<ReposRecyclerAd
     private final int screenWidth;
     private Context mContext;
 
+    DisplayMetrics displayMetrics;
+    float dpHeight;
+    float dpWidth;
+
     private int[] actualDimensions;
 
     private ReposRecyclerAdapter.OnScrollToBottomListener mScrollToBottomListener;
@@ -79,6 +84,9 @@ public class ReposRecyclerAdapter extends MvpBaseRecyclerAdapter<ReposRecyclerAd
         setHasStableIds(true);
         screenWidth = getScreenWidth(context);
         mContext = context;
+        displayMetrics = mContext.getResources().getDisplayMetrics();
+        dpWidth = (float)((displayMetrics.widthPixels / displayMetrics.density) / 3) * 10;
+        dpHeight = (float) (dpWidth * 0.75);
     }
 
     public void setRepositories(@NonNull RSSFeed rssFeeds) {
@@ -186,6 +194,11 @@ public class ReposRecyclerAdapter extends MvpBaseRecyclerAdapter<ReposRecyclerAd
 
         private MvpDelegate mMvpDelegate;
 
+        int maxWidth;
+        int widthIV;
+        int heightIV;
+        LinearLayout.LayoutParams param;
+
         @ProvidePresenter
         RepositoryPresenter provideRepositoryPresenter() {
             return new RepositoryPresenter(mPosition, mArticle);
@@ -197,6 +210,18 @@ public class ReposRecyclerAdapter extends MvpBaseRecyclerAdapter<ReposRecyclerAd
             super(itemView);
             this.view = itemView;
             ButterKnife.bind(this, view);
+            setSize();
+        }
+
+        void setSize() {
+            view.post(() -> {
+                param = (LinearLayout.LayoutParams) llOne.getLayoutParams();
+                maxWidth = view.getMeasuredWidth();
+                widthIV = (int) (maxWidth * 0.375);
+                heightIV = (int) (widthIV * 0.75);
+                param.height = heightIV;
+                param.width = widthIV;
+                llOne.setLayoutParams(param);});
         }
 
         void bind (Article article, int position) {
@@ -221,7 +246,7 @@ public class ReposRecyclerAdapter extends MvpBaseRecyclerAdapter<ReposRecyclerAd
 
             if(llOne.getVisibility() == View.GONE) llOne.setVisibility(View.VISIBLE);
             if(mArticle.getEclos() != null) {
-                request.clone().load(mArticle.getEclos()).override(480,360).into(imageView);
+                request.clone().load(mArticle.getEclos()).override((int) dpWidth, (int) dpHeight).into(imageView);
             } else { llOne.setVisibility(View.GONE);}
 
             titleTextView.setText(Html.fromHtml(mArticle.getTitle()));
@@ -279,7 +304,7 @@ public class ReposRecyclerAdapter extends MvpBaseRecyclerAdapter<ReposRecyclerAd
     @Nullable
     @Override
     public RequestBuilder<Drawable> getPreloadRequestBuilder(@NonNull Article item) {
-        return request.clone().load(item.getEclos()).override(480,360);
+        return request.clone().load(item.getEclos()).override((int) dpWidth,(int) dpHeight);
     }
 
     @Nullable
