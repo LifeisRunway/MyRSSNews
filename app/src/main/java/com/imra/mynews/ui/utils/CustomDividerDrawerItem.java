@@ -51,7 +51,7 @@ public class CustomDividerDrawerItem extends AbstractDrawerItem<CustomDividerDra
                 ViewCompat.IMPORTANT_FOR_ACCESSIBILITY_NO);
 
         //set the color for the divider
-        viewHolder.divider.setBackgroundColor(UIUtils.getThemeColorFromAttrOrRes(ctx, R.attr.material_drawer_divider, R.color.md_white_1000));
+        viewHolder.divider.setBackgroundColor(UIUtils.getThemeColorFromAttrOrRes(ctx, R.attr.material_drawer_divider, R.color.col));
 
         //call the onPostBindView method to trigger post bind view actions (like the listener to modify the item if required)
         onPostBindView(this, viewHolder.itemView);

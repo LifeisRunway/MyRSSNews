@@ -11,11 +11,11 @@
         android:id="@+id/toolbar_settings"
         android:layout_width="match_parent"
         android:layout_height="35dp"
-        android:background="?attr/colorPrimary"
+        android:background="?attr/colorPrimaryDark"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme"
-        app:title="@string/app_name"
-        app:titleTextColor="@color/colorText" />
+        app:title="Find RSS"
+        app:titleTextColor="@color/colorPrimaryDark" />
 
     <EditText
         android:id="@+id/editText"
@@ -33,7 +33,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="Введите URL новостной ленты" />
+        android:textColor="@color/colorPrimaryDark"
+        android:hint="example.com" />
 
     <Button
         android:id="@+id/search_button"
@@ -46,6 +47,8 @@
         android:layout_marginRight="16dp"
         android:layout_toEndOf="@+id/editText"
         android:layout_toRightOf="@+id/editText"
+        android:background="@drawable/blue_fill__rounded_color"
+        android:textColor="@color/colorAppMyNews"
         android:text="Find" />
 
         <ScrollView
@@ -59,6 +62,7 @@
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_marginTop="8dp"
                 tools:ignore="ScrollViewSize">
 
                 <ListView
@@ -67,6 +71,7 @@
                     android:layout_height="match_parent"
                     android:choiceMode="singleChoice"
                     android:dividerHeight="1dp"
+                    tools:listitem="@layout/find_rss_item_layout"
                     tools:ignore="NestedScrolling" />
 
                 <TextView
@@ -77,6 +82,7 @@
                     android:gravity="top|center"
                     android:fontFamily="@font/poller_one"
                     android:textSize="25sp"
+                    android:textColor="@color/colorPrimaryDark"
                     android:text="@string/how_to_find"
                     android:visibility="visible" />
 

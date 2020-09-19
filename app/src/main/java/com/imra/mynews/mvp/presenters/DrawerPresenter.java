@@ -99,7 +99,6 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
                             .replaceFirst("[^/]+//(www\\.)*","")
                             .replaceFirst("/.+","");
                     r.setTag(tag);
-                    //mAD.insertOrUpdateRss(r);
                     mRssFeeds.add(r);
                 }
             }
@@ -132,10 +131,6 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
 
     public List<RSSFeed> getRssForTag (String tag) {
         return mAD.getRssAsTag(tag);
-    }
-
-    public void addNewNewsChannel(String name) {
-        getViewState().addNewNewsChannel(name);
     }
 
     public boolean checkDouble (String nameChannel) {

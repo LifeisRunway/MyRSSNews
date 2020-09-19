@@ -109,7 +109,7 @@ public class LinkWidget extends AppCompatTextView implements RepositoryView {
     @NonNull
     public SpannableString clickableSpan (@NonNull String link, @ColorInt int color) {
 
-        String changeLink = "<a href=\""+link+"\">Читать дальше &rarr;</a>";
+        String changeLink = "<a href=\""+link+"\">Read more &rarr;</a>";
         CharSequence sequence = Html.fromHtml(changeLink);
         SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
         URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);

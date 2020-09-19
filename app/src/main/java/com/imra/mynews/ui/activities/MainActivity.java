@@ -5,8 +5,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -15,44 +13,30 @@ import android.os.Build;
 import android.os.Bundle;
 
 import androidx.annotation.ColorInt;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.Toolbar;
-import androidx.palette.graphics.Palette;
+import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.DisplayMetrics;
-import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.daimajia.androidanimations.library.Techniques;
 import com.daimajia.androidanimations.library.YoYo;
-import com.github.florent37.glidepalette.GlidePalette;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.analytics.FirebaseAnalytics;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FieldPath;
-import com.google.firebase.firestore.FieldValue;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.SetOptions;
 import com.imra.mynews.R;
 import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.di.modules.GlideRequests;
@@ -91,7 +75,6 @@ import com.mikepenz.materialdrawer.util.DrawerImageLoader;
 import com.mikepenz.materialdrawer.util.DrawerUIUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -146,8 +129,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     private ReposRecyclerAdapter mReposRecyclerAdapter;
 
-    private Drawer mDrawer = null;
-    private AccountHeader mAccountHeader = null;
+    private Drawer mDrawer;
+    private AccountHeader mAccountHeader;
     View view ;
 
     private String oldUrl;
@@ -158,22 +141,17 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     ExpandableBadgeDrawerItem expDrawItem;
     Bundle mBundle;
-    FirebaseUser user;
     String uName;
     String uEmail;
     Uri uIcon;
     private GoogleSignInOptions gso;
     private GoogleSignInClient signInClient;
     private static final int REQUEST_CODE_SEARCH_ACTIVITY = 1;
-    //private FirebaseFirestore db;
     private FirebaseAnalytics mFirebaseAnalytics;
-    DocumentReference docRefUserChannels;
-    DisplayMetrics displayMetrics;
-    float dpHeight;
-    float dpWidth;
 
     @ColorInt
     int color;
+    int colorDrawerItems;
 
     @ProvidePresenter
     DrawerPresenter provideDrawerPresenter () { return new DrawerPresenter(mBundle); }
@@ -185,24 +163,21 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         mBundle = savedInstanceState;
         mContext = this;
         view = new View(this);
-        view.setBackgroundColor(getResources().getColor(R.color.colorAppMyNews));
-        displayMetrics = getResources().getDisplayMetrics();
-        dpWidth = ((displayMetrics.widthPixels / displayMetrics.density) / 3) * 10;
-        dpHeight = (float) (dpWidth * 0.75);
-        color = getResources().getColor(R.color.colorAppMyNews);
+        view.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
+
+        color = getResources().getColor(R.color.colorPrimaryDark);
+        colorDrawerItems = getResources().getColor(R.color.colorPrimaryDark);
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
                 .build();
         signInClient = GoogleSignIn.getClient(this, gso);
-        //db = FirebaseFirestore.getInstance();
+
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
         unbinder = ButterKnife.bind(this);
-        drawerImageLoader();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             mDetailsFrameLayout.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
         }
-        createExpDrItem();
         mRepositoriesPresenter.forDrawer();
         //Перенести это дерьмо в какой-нибудь Presenter
         //user = FirebaseAuth.getInstance().getCurrentUser();
@@ -217,7 +192,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             uEmail = "Unknown email";
             uIcon = Uri.parse("android.resource://com.imra.mynews/" + R.drawable.ic_user_svg);
         }
-        //docRefUserChannels = db.collection("userChannels").document(uEmail);
+
         mToolbar.setPopupTheme(R.style.AppTheme);
         setSupportActionBar(mToolbar);
         Objects.requireNonNull(getSupportActionBar()).setElevation(1);
@@ -231,18 +206,15 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         mReposRecyclerAdapter = new ReposRecyclerAdapter(mContext, getMvpDelegate(), this, glideRequests);
         mReposRecyclerAdapter.setHasStableIds(true);
         RecyclerViewPreloader<Article> preload = new RecyclerViewPreloader<Article>(glideRequests, mReposRecyclerAdapter,mReposRecyclerAdapter,6);
-        //if(this.getResources().getConfiguration().orientation == 1) {
-            mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-        //}
-//        else {
-//            mRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
-//        }
+        mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         mRecyclerView.addOnScrollListener(preload);
+        DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+        divider.setDrawable(getResources().getDrawable(R.drawable.drawable_divider_recycler_view));
+        mRecyclerView.addItemDecoration(divider);
         mRecyclerView.setAdapter(mReposRecyclerAdapter);
         ItemClickSupport.addTo(mRecyclerView).setOnItemClickListener((recyclerView, position, v) -> {
             mMainPresenter.onRepositorySelection(position, mReposRecyclerAdapter.getItem(position));
         });
-
         mSwipeRefreshLayout.setListViewChild(mRecyclerView);
         mSwipeRefreshLayout.setOnRefreshListener(() -> mRepositoriesPresenter.loadRepositories(true, oldUrl, "", isConnected()));
 
@@ -387,15 +359,15 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             if(mDrawerPresenter.getColorChannel(url) != 0 && color != mDrawerPresenter.getColorChannel(url)) {
                 color = mDrawerPresenter.getColorChannel(url);
             } else {
-                color = getResources().getColor(R.color.colorAppMyNews);
+                color = getResources().getColor(R.color.colorPrimaryDark);
             }
             mToolbarFrame.setBackgroundColor(color);
             mToolbar.setBackgroundColor(color);
             mRecyclerView.setBackgroundColor(mDrawerPresenter.manipulateColor(color));
             mDetailsFrameLayout.setBackgroundColor(color);
         } else {
-            if(color != getResources().getColor(R.color.colorAppMyNews)) {
-                color = getResources().getColor(R.color.colorAppMyNews);
+            if(color != getResources().getColor(R.color.colorPrimaryDark)) {
+                color = getResources().getColor(R.color.colorPrimaryDark);
                 mToolbarFrame.setBackgroundColor(color);
                 mToolbar.setBackgroundColor(color);
                 mRecyclerView.setBackgroundColor(mDrawerPresenter.manipulateColor(color));
@@ -448,7 +420,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         DrawerImageLoader.init(new AbstractDrawerImageLoader() {
             @Override
             public void set(ImageView imageView, Uri uri, Drawable placeholder, String tag) {
-                GlideApp.with(imageView.getContext()).load(uri).placeholder(placeholder).error(R.drawable.ic_my_news_playstore).diskCacheStrategy(DiskCacheStrategy.AUTOMATIC).into(imageView);
+                GlideApp.with(imageView.getContext()).load(uri).placeholder(placeholder).error(getResources().getDrawable(R.drawable.error_placeholder)).diskCacheStrategy(DiskCacheStrategy.AUTOMATIC).into(imageView);
             }
 
             @Override
@@ -478,11 +450,16 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     private void createExpDrItem () {
         if(!mDrawerPresenter.getUrlRssFeeds().isEmpty()) {
-            expDrawItem = new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_list).sizeDp(48).color(getResources().getColor(R.color.colorAccent))).withTag("-").withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon)).withBadge("!").withSubItems().withTag("новости").withIsExpanded(false);
+            if(expDrawItem != null && !expDrawItem.getSubItems().isEmpty()) {
+                expDrawItem.getSubItems().clear();
+            } else {
+                expDrawItem = new ExpandableBadgeDrawerItem().withName("News list").withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_rss_feed).color(colorDrawerItems)).withTag("-").withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorPrimaryDark)).withBadge("!").withSubItems().withTag("новости").withIsExpanded(false);
+            }
         } else {
-            expDrawItem =  new ExpandableBadgeDrawerItem().withName("Новостные ленты").withIcon(GoogleMaterial.Icon.gmd_book).withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon)).withTag("новости").withBadge("!").withSubItems(
+            expDrawItem =  new ExpandableBadgeDrawerItem().withName("News list").withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_rss_feed).color(colorDrawerItems)).withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorPrimaryDark)).withTag("новости").withBadge("!").withSubItems(
                     new SecondaryDrawerItem()
-                            .withName("Нет новостных лент")
+                            .withName("No news channels")
+                            .withTextColor(colorDrawerItems)
                             .withLevel(2)
                             .withTag("-")
                             .withIdentifier(20000).withSetSelected(false).withEnabled(false)).withIsExpanded(false);
@@ -492,9 +469,10 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     @SuppressLint("ResourceAsColor")
     @Override
     public void setDrawer (Bundle savedInstanceState) {
-
+        drawerImageLoader();
+        createExpDrItem();
         // Create a sample profile
-        final IProfile profile = new ProfileDrawerItem().withName(uName).withEmail(uEmail).withIcon(uIcon).withIdentifier(100000);
+        final IProfile profile = new ProfileDrawerItem().withName(uName).withTextColor(colorDrawerItems).withEmail(uEmail).withIcon(uIcon).withIdentifier(100000);
 
         int orientation = this.getResources().getConfiguration().orientation;
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -502,23 +480,23 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                     .withActivity(this)
                     .withCompactStyle(true)
                     .withTranslucentStatusBar(true) //полупрозрачная строка состояния?
-                    .withHeaderBackground(R.drawable.header) //задник (фон)
+                    .withHeaderBackground(R.drawable.header_dark) //задник (фон)
                     .addProfiles(
                             profile,
                             //don't ask but google uses 14dp for the add account icon in gmail but 20dp for the normal icons (like manage account)
-                            new ProfileSettingDrawerItem().withName("Exit Account").withIcon(GoogleMaterial.Icon.gmd_exit_to_app).withIdentifier(100002)
+                            new ProfileSettingDrawerItem().withName("Exit Account").withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_exit_to_app).color(colorDrawerItems)).withIdentifier(100002)
                     ).withOnAccountHeaderListener((view, profile1, current) -> {
                         if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == 100002) {
                             mErrorDialog = new AlertDialog.Builder(this)
-                                    .setTitle("Выйти из аккаунта")
-                                    .setMessage("Вы уверены?")
-                                    .setPositiveButton("Да", (dialog, which) -> {
+                                    .setTitle("Logout")
+                                    .setMessage("You are sure?")
+                                    .setPositiveButton("Yes", (dialog, which) -> {
                                         FirebaseAuth.getInstance().signOut();
                                         signInClient.signOut();
                                         startActivity(new Intent(this, LoginActivity.class));
                                         finishAffinity();
                                     })
-                                    .setNegativeButton("Нет", (dialog, which) -> {
+                                    .setNegativeButton("No", (dialog, which) -> {
                                         dialog.dismiss();
                                     })
                                     .show();
@@ -532,23 +510,23 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             mAccountHeader = new AccountHeaderBuilder()
                     .withActivity(this)
                     .withTranslucentStatusBar(true) //полупрозрачная строка состояния?
-                    .withHeaderBackground(R.drawable.header) //задник (фон)
+                    .withHeaderBackground(R.drawable.header_dark) //задник (фон)
                     .addProfiles(
                             profile,
                             //don't ask but google uses 14dp for the add account icon in gmail but 20dp for the normal icons (like manage account)
-                            new ProfileSettingDrawerItem().withName("Exit Account").withIcon(GoogleMaterial.Icon.gmd_exit_to_app).withIdentifier(100002)
+                            new ProfileSettingDrawerItem().withName("Exit Account").withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_exit_to_app).color(colorDrawerItems)).withIdentifier(100002)
                     ).withOnAccountHeaderListener((view, profile1, current) -> {
                         if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == 100002) {
                             mErrorDialog = new AlertDialog.Builder(this)
-                                    .setTitle("Выйти из аккаунта")
-                                    .setMessage("Вы уверены?")
-                                    .setPositiveButton("Да", (dialog, which) -> {
+                                    .setTitle("Logout")
+                                    .setMessage("You are sure?")
+                                    .setPositiveButton("Yes", (dialog, which) -> {
                                         FirebaseAuth.getInstance().signOut();
                                         signInClient.signOut();
                                         startActivity(new Intent(this, LoginActivity.class));
                                         finishAffinity();
                                     })
-                                    .setNegativeButton("Нет", (dialog, which) -> {
+                                    .setNegativeButton("No", (dialog, which) -> {
                                         dialog.dismiss();
                                     })
                                     .show();
@@ -568,16 +546,15 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 .withItemAnimator(new ScaleYAnimator())
                 .withActionBarDrawerToggle(true)
                 .withAccountHeader(mAccountHeader)
-                .withSliderBackgroundColorRes(R.color.md_white_1000)
+                .withSliderBackgroundColorRes(R.color.col)
                 .addDrawerItems(
                         new CustomDividerDrawerItem().withEnabled(false),
-                        new PrimaryDrawerItem().withName(R.string.drawer_item_home).withIcon(GoogleMaterial.Icon.gmd_settings).withIdentifier(50000).withSelectable(false),
-                        new PrimaryDrawerItem().withName(R.string.drawer_item_settings).withIcon(GoogleMaterial.Icon.gmd_find_in_page).withIdentifier(50001).withSelectable(false),
-                        new PrimaryDrawerItem().withName(R.string.drawer_item_offline).withIcon(GoogleMaterial.Icon.gmd_save).withIdentifier(50002).withSelectable(false),
-                        new PrimaryDrawerItem().withName(R.string.Contacts).withIcon(GoogleMaterial.Icon.gmd_info).withIdentifier(50004).withSelectable(false),
-                        new SectionDrawerItem().withName("Новости"),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_settings).withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_settings).color(colorDrawerItems)).withIdentifier(50000).withSelectable(false),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_search_rss).withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_find_in_page).color(colorDrawerItems)).withIdentifier(50001).withSelectable(false),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_saved_articles).withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_save).color(colorDrawerItems)).withIdentifier(50002).withSelectable(false),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_about).withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_info).color(colorDrawerItems)).withIdentifier(50004).withSelectable(false),
+                        new SectionDrawerItem().withName("RSS").withTextColor(colorDrawerItems),
                         expDrawItem
-                        //new SectionDrawerItem().withIdentifier(60000)
                 )
                 .withOnDrawerItemClickListener((View view, int position, IDrawerItem drawerItem) -> {
 
@@ -727,7 +704,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 })
                 .withSavedInstance(savedInstanceState)
                 .withShowDrawerOnFirstLaunch(true)
-                //.withShowDrawerUntilDraggedOpened(true)
                 .build();
 
         mDrawer.getAdapter().withOnPreClickListener((v, adapter, item, position1) -> {
@@ -741,22 +717,23 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             }
             return false;
         });
-         mRepositoriesPresenter.getInFirestone();
+        mRepositoriesPresenter.getInFirestone();
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        //add the values which need to be saved from the drawer to the bundle
-        outState = mDrawer.saveInstanceState(outState);
-        //add the values which need to be saved from the accountHeader to the bundle
-        outState = mAccountHeader.saveInstanceState(outState);
-        super.onSaveInstanceState(outState);
-    }
+//    @Override
+//    protected void onSaveInstanceState(Bundle outState) {
+//        //add the values which need to be saved from the drawer to the bundle
+//        outState = mDrawer.saveInstanceState(outState);
+//        //add the values which need to be saved from the accountHeader to the bundle
+//        outState = mAccountHeader.saveInstanceState(outState);
+//        super.onSaveInstanceState(outState);
+//    }
 
     private void setZeroItemDrawer () {
         oldUrl = "";
         expDrawItem.getSubItems().add( new SecondaryDrawerItem()
-                .withName("Нет новостных лент")
+                .withName("No news channels")
+                .withTextColor(colorDrawerItems)
                 .withLevel(2)
                 .withTag("-")
                 .withIdentifier(20000).withSetSelected(false).withEnabled(false));
@@ -809,11 +786,12 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                     if(!itemTag.equals(url)) {
                         ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
                                 .withName(tag)
-                                .withIcon(GoogleMaterial.Icon.gmd_note)
+                                .withTextColor(colorDrawerItems)
+                                .withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_rss_feed).color(colorDrawerItems))
                                 .withTag(tag)
                                 .withIdentifier(30000 + identif)
                                 .withSelectable(false)
-                                .withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon))
+                                .withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorPrimaryDark))
                                 .withBadge("0")
                                 .withSubItems()
                                 .withIsExpanded(false);
@@ -852,6 +830,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         if(iconUrl != null && !iconUrl.equals("")) {
             c = new CustomUrlPrimaryDrawerItem()
                     .withName(name)
+                    .withTextColor(colorDrawerItems)
                     .withTag(tag)
                     .withIcon(iconUrl)
                     .withIdentifier(identif).withSelectable(false);
@@ -859,6 +838,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         } else {
             c = new CustomUrlPrimaryDrawerItem()
                     .withName(name)
+                    .withTextColor(colorDrawerItems)
                     .withTag(tag)
                     .withIcon(R.drawable.youtube_icon)
                     .withIdentifier(identif).withSelectable(false);
@@ -893,12 +873,13 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
                     ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
                             .withName(tag)
-                            .withIcon(GoogleMaterial.Icon.gmd_note)
+                            .withTextColor(colorDrawerItems)
+                            .withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_rss_feed).color(colorDrawerItems))
                             .withTag(tag)
                             .withIdentifier(30000 + identif)
                             .withSelectable(false)
                             .withLevel(1)
-                            .withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorFon))
+                            .withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorPrimaryDark))
                             .withBadge("0")
                             .withSubItems()
                             .withIsExpanded(false);
@@ -939,10 +920,4 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             }
         }
     }
-
-    @Override
-    public void addNewNewsChannel (String name) {
-
-    }
-
 }

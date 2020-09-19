@@ -14,16 +14,17 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="273dp"
-            android:background="@drawable/blue_bg">
+            android:layout_height="265dp"
+            android:background="@drawable/header_login">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="100dp"
+                android:layout_marginTop="70dp"
                 android:fontFamily="@font/poller_one"
                 android:text="@string/myrssnews"
+                android:textColor="@color/colorAppMyNews"
                 android:textSize="35sp" />
 
         </FrameLayout>
@@ -35,10 +36,6 @@
             android:layout_marginTop="30dp"
             android:layout_marginRight="62dp"
             android:background="@drawable/blue_border_rounded_cornwe">
-
-            <!-- INPUT -->
-
-            <!-- ICON -->
 
             <EditText
                 android:id="@+id/email"
@@ -53,10 +50,10 @@
                 android:paddingLeft="17dp"
                 android:paddingTop="15dp"
                 android:paddingBottom="15dp"
-                android:textColor="#6DD8C2"
-                android:textColorHint="@color/md_grey_500"
+                android:textColor="@color/colorPrimaryDark"
+                android:textColorHint="@color/colorAppMyNews2"
                 android:textCursorDrawable="@drawable/cursor_color"
-                android:textSize="12sp" />
+                android:textSize="14sp" />
 
             <ImageView
                 android:id="@+id/username_icon"
@@ -77,17 +74,16 @@
             android:layout_marginTop="12.7dp"
             android:background="@drawable/blue_border_rounded_cornwe">
 
-            <!-- INPUT -->
             <EditText
                 android:id="@+id/pass"
                 android:layout_toRightOf="@+id/icon"
                 android:hint="Password"
-                android:textColorHint="@color/md_grey_500"
-                android:textSize="12sp"
+                android:textColorHint="@color/colorAppMyNews2"
+                android:textSize="14sp"
                 android:paddingLeft="17dp"
                 android:paddingTop="15dp"
                 android:maxLines="1"
-                android:textColor="#6DD8C2"
+                android:textColor="@color/colorPrimaryDark"
                 android:inputType="textPassword"
                 android:paddingBottom="15dp"
                 android:maxLength="10"
@@ -113,26 +109,29 @@
             android:id="@+id/login_btn"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="12sp"
+            android:textSize="16sp"
+            android:fontFamily="@font/poller_one"
             android:layout_gravity="center"
             android:gravity="center"
-            android:paddingTop="14dp"
-            android:paddingBottom="14dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
             android:layout_marginLeft="62dp"
             android:layout_marginRight="62dp"
             android:layout_marginTop="18.7dp"
             android:text="Login"
+            android:textColor="@color/colorAppMyNews"
             android:background="@drawable/blue_fill__rounded_color"
             />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="10.5sp"
-            android:textColor="#6DD8C2"
+            android:textSize="10sp"
+            android:fontFamily="@font/poller_one"
+            android:textColor="@color/colorPrimaryDark"
             android:layout_marginTop="12dp"
             android:layout_gravity="center"
-            android:text="FORGOT PASSWORD ?"
+            android:text="@string/forgot_password"
             />
 
         <TextView
@@ -143,12 +142,14 @@
             android:layout_marginLeft="142dp"
             android:layout_marginTop="24dp"
             android:layout_marginRight="142dp"
+            android:textColor="@color/colorAppMyNews"
             android:background="@drawable/blue_fill__rounded_color"
             android:gravity="center"
             android:paddingTop="5dp"
             android:paddingBottom="5dp"
             android:text="SignUp"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:fontFamily="@font/poller_one"/>
 
 
 
@@ -176,7 +177,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
                 android:text="or"
-                android:textColor="#aeaeae"
+                android:textColor="@color/colorPrimaryDark"
                 android:textSize="13.3sp" />
 
 
@@ -190,27 +191,27 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="26.7dp"
-                android:layout_height="26.7dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:src="@drawable/fb" />
 
             <ImageView
                 android:id="@+id/google"
-                android:layout_width="26.7dp"
-                android:layout_height="26.7dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_marginLeft="20dp"
                 android:layout_marginRight="20dp"
                 app:srcCompat="@drawable/ic_google_svg" />
 
             <ImageView
-                android:layout_width="26.7dp"
-                android:layout_height="26.7dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_marginRight="20dp"
                 android:src="@drawable/twitter" />
 
             <ImageView
-                android:layout_width="26.7dp"
-                android:layout_height="26.7dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:src="@drawable/linkedin" />
 
         </LinearLayout>

@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.ListPreloader;
 import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.imra.mynews.R;
 import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.di.modules.GlideRequest;
@@ -66,11 +67,11 @@ public class ReposRecyclerAdapter extends MvpBaseRecyclerAdapter<ReposRecyclerAd
     private List<Article> mArticles;
     private final GlideRequest<Drawable> request;
     private final int screenWidth;
-    private Context mContext;
+    //private Context mContext;
 
-    DisplayMetrics displayMetrics;
-    float dpHeight;
-    float dpWidth;
+    //DisplayMetrics displayMetrics;
+    float dpHeight = 360;
+    float dpWidth = 480;
 
     private int[] actualDimensions;
 
@@ -83,10 +84,6 @@ public class ReposRecyclerAdapter extends MvpBaseRecyclerAdapter<ReposRecyclerAd
         request = glideRequests.asDrawable().centerCrop();
         setHasStableIds(true);
         screenWidth = getScreenWidth(context);
-        mContext = context;
-        displayMetrics = mContext.getResources().getDisplayMetrics();
-        dpWidth = (float)((displayMetrics.widthPixels / displayMetrics.density) / 3) * 10;
-        dpHeight = (float) (dpWidth * 0.75);
     }
 
     public void setRepositories(@NonNull RSSFeed rssFeeds) {
@@ -138,8 +135,6 @@ public class ReposRecyclerAdapter extends MvpBaseRecyclerAdapter<ReposRecyclerAd
         final View view = inflater.inflate(R.layout.item_layout, parent, false);
         view.getLayoutParams().width = screenWidth;
 
-        //Log.e("Таг", "viewType " + viewType);
-
         if (actualDimensions == null) {
             view.getViewTreeObserver()
                     .addOnPreDrawListener(
@@ -162,6 +157,11 @@ public class ReposRecyclerAdapter extends MvpBaseRecyclerAdapter<ReposRecyclerAd
     public void onBindViewHolder(@NonNull ListViewHolder holder, int position) {
         Article a = mArticles.get(position);
         holder.bind(a,position);
+    }
+
+    @Override
+    public void onViewRecycled(@NonNull ListViewHolder holder) {
+        super.onViewRecycled(holder);
     }
 
     @Override
@@ -216,8 +216,8 @@ public class ReposRecyclerAdapter extends MvpBaseRecyclerAdapter<ReposRecyclerAd
         void setSize() {
             view.post(() -> {
                 param = (LinearLayout.LayoutParams) llOne.getLayoutParams();
-                maxWidth = view.getMeasuredWidth();
-                widthIV = (int) (maxWidth * 0.375);
+                //maxWidth = view.getMeasuredWidth();
+                widthIV = (int) (screenWidth * 0.375);
                 heightIV = (int) (widthIV * 0.75);
                 param.height = heightIV;
                 param.width = widthIV;
@@ -246,7 +246,9 @@ public class ReposRecyclerAdapter extends MvpBaseRecyclerAdapter<ReposRecyclerAd
 
             if(llOne.getVisibility() == View.GONE) llOne.setVisibility(View.VISIBLE);
             if(mArticle.getEclos() != null) {
-                request.clone().load(mArticle.getEclos()).override((int) dpWidth, (int) dpHeight).into(imageView);
+                request.clone().load(mArticle.getEclos())
+                        //.transition(DrawableTransitionOptions.withCrossFade())
+                        .override((int) dpWidth, (int) dpHeight).into(imageView).clearOnDetach();
             } else { llOne.setVisibility(View.GONE);}
 
             titleTextView.setText(Html.fromHtml(mArticle.getTitle()));

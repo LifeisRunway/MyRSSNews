@@ -74,7 +74,7 @@ public class FindRSSActivity extends MvpAppCompatActivity implements Repositorie
         //getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
         setSupportActionBar(mToolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
-        mToolbar.setTitle("Поиск RSS-каналов");
+        mToolbar.setTitle(R.string.Find_rss);
 
 
         searchRSSAdapter = new SearchRSSAdapter(getMvpDelegate(),"");

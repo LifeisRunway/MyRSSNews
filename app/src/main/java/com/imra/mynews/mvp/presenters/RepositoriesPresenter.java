@@ -390,12 +390,10 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
 
     private void loadDataForDrawer () {
-
             user = FirebaseAuth.getInstance().getCurrentUser();
             db = FirebaseFirestore.getInstance();
-            Map<String, Object> userChannels = new HashMap<>();
             
-            if(user != null) {
+            if(user != null && user.getEmail() != null) {
                 docRefUserChannels = db.collection("userChannels").document(user.getEmail());
                 docRefUserChannels
                     .get()
@@ -403,13 +401,8 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                         if (task.isSuccessful()) {
                             if(task.getResult() != null && task.getResult().getData() != null) {
                                loadDataForDrawer2(task.getResult().getData());
-                                //mDrawerPresenter.setSubItems(task.getResult().getData());
-                                Log.e("getInFire task not null", task.getResult().getId() + " => " + task.getResult().getData());
-                            } else {
-                                //mDrawerPresenter.setSubItems(userChannels);
+                                //Log.e("getInFire task not null", task.getResult().getId() + " => " + task.getResult().getData());
                             }
-                        } else {
-                            Log.w("ДОК_ОШИБКА", "Error getting documents.", task.getException());
                         }
                     });
             }
@@ -446,7 +439,6 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                     .addOnCompleteListener(task -> {
                         if (task.isSuccessful()) {
                             if(task.getResult() != null && task.getResult().getData() != null) {
-                                //mRepositoriesPresenter.forDrawer(task.getResult().getData());
                                 getViewState().setFirestoneMap(task.getResult().getData());
                                 //Log.e("getInFire task not null", task.getResult().getId() + " => " + task.getResult().getData());
                             } else {
@@ -464,27 +456,12 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         docData.put(key, value);
         docRefUserChannels
                 .set(docData, SetOptions.merge())
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                    @Override
-                    public void onSuccess(Void aVoid) {
-                        Log.e("Сэйв_прошел", "DocumentSnapshot successfully written!");
-                    }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        Log.e("Ошибка_сэйва", "Error writing document", e);
-                    }
-                });
+                .addOnSuccessListener(aVoid -> Log.e("Сэйв_прошел", "DocumentSnapshot successfully written!"))
+                .addOnFailureListener(e -> Log.e("Ошибка_сэйва", "Error writing document", e));
     }
 
     public void delInFirestone (String key) {
-        docRefUserChannels.update(FieldPath.of(key), FieldValue.delete()).addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                Log.e("Сэйв_удален", "DocumentSnapshot successfully deleted!");
-            }
-        });
+        docRefUserChannels.update(FieldPath.of(key), FieldValue.delete()).addOnCompleteListener(task -> Log.e("Сэйв_удален", "DocumentSnapshot successfully deleted!"));
     }
 
     private void onLoadingFinish(boolean isPageLoading, boolean isRefreshing) {

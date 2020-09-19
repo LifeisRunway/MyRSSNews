@@ -11,11 +11,11 @@
         android:id="@+id/toolbar2"
         android:layout_width="match_parent"
         android:layout_height="35dp"
-        android:background="?attr/colorPrimary"
+        android:background="?attr/colorPrimaryDark"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme"
-        app:title="@string/app_name"
-        app:titleTextColor="@color/colorText" />
+        app:title="Saved RSS"
+        app:titleTextColor="@color/colorPrimaryDark" />
 
     <FrameLayout
         android:id="@+id/v_toolbar_extension2"
@@ -48,6 +48,7 @@
                     android:layout_height="match_parent"
                     android:choiceMode="singleChoice"
                     android:dividerHeight="1dp"
+                    tools:listitem="@layout/item_layout"
                     tools:ignore="NestedScrolling" />
 
                 <TextView

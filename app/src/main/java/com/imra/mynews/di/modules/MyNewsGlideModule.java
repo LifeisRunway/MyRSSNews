@@ -19,7 +19,7 @@ public final class MyNewsGlideModule extends AppGlideModule {
 
     @Override
     public void applyOptions(Context context, GlideBuilder builder) {
-        int diskCacheSizeBytes = 1024 * 1024 * 125; // 125 MB
+        int diskCacheSizeBytes = 1024 * 1024 * 200; // 200 MB
         builder.setDiskCache(new InternalCacheDiskCacheFactory(context, diskCacheSizeBytes));
     }
 

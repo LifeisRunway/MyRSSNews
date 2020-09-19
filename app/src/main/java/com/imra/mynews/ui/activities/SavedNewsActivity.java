@@ -80,7 +80,7 @@ public class SavedNewsActivity extends MvpAppCompatActivity implements Repositor
 
         setSupportActionBar(mToolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
-        mToolbar.setTitle("Сохраненные новости");
+        mToolbar.setTitle(R.string.saved_rss);
 
         mSwipeRefreshLayout.setListViewChild(mListView);
         mSwipeRefreshLayout.setOnRefreshListener(() -> {

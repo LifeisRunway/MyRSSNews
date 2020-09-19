@@ -9,6 +9,7 @@ import java.util.Map;
 import moxy.MvpView;
 import moxy.viewstate.strategy.AddToEndSingleStrategy;
 import moxy.viewstate.strategy.AddToEndStrategy;
+import moxy.viewstate.strategy.OneExecutionStateStrategy;
 import moxy.viewstate.strategy.StateStrategyType;
 
 /**
@@ -44,6 +45,7 @@ public interface RepositoriesView extends MvpView {
     @StateStrategyType(AddToEndStrategy.class)
     void addRepositories(RSSFeed repositories);
 
+    @StateStrategyType(OneExecutionStateStrategy.class)
     void setFirestoneMap(Map<String, Object> firestoneMap);
 
 }

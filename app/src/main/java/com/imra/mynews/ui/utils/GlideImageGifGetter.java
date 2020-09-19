@@ -11,9 +11,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat;
 import android.text.Html;
+import android.util.Log;
+import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.Request;
 import com.bumptech.glide.request.RequestOptions;
@@ -43,8 +46,8 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
     private boolean matchParentWidth;
     private HtmlImagesHandler imagesHandler;
     private float density = 1.0f;
-
-    //private RequestOptions requestOptions;
+    ViewTreeObserver vto;
+    int viewWidth;
 
     private List<Integer> test;
 
@@ -66,6 +69,15 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
             density = container.get().getResources().getDisplayMetrics().density;
         }
         test = new ArrayList<>();
+        vto = container.get().getViewTreeObserver();
+        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                container.get().getViewTreeObserver().removeOnGlobalLayoutListener(this);
+                //viewHeight = container.get().getMeasuredHeight();
+                viewWidth = container.get().getMeasuredWidth();
+            }
+        });
 //        requestOptions = new RequestOptions()
 //                .diskCacheStrategy(DiskCacheStrategy.ALL)
 //                .signature()
@@ -80,7 +92,6 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
             mSource = "http://img.youtube.com/vi/" + source.substring(source.indexOf("embed/") + 6) + "/0.jpg";
             test.add(1);
         }else if(source.contains("coub") && source.contains("embed/")) {
-            //mSource = "https://coubsecureassets-a.akamaihd.net/assets/brand_assets_og_image-4de4b0738780e78134bbb312d76412f0c3259b5e26323e2f5b899a5cfff5ee3d.png";
             mSource = " ";
             test.add(2);
         } else {
@@ -100,8 +111,10 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
                     .with(container.get().getContext())
                     .asDrawable()
                     .load(mSource)
-                    .apply(RequestOptions.centerInsideTransform())
-                    .placeholder(R.drawable.spinner_200px)
+                    //.transition(DrawableTransitionOptions.withCrossFade())
+                    //.apply(RequestOptions.centerInsideTransform())
+                    .placeholder(R.drawable.loading_placeholder)
+                    .error(R.drawable.error_placeholder)
                     .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
                     .into(drawable);
         });
@@ -145,27 +158,27 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
 
         private void setDrawable(Drawable drawable) {
 
-            if(test.get(0) == 1) {
-//                dis = Observable.just(1)
-//                        .subscribeOn(Schedulers.io())
-//                        .observeOn(AndroidSchedulers.mainThread())
-//                        .subscribe((tem) -> { mDraw = addWaterMark(drawable);});
-                mDraw = addWaterMark(drawable, 1);
-            } else if(test.get(0) == 2) {
-                mDraw = container.get().getResources().getDrawable(R.drawable.coub_icon);
+            if(!test.isEmpty()) {
+                if(test.get(0) == 1) {
+                    mDraw = addWaterMark(drawable, 1);
+                } else if(test.get(0) == 2) {
+                    mDraw = container.get().getResources().getDrawable(R.drawable.coub_icon);
+                } else {
+                    mDraw = drawable;
+                }
+
+                test.remove(0);
             } else {
                 mDraw = drawable;
             }
 
-            test.remove(0);
-
             int drawableWidth = (int) (mDraw.getIntrinsicWidth() * density);
             int drawableHeight = (int) (mDraw.getIntrinsicHeight() * density);
-            int maxWidth = container.get().getMeasuredWidth();
+            //int maxWidth = container.get().getMeasuredWidth();
 
-            int calculatedHeight = maxWidth * drawableHeight / drawableWidth;
-            mDraw.setBounds(0, 0, maxWidth, calculatedHeight);
-            setBounds(0, 0, maxWidth, calculatedHeight);
+            int calculatedHeight = viewWidth * drawableHeight / drawableWidth;
+            mDraw.setBounds(0, 0, viewWidth, calculatedHeight);
+            setBounds(0, 0, viewWidth, calculatedHeight);
 
 
             mDrawable.setDrawable(mDraw);
@@ -182,17 +195,19 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
 
             int drawableWidth = (int) (drawable.getIntrinsicWidth() * density);
             int drawableHeight = (int) (drawable.getIntrinsicHeight() * density);
-            int maxWidth = container.get().getMeasuredWidth();
-            //if ((drawableWidth > maxWidth) || matchParentWidth) {
-//                int calculatedHeight = maxWidth * drawableHeight / drawableWidth;
-//                drawable.setBounds(0, 0, maxWidth, drawableHeight);
-//                setBounds(0, 0, maxWidth, calculatedHeight);
-            //} else {
-                int calculatedHeight = maxWidth * drawableHeight / drawableWidth;
-                drawable.setBounds(0, 0, maxWidth, calculatedHeight);
-                setBounds(0, 0, maxWidth, calculatedHeight);
-            //}
 
+            int calculatedHeight = viewWidth * drawableHeight / drawableWidth;
+
+            int left = viewWidth/2 - (drawableWidth/2);
+
+            //Log.e("GlideGif", "view width " + viewWidth + " and image width " + drawableWidth);
+            if(viewWidth > drawableWidth) {
+                drawable.setBounds(left, 0, drawableWidth+left, drawableHeight);
+                setBounds(left, 0, drawableWidth+left, drawableHeight);
+            } else {
+                drawable.setBounds(0, 0, viewWidth, calculatedHeight);
+                setBounds(0, 0, viewWidth, calculatedHeight);
+            }
 
             mDrawable.setDrawable(drawable);
 
@@ -243,28 +258,21 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
 
         @Override
         public void onLoadStarted(@Nullable Drawable placeholderDrawable) {
-//            if(placeholderDrawable != null) {
-//                setDrawable(placeholderDrawable);
-//            }
-
             if (placeholderDrawable != null) {
                 setDrawableOnLoadStart(placeholderDrawable);
             }
-            //System.out.println("Загрузка начата");
         }
 
         @Override
         public void onLoadFailed(@Nullable Drawable errorDrawable) {
-//            if (errorDrawable != null) {
-//                setDrawable(errorDrawable);
-//            }
-            //System.out.println("Загрузка провалена");
+            if (errorDrawable != null) {
+                setDrawableOnLoadStart(errorDrawable);
+            }
         }
 
         @Override
         public void onResourceReady(@NonNull Drawable drawable, @Nullable Transition<? super Drawable> transition) {
             setDrawable(drawable);
-            //System.out.println("Ресурсы загрузились ");
         }
 
         @Override
@@ -272,7 +280,6 @@ public class GlideImageGifGetter implements Html.ImageGetter, Drawable.Callback 
             if(placeholderDrawable != null) {
                 setDrawableOnLoadStart(placeholderDrawable);
             }
-            //System.out.println("Очистка");
         }
 
         @Override

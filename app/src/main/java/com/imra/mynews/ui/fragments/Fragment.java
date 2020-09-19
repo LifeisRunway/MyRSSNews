@@ -74,13 +74,13 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
     LinkWidget tvLink;
 
     @BindView(R.id.image_button_like)
-    ImageButton mImageButton;
+    ImageView mImageButton;
 
     @BindView(R.id.image_button_save)
-    ImageButton mImageButtonSave;
+    ImageView mImageButtonSave;
 
     @BindView(R.id.image_button_share)
-    ImageButton mImageButtonShare;
+    ImageView mImageButtonShare;
 
     private Unbinder unbinder;
 
@@ -224,10 +224,10 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
     public void greenOrNot (boolean isSave) {
         if(isSave) {
             //mImageButtonSave.setBackgroundColor(R.color.colorText);
-            mImageButtonSave.setImageResource(android.R.drawable.ic_menu_delete);
+            mImageButtonSave.setImageDrawable(getResources().getDrawable(android.R.drawable.star_big_on));
         } else {
             //mImageButtonSave.setBackgroundColor(android.R.color.transparent);
-            mImageButtonSave.setImageResource(android.R.drawable.ic_menu_save);
+            mImageButtonSave.setImageDrawable(getResources().getDrawable(android.R.drawable.star_big_off));
         }
     }
 
