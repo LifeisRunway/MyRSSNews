@@ -329,45 +329,112 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
 
     private RSSFeed findRssUrl (String stringHtml, String url) {
-        String sRssFeed = "<\\s*link\\s*.+?(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*.+?(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*.+?(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*.+?(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*/*>";
-        String mRegex2 = "<\\s*link[^>]+(type\\s*=\\s*['\"]*image[^'\"]['\"]*[^>]+href\\s*=(\\s*['\"]*[^\"']+['\"]*)|href\\s*=(\\s*['\"]*[^\"']+['\"]*)[^>]+type\\s*=\\s*['\"]*image[^'\"]['\"]*)[^>]+";
-        String find2 = "href=['"]*(https*:\/\/[^'"]+rss|feed[^'"]+|\/[^'"]*rss[^'"]*)['"]*";
-        String smallIcon = "<\\s*link\\s*.+?(rel)\\s*=\\s*['\"]*([^'\"]*icon[^'\"]*)['\"]*\\s*.+?(href)\\s*=\\s*['\"]*([^'\"]+)['\"]*\\s*.+?\\/*>";
+        //String sRssFeed = "<\\s*link\\s*.+?(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*.+?(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*.+?(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*.+?(rel|type|title|href)\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\"'<>\\s]+)\\s*/*>";
+        //String mRegex2 = "<\\s*link[^>]+(type\\s*=\\s*['\"]*image[^'\"]['\"]*[^>]+href\\s*=(\\s*['\"]*[^\"']+['\"]*)|href\\s*=(\\s*['\"]*[^\"']+['\"]*)[^>]+type\\s*=\\s*['\"]*image[^'\"]['\"]*)[^>]+";
+        String findRssFirst = "<\\s*link.+?((title=['\"]*([^'\"]+)['\"]*)[^>]+?(href=['\"]*([^'\"]+rss[^'\"]*|[^'\"]+feed[^'\"]*)['\"]*))[^>]+/*>";
+        String findRssSecond = "<\\s*link.+?((href=['\"]*([^'\"]+rss[^'\"]*|[^'\"]+feed[^'\"]*)['\"]*)[^>]+?(title=['\"]*([^'\"]+)['\"]*))[^>]+/*>";
+        String smallIcon = "<\\s*link.+?(rel)\\s*=\\s*['\"]*([^'\"]*icon[^'\"]*)['\"]*\\s*[^>]+(href)\\s*=\\s*['\"]*([^'\"]+)['\"]*\\s*[^>]+/*>";
+        String smallIcon2 = "<\\s*link.+?(href)\\s*=\\s*['\"]*([^'\"]+)[^>]+(rel)\\s*=\\s*['\"]*([^'\"]*icon[^'\"]*)['\"]*\\s*[^>]+/*>";
 
         Map<String, String> map = new HashMap<>();
         List<Article> articles = new ArrayList<>();
         RSSFeed rssFeeds = new RSSFeed();
+        //Article article;
+
+            //old version findRSS
+//        if(!stringHtml.equals("") && !url.equals("")) {
+//            Pattern pattern = Pattern.compile(sRssFeed);
+//            Matcher matcher = pattern.matcher(stringHtml);
+//            while (matcher.find()) {
+//                for (int i = 0; i < 7; i+=2) {
+//                    String name = matcher.group(i + 1).replace("\"","");
+//                    String value = matcher.group(i + 2).replace("\"","");
+//                    map.put(name, value);
+//                }
+//
+//                if (map.get("rel").equals("alternate")) {
+//                    if(map.get("type").equals("application/atom+xml") || map.get("type").equals("application/rss+xml")){
+//                        Article article = new Article();
+//                        if(map.get("href").substring(0,1).equals("/")) {article.setDescription(url + map.get("href"));}
+//                        else {article.setDescription(map.get("href"));}
+//                        article.setTitle(map.get("title"));
+//                        articles.add(article);
+//                    }
+//                }
+//                map.clear();
+//            }
+//
+//            if(!articles.isEmpty()) {
+//                pattern = Pattern.compile(smallIcon);
+//                matcher = pattern.matcher(stringHtml);
+//                if(matcher.find()) {
+//
+//                    for (int i = 0; i < 3; i+=2) {
+//                        String name = matcher.group(i + 1);
+//                        String value = matcher.group(i + 2);
+//                        map.put(name, value);
+//                    }
+//
+//                    if (map.get("rel").equals("apple-touch-icon") || map.get("rel").equals("icon") || map.get("rel").equals("shortcut icon")) {
+//
+//                        String tmp = (map.get("href").substring(0,1).equals("/")) ?
+//                                url + map.get("href") :
+//                                map.get("href");
+//
+//                        for(Article article : articles) {
+//                            article.setLink(tmp);
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         if(!stringHtml.equals("") && !url.equals("")) {
-            Pattern pattern = Pattern.compile(sRssFeed);
+            Pattern pattern = Pattern.compile(findRssFirst);
+            Pattern pattern2 = Pattern.compile(findRssSecond);
             Matcher matcher = pattern.matcher(stringHtml);
-            while (matcher.find()) {
-                for (int i = 0; i < 7; i+=2) {
-                    String name = matcher.group(i + 1).replace("\"","");
-                    String value = matcher.group(i + 2).replace("\"","");
-                    map.put(name, value);
-                }
+            Matcher matcher2 = pattern2.matcher(stringHtml);
 
-                if (map.get("rel").equals("alternate")) {
-                    if(map.get("type").equals("application/atom+xml") || map.get("type").equals("application/rss+xml")){
+            while (matcher.find()) {
+                //Log.e("ТАГ_matcher", "matcher1 find");
+                map.put("title", matcher.group(3));
+                map.put("href", matcher.group(5));
+
+                if (map.get("href") != null && map.get("title") != null) {
                         Article article = new Article();
-                        if(map.get("href").substring(0,1).equals("/")) {article.setDescription(url + map.get("href"));}
-                        else {article.setDescription(map.get("href"));}
+                        article.setDescription(checkHref(map.get("href"), url));
                         article.setTitle(map.get("title"));
                         articles.add(article);
-                    }
+                }
+                map.clear();
+            }
+
+            while (matcher2.find()) {
+                //Log.e("ТАГ_matcher", "matcher2 find");
+                map.put("title", matcher2.group(5));
+                map.put("href", matcher2.group(3));
+
+                if (map.get("href") != null && map.get("title") != null) {
+                    Article article = new Article();
+                    article.setDescription(checkHref(map.get("href"), url));
+                    article.setTitle(map.get("title"));
+                    articles.add(article);
                 }
                 map.clear();
             }
 
             if(!articles.isEmpty()) {
                 pattern = Pattern.compile(smallIcon);
+                pattern2 = Pattern.compile(smallIcon2);
                 matcher = pattern.matcher(stringHtml);
+                matcher2 = pattern2.matcher(stringHtml);
+
                 if(matcher.find()) {
 
                     for (int i = 0; i < 3; i+=2) {
                         String name = matcher.group(i + 1);
                         String value = matcher.group(i + 2);
+                        //Log.e("ТАГ_icons1", name + " and " + value);
                         map.put(name, value);
                     }
 
@@ -377,17 +444,58 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                                 url + map.get("href") :
                                 map.get("href");
 
-                        for(Article article : articles) {
-                            article.setLink(tmp);
+                        for(Article a : articles) {
+                            a.setLink(tmp);
+                        }
+                    }
+                }
+                if(matcher2.find()) {
+
+                    for (int i = 0; i < 3; i+=2) {
+                        String name = matcher2.group(i + 1);
+                        String value = matcher2.group(i + 2);
+                        //Log.e("ТАГ_icons2", name + " and " + value);
+                        map.put(name, value);
+
+                    }
+
+                    if (map.get("rel").equals("apple-touch-icon") || map.get("rel").equals("icon") || map.get("rel").equals("shortcut icon")) {
+
+                        String tmp = (map.get("href").substring(0,1).equals("/")) ?
+                                url + map.get("href") :
+                                map.get("href");
+
+                        for(Article a : articles) {
+                            a.setLink(tmp);
                         }
                     }
                 }
             }
         }
+
         rssFeeds.setArticleList(articles);
         return rssFeeds;
     }
 
+    private String checkHref (String href, String url) {
+        String mHref = href;
+        String treeChar = href.substring(0, 4);
+        //String endChars = href.substring(href.length() - 4);
+//        if(endChars.equals(".xml")) {
+//            mHref = href.substring(0, href.length()-4);
+//        } else {
+//            mHref = href;
+//        }
+
+        switch (treeChar) {
+            case "//ww" :
+                return "https:" + mHref;
+            case "/rss" :
+                return url + mHref;
+            default:
+                return mHref;
+        }
+    }
 
     private void loadDataForDrawer () {
             user = FirebaseAuth.getInstance().getCurrentUser();
@@ -490,7 +598,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         System.out.println(si);
 
         if(error.getClass() == UnknownHostException.class) {
-            fixError = "Невозможно подключиться к:\n\"" + url + "\"\nПроверьте правильность адреса и доступ к интернету";
+            fixError = "Cannot connect to:\n\"" + url + "\"\n\n" + "Check the correctness of the entered url and internet access";
         }
         getViewState().showError(fixError);
     }

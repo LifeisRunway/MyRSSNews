@@ -11,18 +11,18 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="35dp"
-        android:background="?colorPrimary"
+        android:background="?colorPrimaryDark"
         android:minHeight="?attr/actionBarSize"
         android:theme="?attr/actionBarTheme"
         app:titleTextAppearance="@style/Toolbar.TitleText"
-        app:title="@string/app_name" />
+        app:titleTextColor="@color/colorPrimaryDark" />
 
     <FrameLayout
         android:id="@+id/v_toolbar_extension"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/toolbar"
-        android:background="?colorPrimary"
+        android:background="?colorPrimaryDark"
         android:elevation="0dp"
         tools:targetApi="lollipop">
 
@@ -32,10 +32,11 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="5dp"
             android:textSize="16sp"
-            tools:text="Название канала"
+            android:textColor="@color/colorPrimaryDark"
             android:maxLines="1"
             android:ellipsize="end"
             android:layout_marginStart="18dp"
+            android:visibility="gone"
             android:layout_marginEnd="18dp" />
 
         <TextView
@@ -45,12 +46,11 @@
             android:layout_marginStart="18dp"
             android:layout_marginEnd="18dp"
             android:layout_marginLeft="18dp"
-            android:layout_marginTop="26dp"
+            android:textColor="@color/colorPrimaryDark"
             android:maxLines="1"
             android:ellipsize="end"
             android:layout_marginBottom="4dp"
-            android:textSize="12sp"
-            tools:text="Дополнительное название канала" />
+            android:textSize="12sp" />
     </FrameLayout>
 
     <com.imra.mynews.ui.views.FrameSwipeRefreshLayout
@@ -61,7 +61,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent" >
 
             <FrameLayout
                 android:layout_width="match_parent"
@@ -73,7 +73,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:choiceMode="singleChoice"
-                    android:dividerHeight="1dp"
                     tools:ignore="NestedScrolling"
                     tools:listitem="@layout/item_layout" />
 

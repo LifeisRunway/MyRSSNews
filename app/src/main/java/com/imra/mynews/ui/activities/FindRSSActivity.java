@@ -91,7 +91,7 @@ public class FindRSSActivity extends MvpAppCompatActivity implements Repositorie
                 mRepositoriesPresenter.findRSS(false, changeToURL());
             }
         });
-        mRepositoriesPresenter.findRSS(false, "");
+        //mRepositoriesPresenter.findRSS(false, "");
     }
 
     @Override
@@ -103,7 +103,7 @@ public class FindRSSActivity extends MvpAppCompatActivity implements Repositorie
     private String changeToURL () {
         String input = String.valueOf(mEditText.getText());
         if(!input.matches("^\\w+://")) {
-            return mUrl = "http://" + input;
+            mUrl = "http://" + input;
         }
         return mUrl;
     }

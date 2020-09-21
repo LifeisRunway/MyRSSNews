@@ -167,7 +167,7 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
             String shareMessage = mArticle.getTitle() + " " + mArticle.getLink();
             sendIntent.putExtra(Intent.EXTRA_TEXT, shareMessage);
             sendIntent.setType("text/plain");
-            startActivity(Intent.createChooser(sendIntent,"Поделиться новостью"));
+            startActivity(Intent.createChooser(sendIntent,"Share news"));
         });
 
         mImageButtonSave.setOnClickListener(v -> {
@@ -198,7 +198,7 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
             mCategoryTV.setVisibility(View.GONE);
         }
         if(mArticle.getCreator() != null) {
-            String s = "Автор - " + mArticle.getCreator();
+            String s = "Author - " + mArticle.getCreator();
             mAuthorTV.setText(s);
             mAuthorTV.setVisibility(View.VISIBLE);
         } else {
@@ -207,15 +207,14 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
         mTitleTextView.setText(Html.fromHtml(mArticle.getTitle()));
         textView.initWidget(getMvpDelegate(), article, position);
         tvLink.initWidget(getMvpDelegate(), article, position);
-        System.out.println("Тест");
     }
 
     @Override
     public void saveOrDelete(boolean isSave) {
         if(isSave) {
-            Toast.makeText(getContext(),"Сохранено",Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(),"Saved",Toast.LENGTH_SHORT).show();
         } else {
-            Toast.makeText(getContext(),"Удалено",Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(),"Deleted",Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -224,10 +223,10 @@ public class Fragment extends MvpAppCompatFragment implements RepositoryView {
     public void greenOrNot (boolean isSave) {
         if(isSave) {
             //mImageButtonSave.setBackgroundColor(R.color.colorText);
-            mImageButtonSave.setImageDrawable(getResources().getDrawable(android.R.drawable.star_big_on));
+            mImageButtonSave.setImageDrawable(getResources().getDrawable(android.R.drawable.btn_star_big_on));
         } else {
             //mImageButtonSave.setBackgroundColor(android.R.color.transparent);
-            mImageButtonSave.setImageDrawable(getResources().getDrawable(android.R.drawable.star_big_off));
+            mImageButtonSave.setImageDrawable(getResources().getDrawable(android.R.drawable.btn_star_big_off));
         }
     }
 
