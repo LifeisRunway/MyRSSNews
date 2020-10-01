@@ -85,13 +85,17 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
         mRssFeeds.clear();
         tagRssFeeds.clear();
         if(!firestoneData.isEmpty()) {
+            Log.e("firestone_DP", "notnull");
             for(Map.Entry e : firestoneData.entrySet()) {
+                Log.e("firestone_DP_MAP", "key" + e.getKey().toString() + ", value " + e.getValue().toString());
                 if(mAD.getRssForDrawer(e.getKey().toString()) != null) {
                     if(mAD.getRssForDrawer(e.getKey().toString()).getColorChannel() == 0) {
                         changeBackCol(e.getKey().toString());
                     }
+                    Log.e("firestone_DP", "not null key");
                     mRssFeeds.add(mAD.getRssForDrawer(e.getKey().toString()));
                 } else {
+                    Log.e("firestone_DP", "null key");
                     RSSFeed r = new RSSFeed();
                     r.setUrl(e.getKey().toString());
                     r.setIconUrl(e.getValue().toString());
@@ -131,6 +135,10 @@ public class DrawerPresenter extends MvpPresenter<DrawerView> {
 
     public List<RSSFeed> getRssForTag (String tag) {
         return mAD.getRssAsTag(tag);
+    }
+
+    public RSSFeed getRssTag (String tag) {
+        return mAD.getRssTag(tag);
     }
 
     public boolean checkDouble (String nameChannel) {

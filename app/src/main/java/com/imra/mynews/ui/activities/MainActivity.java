@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.res.Configuration;
 import android.graphics.drawable.Drawable;
 import android.net.ConnectivityManager;
+import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
@@ -21,6 +22,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
@@ -109,6 +111,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     ProgressBar mRepositoriesProgressBar;
     @BindView(R.id.activity_home_list_view_repositories)
     RecyclerView mRecyclerView;
+    @BindView(R.id.activity_home_image_view_no_repositories)
+    ImageView mNoRepositoriesImageView;
     @BindView(R.id.activity_home_text_view_no_repositories)
     TextView mNoRepositoriesTextView;
     @BindView(R.id.toolbar)
@@ -131,7 +135,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     private Drawer mDrawer;
     private AccountHeader mAccountHeader;
-    View view ;
+    //View view ;
 
     private String oldUrl;
 
@@ -141,13 +145,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     ExpandableBadgeDrawerItem expDrawItem;
     Bundle mBundle;
-    String uName;
-    String uEmail;
-    Uri uIcon;
     private GoogleSignInOptions gso;
     private GoogleSignInClient signInClient;
     private static final int REQUEST_CODE_SEARCH_ACTIVITY = 1;
     private FirebaseAnalytics mFirebaseAnalytics;
+    private Map<String, Object> firestoneData;
 
     @ColorInt
     int color;
@@ -156,16 +158,18 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     @ProvidePresenter
     DrawerPresenter provideDrawerPresenter () { return new DrawerPresenter(mBundle); }
 
+    @SuppressLint("UseCompatLoadingForDrawables")
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mBundle = savedInstanceState;
         mContext = this;
-        view = new View(this);
-        view.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
+//        view = new View(this);
+//        view.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
 
-        color = getResources().getColor(R.color.colorPrimaryDark);
+        color = getResources().getColor(R.color.colorAppMyNews2);
         colorDrawerItems = getResources().getColor(R.color.colorPrimaryDark);
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
@@ -177,20 +181,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         unbinder = ButterKnife.bind(this);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             mDetailsFrameLayout.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
-        }
-        mRepositoriesPresenter.forDrawer();
-        //Перенести это дерьмо в какой-нибудь Presenter
-        //user = FirebaseAuth.getInstance().getCurrentUser();
-        if (mDrawerPresenter.getUser() != null) {
-            uName = mDrawerPresenter.getUser().getDisplayName();
-            uEmail = mDrawerPresenter.getUser().getEmail();
-            uIcon = mDrawerPresenter.getUser().getPhotoUrl() == null ?
-                    Uri.parse("android.resource://com.imra.mynews/" + R.drawable.ic_user_svg) :
-                    mDrawerPresenter.getUser().getPhotoUrl();
-        } else {
-            uName = "Unknown user";
-            uEmail = "Unknown email";
-            uIcon = Uri.parse("android.resource://com.imra.mynews/" + R.drawable.ic_user_svg);
         }
 
         mToolbar.setPopupTheme(R.style.AppTheme);
@@ -228,8 +218,13 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     private boolean isConnected () {
         ConnectivityManager cm = (ConnectivityManager) mContext.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo nInfo = (cm != null) ? cm.getActiveNetworkInfo() : null;
-        return nInfo != null && nInfo.isConnected();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            NetworkCapabilities capabilities = (cm != null) ? cm.getNetworkCapabilities(cm.getActiveNetwork()) : null;
+            return capabilities != null && (capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) || capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI));
+        } else {
+            NetworkInfo nInfo = (cm != null) ? cm.getActiveNetworkInfo() : null;
+            return nInfo != null && nInfo.isConnected();
+        }
     }
 
     @Override
@@ -313,6 +308,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     @Override
     public void showListProgress() {
         mRecyclerView.setVisibility(View.GONE);
+        mNoRepositoriesImageView.setVisibility(View.GONE);
         mNoRepositoriesTextView.setVisibility(View.GONE);
         mRepositoriesProgressBar.setVisibility(View.VISIBLE);
     }
@@ -326,9 +322,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     @Override
     public void setRepositories(RSSFeed repositories) {
         if(repositories.getArticleList().isEmpty()) {
+            mNoRepositoriesImageView.setVisibility(View.VISIBLE);
             mNoRepositoriesTextView.setVisibility(View.VISIBLE);
             mRecyclerView.setVisibility(View.GONE);
         } else {
+            mNoRepositoriesImageView.setVisibility(View.GONE);
             mNoRepositoriesTextView.setVisibility(View.GONE);
             mRecyclerView.setVisibility(View.VISIBLE);
         }
@@ -356,21 +354,24 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     private void colorMod (String url) {
         if(mMainPresenter.getColorModSP()) {
-            if(mDrawerPresenter.getColorChannel(url) != 0 && color != mDrawerPresenter.getColorChannel(url)) {
-                color = mDrawerPresenter.getColorChannel(url);
-            } else {
-                color = getResources().getColor(R.color.colorPrimaryDark);
-            }
-            mToolbarFrame.setBackgroundColor(color);
-            mToolbar.setBackgroundColor(color);
-            mRecyclerView.setBackgroundColor(mDrawerPresenter.manipulateColor(color));
-            mDetailsFrameLayout.setBackgroundColor(color);
-        } else {
-            if(color != getResources().getColor(R.color.colorPrimaryDark)) {
-                color = getResources().getColor(R.color.colorPrimaryDark);
+            expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
+            if(!expDrawItem.getSubItems().isEmpty() && expDrawItem.getSubItems().get(0).getIdentifier() != 20000) {
+                if(mDrawerPresenter.getColorChannel(url) != 0 && color != mDrawerPresenter.getColorChannel(url)) {
+                    color = mDrawerPresenter.getColorChannel(url);
+                } else {
+                    color = getResources().getColor(R.color.colorPrimary);
+                }
                 mToolbarFrame.setBackgroundColor(color);
                 mToolbar.setBackgroundColor(color);
                 mRecyclerView.setBackgroundColor(mDrawerPresenter.manipulateColor(color));
+                mDetailsFrameLayout.setBackgroundColor(color);
+            }
+        } else {
+            if(color != getResources().getColor(R.color.colorAppMyNews2)) {
+                color = getResources().getColor(R.color.colorAppMyNews2);
+                mToolbarFrame.setBackgroundColor(color);
+                mToolbar.setBackgroundColor(color);
+                mRecyclerView.setBackgroundColor(getResources().getColor(R.color.col));
                 mDetailsFrameLayout.setBackgroundColor(color);
             }
         }
@@ -379,9 +380,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     @Override
     public void addRepositories(RSSFeed repositories) {
         if(repositories.getArticleList().isEmpty()) {
+            mNoRepositoriesImageView.setVisibility(View.VISIBLE);
             mNoRepositoriesTextView.setVisibility(View.VISIBLE);
             mRecyclerView.setVisibility(View.GONE);
         } else {
+            mNoRepositoriesImageView.setVisibility(View.GONE);
             mNoRepositoriesTextView.setVisibility(View.GONE);
             mRecyclerView.setVisibility(View.VISIBLE);
         }
@@ -472,7 +475,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         drawerImageLoader();
         createExpDrItem();
         // Create a sample profile
-        final IProfile profile = new ProfileDrawerItem().withName(uName).withTextColor(colorDrawerItems).withEmail(uEmail).withIcon(uIcon).withIdentifier(100000);
+        final IProfile profile = mRepositoriesPresenter.getProfile();
 
         int orientation = this.getResources().getConfiguration().orientation;
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -720,25 +723,27 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         mRepositoriesPresenter.getInFirestone();
     }
 
-//    @Override
-//    protected void onSaveInstanceState(Bundle outState) {
-//        //add the values which need to be saved from the drawer to the bundle
-//        outState = mDrawer.saveInstanceState(outState);
-//        //add the values which need to be saved from the accountHeader to the bundle
-//        outState = mAccountHeader.saveInstanceState(outState);
-//        super.onSaveInstanceState(outState);
-//    }
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        //add the values which need to be saved from the drawer to the bundle
+        outState = mDrawer.saveInstanceState(outState);
+        //add the values which need to be saved from the accountHeader to the bundle
+        outState = mAccountHeader.saveInstanceState(outState);
+        super.onSaveInstanceState(outState);
+    }
 
     private void setZeroItemDrawer () {
         oldUrl = "";
-        expDrawItem.getSubItems().add( new SecondaryDrawerItem()
-                .withName("No news channels")
-                .withTextColor(colorDrawerItems)
-                .withLevel(2)
-                .withTag("-")
-                .withIdentifier(20000).withSetSelected(false).withEnabled(false));
-        expDrawItem.getBadge().setText("!");
-        mDrawer.updateItem(expDrawItem);
+        if(expDrawItem.getSubItems().isEmpty()) {
+            expDrawItem.getSubItems().add( new SecondaryDrawerItem()
+                    .withName("No news channels")
+                    .withTextColor(colorDrawerItems)
+                    .withLevel(2)
+                    .withTag("-")
+                    .withIdentifier(20000).withSetSelected(false).withEnabled(false));
+            expDrawItem.getBadge().setText("!");
+            mDrawer.updateItem(expDrawItem);
+        }
     }
 
     @Override
@@ -847,30 +852,55 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         return c;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     public void setSubItems (List<String> tags) {
 
         List<RSSFeed> normals;
+        StringBuilder s = new StringBuilder();
+        String ss = "! ";
+        for(String t : tags) {
+            s.append(t).append(" ");
+        }
+        Log.e("tags", ss);
 
         expDrawItem = (ExpandableBadgeDrawerItem) mDrawer.getDrawerItem(50003);
+        if(expDrawItem.isExpanded()) {
+            mDrawer.getExpandableExtension().collapse(mDrawer.getPosition(50003));
+            expDrawItem.getSubItems().clear();
+            mDrawer.updateItem(expDrawItem);
+            mDrawer.getExpandableExtension().expand(mDrawer.getPosition(50003));
+        } else {
+            expDrawItem.getSubItems().clear();
+            mDrawer.updateItem(expDrawItem);
+        }
+
         if(!tags.isEmpty()) {
+
+            if(!expDrawItem.getSubItems().isEmpty()) {
+                if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) {expDrawItem.getSubItems().remove(0);}
+            }
+
             for(String tag : tags) {
                 normals = mDrawerPresenter.getRssForTag(tag);
 
                 if(normals.size() == 1) {
-
-                    if(!expDrawItem.getSubItems().isEmpty()) {
-                        if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) {expDrawItem.getSubItems().remove(0);}
-                    }
 
                     expDrawItem.getSubItems().add(addCUPDrawerItem(
                             normals.get(0).getChannelTitle(),
                             normals.get(0).getUrl(),
                             normals.get(0).getIconUrl()));
 
+                } else if (normals.size() == 0) {
+                    RSSFeed r =  mDrawerPresenter.getRssTag(tag);
+                    if(r != null) {
+                        expDrawItem.getSubItems().add(addCUPDrawerItem(
+                                r.getChannelTitle(),
+                                r.getUrl(),
+                                r.getIconUrl()));
+                    }
+                    Log.e("normals_size",  " размер = 0");
                 } else {
-
+                    Log.e("normals_size", normals.size() + " размер");
                     ExpandableBadgeDrawerItem expTest = new ExpandableBadgeDrawerItem()
                             .withName(tag)
                             .withTextColor(colorDrawerItems)
@@ -891,21 +921,32 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                     expDrawItem.getSubItems().add(expTest);
                 }
             }
-            if(expDrawItem.getSubItems().get(0).getIdentifier() == 20000) { expDrawItem.getBadge().setText("!"); }
-            else {expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));}
-
-            mDrawer.updateItem(expDrawItem);
-            if ((expDrawItem.getSubItems().get(0) instanceof ExpandableBadgeDrawerItem)) {
-                oldUrl =  ((ExpandableBadgeDrawerItem)expDrawItem.getSubItems().get(0)).getSubItems().get(0).getTag().toString();
+            if(expDrawItem.getSubItems().isEmpty()) {
+                setZeroItemDrawer();
+                expDrawItem.getBadge().setText("!");
+                oldUrl = "";
             } else {
-                oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();
-            }
-            if(mMainPresenter.getColorModSP()) {
-                colorMod(oldUrl);
+                expDrawItem.withBadge(String.valueOf(expDrawItem.getSubItems().size()));
+                if(expDrawItem.isExpanded()) {
+                    mDrawer.getExpandableExtension().collapse(mDrawer.getPosition(50003));
+                    mDrawer.updateItem(expDrawItem);
+                    mDrawer.getExpandableExtension().expand(mDrawer.getPosition(50003));
+                } else {
+                    mDrawer.updateItem(expDrawItem);
+                }
+                if ((expDrawItem.getSubItems().get(0) instanceof ExpandableBadgeDrawerItem)) {
+                    oldUrl =  ((ExpandableBadgeDrawerItem)expDrawItem.getSubItems().get(0)).getSubItems().get(0).getTag().toString();
+                } else {
+                    oldUrl = expDrawItem.getSubItems().get(0).getTag().toString();
+                }
+                if(mMainPresenter.getColorModSP()) {
+                    colorMod(oldUrl);
+                }
             }
         } else {
             setZeroItemDrawer();
         }
+        Log.e("oldUrl", oldUrl);
         mRepositoriesPresenter.loadRepositories(false, oldUrl, "", isConnected());
     }
 

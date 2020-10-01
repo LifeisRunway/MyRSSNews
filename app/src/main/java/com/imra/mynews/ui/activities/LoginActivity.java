@@ -1,8 +1,13 @@
 package com.imra.mynews.ui.activities;
 
+import android.Manifest;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -13,30 +18,22 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.AuthCredential;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.imra.mynews.R;
 import com.imra.mynews.mvp.presenters.LoginPresenter;
 import com.imra.mynews.mvp.views.LoginView;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -77,13 +74,23 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
     private GoogleSignInOptions gso;
     private GoogleSignInClient signInClient;
     private GoogleSignInAccount googleSignInAccount;
+    private static final int REQUEST_CODE_PERMISSION = 27;
+    private final String [] permissions = new String[] {
+                    Manifest.permission.INTERNET,
+                    Manifest.permission.ACCESS_NETWORK_STATE,
+                    Manifest.permission.ACCESS_WIFI_STATE,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         unbinder = ButterKnife.bind(this);
+        if(!hasPermissons()) {
+            requestPermissionWithRationale();
+        }
         mAuth = FirebaseAuth.getInstance();
         //mLoginPresenter.isEnter();
         gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -99,6 +106,90 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
         mGoogle.setOnClickListener(v -> mLoginPresenter.onClickGoogleSignIn());
         mSignUpBtn.setOnClickListener(v -> mLoginPresenter.onClickSignUp());
         mLoginBtn.setOnClickListener(v -> mLoginPresenter.onClickSignIn());
+    }
+
+    private boolean hasPermissons () {
+        int res = 0;
+
+        for (String permission : permissions) {
+            res = checkCallingOrSelfPermission(permission);
+            if(res != PackageManager.PERMISSION_GRANTED) {return false;}
+        }
+        return true;
+    }
+
+    private void requestPerms () {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            requestPermissions(permissions, REQUEST_CODE_PERMISSION);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        boolean allowed = true;
+
+        switch (requestCode) {
+            case REQUEST_CODE_PERMISSION :
+                for (int res : grantResults) {
+                    //if user granted all permissions
+                    allowed = allowed && (res == PackageManager.PERMISSION_GRANTED);
+                }
+                break;
+            default:
+                allowed = false;
+                break;
+        }
+
+        if(!allowed) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                for (String perm : permissions) {
+                    if (shouldShowRequestPermissionRationale(perm)) {
+                        Toast.makeText(this, "Permission denied", Toast.LENGTH_SHORT).show();
+                    } else {
+                        showNoPermissionSnackbar();
+                    }
+                }
+            }
+        }
+    }
+
+    private void showNoPermissionSnackbar() {
+        Snackbar.make(LoginActivity.this.findViewById(R.id.activity_login), "Permissions isn't granted", Snackbar.LENGTH_LONG)
+                .setAction("SETTINGS", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        openApplicationSettings();
+                        Toast.makeText(getApplicationContext(), "Open permissions and granted", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    public void requestPermissionWithRationale() {
+        boolean isDeny = false;
+
+        for(String perm : permissions) {
+            if(ActivityCompat.shouldShowRequestPermissionRationale(this,perm)) {isDeny = true;}
+        }
+
+        if(isDeny) {
+            final String message = "Permissions is needed to work app";
+            Snackbar.make(LoginActivity.this.findViewById(R.id.activity_login), message, Snackbar.LENGTH_LONG)
+                    .setAction("GRANT", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            requestPerms();
+                        }
+                    })
+                    .show();
+        } else {
+            requestPerms();
+        }
+    }
+
+    private void openApplicationSettings () {
+        Intent appSettings = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                Uri.parse("package:" + getPackageName()));
+        startActivityForResult(appSettings, REQUEST_CODE_PERMISSION);
     }
 
     @Override
@@ -137,7 +228,7 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
             mAuth.signInWithEmailAndPassword(mEmailET.getText().toString(), mPassET.getText().toString())
                     .addOnCompleteListener(this, task -> {
                         if(task.isSuccessful()) {
-                            Toast.makeText(getApplicationContext(), "Пользователь успешно вошел!", Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(getApplicationContext(), "", Toast.LENGTH_SHORT).show();
                             startActivity(new Intent(this, MainActivity.class));
                             finishAffinity();
                         } else {
@@ -164,6 +255,7 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
             try {
                 GoogleSignInAccount account = task.getResult(ApiException.class);
                 //Log.d(TAG, "firebaseAuthWithGoogle:" + account.getId());
+                assert account != null;
                 mLoginPresenter.firebaseAuthWithGoogle(account.getIdToken());
             } catch (ApiException e) {
                 Log.w(TAG, "Google sign in failed", e);
@@ -178,7 +270,7 @@ public class LoginActivity extends MvpAppCompatActivity implements LoginView {
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
                         // Sign in success, update UI with the signed-in user's information
-                        Log.d(TAG, "signInWithCredential:success");
+                        //Log.d(TAG, "signInWithCredential:success");
                         startActivity(new Intent(this, MainActivity.class));
                         finishAffinity();
                     } else {

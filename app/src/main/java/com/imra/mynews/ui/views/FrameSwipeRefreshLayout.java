@@ -34,7 +34,6 @@ public class FrameSwipeRefreshLayout extends SwipeRefreshLayout {
         if (mListViewChild != null && mListViewChild.getVisibility() == VISIBLE) {
             return mListViewChild.canScrollVertically(-1);
         }
-
         return super.canChildScrollUp();
     }
 }

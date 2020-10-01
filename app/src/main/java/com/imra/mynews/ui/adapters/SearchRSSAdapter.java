@@ -160,10 +160,7 @@ public class SearchRSSAdapter extends MvpBaseAdapter {
             getMvpDelegate().onCreate();
             getMvpDelegate().onAttach();
 
-            view.setBackgroundResource(position == mSelection ? R.color.colorAccent : android.R.color.transparent);
-
-            //Сохранить в Room
-            //imageButton.setOnClickListener(v -> );
+            view.setBackgroundResource(position == mSelection ? R.color.colorAppMyNews2 : android.R.color.transparent);
         }
 
         @TargetApi(Build.VERSION_CODES.O)

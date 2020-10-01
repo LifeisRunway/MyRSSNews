@@ -67,6 +67,7 @@ public class FindRSSActivity extends MvpAppCompatActivity implements Repositorie
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_find_rss);
 
@@ -88,7 +89,7 @@ public class FindRSSActivity extends MvpAppCompatActivity implements Repositorie
         mSearchButton.setOnClickListener(new Button.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mRepositoriesPresenter.findRSS(false, changeToURL());
+                if(!String.valueOf(mEditText.getText()).equals("")) mRepositoriesPresenter.findRSS(false, changeToURL());
             }
         });
         //mRepositoriesPresenter.findRSS(false, "");

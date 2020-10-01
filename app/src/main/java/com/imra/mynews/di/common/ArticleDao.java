@@ -122,6 +122,9 @@ public interface ArticleDao {
     RSSFeed getRssForDrawer (String url);
 
     @Query("SELECT * FROM rssfeeds WHERE tag = :tag")
+    RSSFeed getRssTag (String tag);
+
+    @Query("SELECT * FROM rssfeeds WHERE tag = :tag")
     List<RSSFeed> getRssAsTag (String tag);
 
 }

@@ -29,6 +29,7 @@ import com.bumptech.glide.ListPreloader;
 import com.bumptech.glide.RequestBuilder;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.bumptech.glide.request.RequestOptions;
 import com.imra.mynews.R;
 import com.imra.mynews.di.modules.GlideApp;
 import com.imra.mynews.di.modules.GlideRequest;

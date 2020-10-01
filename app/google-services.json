@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "866149618881-hnhtd9l7gf7a1ru1rl1pv1dn1fhgsa2p.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.imra.mynews",
+            "certificate_hash": "7b928f64889cc1859d4bd6401a6a8e230bf19396"
+          }
+        },
+        {
           "client_id": "866149618881-co6dolnnq1g9l1l9bca6iqpje9drrgbc.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -36,7 +44,7 @@
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "866149618881-p88m6leo9h7jvrhlcaa7q4kl3amfg077.apps.googleusercontent.com",
+              "client_id": "866149618881-nu0nb1jtii5i3mq1rg25r0dd3b5mu34r.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

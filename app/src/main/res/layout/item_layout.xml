@@ -4,18 +4,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/item_repository_backgound"
     android:descendantFocusability="blocksDescendants"
     android:orientation="horizontal"
-    android:padding="8dp"
+    android:padding="5dp"
     android:baselineAligned="false">
 
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="10dp"
-        android:layout_marginLeft="10dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
         android:layout_marginTop="5dp"
         android:layout_marginBottom="5dp"
         android:layout_weight="1"
@@ -29,14 +28,16 @@
                 android:id="@+id/tvPubDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="PubDate" />
+                android:fontFamily="sans-serif-light"
+                tools:text="10 ноября 2020" />
 
             <TextView
                 android:id="@+id/tvTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="right"
-                android:layout_marginRight="5dp"
+                android:fontFamily="sans-serif-light"
+                android:layout_marginRight="15dp"
                 tools:ignore="RtlHardcoded"
                 tools:text="00:00" />
 
@@ -46,10 +47,14 @@
             android:id="@+id/item_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="5dp"
+            android:layout_marginRight="15dp"
+            android:textColor="@color/colorPrimaryDark"
             android:gravity="left"
+            android:maxLines="6"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-condensed-medium"
             tools:ignore="RtlHardcoded"
-            tools:text="Test text only for test! Dont  this text not for test! Arararaarararar" />
+            tools:text="@tools:sample/lorem/random" />
 
 
     </LinearLayout>
@@ -60,8 +65,10 @@
         android:layout_height="120dp"
         android:layout_marginTop="5dp"
         android:layout_marginBottom="5dp"
+        android:layout_marginEnd="5dp"
         android:layout_weight="0"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:layout_marginRight="5dp">
 
         <ImageView
             android:id="@+id/item_view_main"

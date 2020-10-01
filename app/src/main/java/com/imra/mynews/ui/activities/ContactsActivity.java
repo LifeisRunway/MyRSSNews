@@ -49,6 +49,7 @@ public class ContactsActivity extends MvpAppCompatActivity {
     @SuppressLint("ResourceAsColor")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contacts);
         unbinder = ButterKnife.bind(this);

@@ -51,11 +51,23 @@
                     tools:listitem="@layout/item_layout"
                     tools:ignore="NestedScrolling" />
 
+                <ImageView
+                    android:id="@+id/activity_home_image_view_no_repositories2"
+                    android:layout_width="70dp"
+                    android:layout_height="100dp"
+                    android:layout_gravity="center"
+                    android:background="@drawable/icon_no_rss2"
+                    android:visibility="gone"
+                    android:layout_marginBottom="50dp"/>
+
                 <TextView
                     android:id="@+id/activity_home_text_view_no_repositories2"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:textSize="12sp"
+                    android:fontFamily="@font/poller_one"
+                    android:textColor="@color/colorPrimaryDark"
                     android:text="@string/no_news"
                     android:visibility="gone" />
 

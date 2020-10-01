@@ -22,4 +22,5 @@
     <string name="saved_rss">Saved RSS</string>
     <string name="colorful_rssfeed_mod_beta">Colorful RSSFeed mod (beta)</string>
     <string name="forgot_password"><u>Forgot password ?</u></string>
+    <string name="signup"><u>SignUp</u></string>
 </resources>

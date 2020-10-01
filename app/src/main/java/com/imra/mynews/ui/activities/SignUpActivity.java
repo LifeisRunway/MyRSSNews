@@ -51,6 +51,7 @@ public class SignUpActivity extends MvpAppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sign_up);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);

@@ -1,6 +1,7 @@
 package com.imra.mynews.mvp.presenters;
 
 import android.annotation.TargetApi;
+import android.net.Uri;
 import android.os.Build;
 import android.util.Log;
 
@@ -17,6 +18,7 @@ import com.google.firebase.firestore.FieldPath;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
+import com.imra.mynews.R;
 import com.imra.mynews.app.MyNewsApp;
 import com.imra.mynews.di.common.ArticleDao;
 import com.imra.mynews.mvp.MyNewsService;
@@ -26,6 +28,8 @@ import com.imra.mynews.mvp.models.ItemHtml;
 import com.imra.mynews.mvp.models.RSSFeed;
 import com.imra.mynews.mvp.models.RssFeedArticlesDetail;
 import com.imra.mynews.mvp.views.RepositoriesView;
+import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
+import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 
 import java.net.UnknownHostException;
 import java.time.Instant;
@@ -76,6 +80,9 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     private FirebaseUser user;
     private FirebaseFirestore db;
     private DocumentReference docRefUserChannels;
+    private IProfile profile;
+
+    private int firestoneMapSize = 0;
 
     public RepositoriesPresenter() {
         MyNewsApp.getAppComponent().inject(this);
@@ -84,6 +91,7 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     @Override
     protected void onFirstViewAttach () {
         super.onFirstViewAttach();
+        forDrawer();
         //loadRepositories(false, "https://");
     }
 
@@ -171,9 +179,9 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     }
     
     private List<Article> checkAndClearArticlesInDB (List<Article> articles) {
-        int maxArticles = 100;
+        int maxArticles = 101;
         
-        if(articles.size() <= maxArticles) {
+        if(articles.size() < maxArticles) {
             return smallToBig(articles);
         } else {
             List<Article> saved = new ArrayList<>();
@@ -185,10 +193,11 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
             }
             
             if(saved.isEmpty()) {
-                mAD.deleteArticles(normals.subList(maxArticles + 1, normals.size()));
-                return normals.subList(0, maxArticles);
+                Log.e("normals", "size" + normals.size());
+                mAD.deleteArticles(normals.subList(maxArticles, normals.size()));
+                return normals.subList(0, maxArticles-1);
             } else {
-                mAD.deleteArticles(normals.subList(maxArticles + 1, normals.size()));
+                mAD.deleteArticles(normals.subList(maxArticles, normals.size()));
                 normals = new ArrayList<>(normals.subList(0, maxArticles - saved.size()));
                 normals.addAll(saved);
                 return smallToBig(normals);
@@ -200,18 +209,28 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
     private List<Article> smallToBig (@NonNull List<Article> articles) {
 
         if(!articles.isEmpty() && articles.get(0).getPubDate() != null) {
-            String temp2 = articles.get(0).getPubDate();
-            assert temp2 != null;
-            DateTimeFormatter format2 = (temp2.substring(temp2.length()-3, temp2.length()).equals("GMT")) ?
-                    DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss 'GMT'",  Locale.US).withZone(ZoneOffset.UTC) :
-                    DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US).withZone(ZoneOffset.UTC);
 
             Collections.sort(articles, new Comparator<Article>() {
                 @Override
                 public int compare(Article o1, Article o2) {
-                    TemporalAccessor date1 = format2.parse(o1.getPubDate());
+                    String tmp1 = o1.getPubDate();
+                    String tmp2 = o2.getPubDate();
+                    DateTimeFormatter format1;
+                    DateTimeFormatter format2;
+
+                    assert tmp1 != null;
+                    format1 = (tmp1.substring(tmp1.length()-3, tmp1.length()).equals("GMT")) ?
+                            DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss 'GMT'",  Locale.US).withZone(ZoneOffset.UTC) :
+                            DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US).withZone(ZoneOffset.UTC);
+
+                    assert tmp2 != null;
+                    format2 = (tmp2.substring(tmp2.length()-3, tmp2.length()).equals("GMT")) ?
+                            DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss 'GMT'",  Locale.US).withZone(ZoneOffset.UTC) :
+                            DateTimeFormatter.ofPattern("EEE, d MMM yyyy HH:mm:ss Z", Locale.US).withZone(ZoneOffset.UTC);
+
+                    TemporalAccessor date1 = format1.parse(tmp1);
                     Instant time = Instant.from(date1);
-                    TemporalAccessor date2 = format2.parse(o2.getPubDate());
+                    TemporalAccessor date2 = format2.parse(tmp2);
                     Instant time2 = Instant.from(date2);
                     return time2.compareTo(time);
                 }
@@ -341,54 +360,6 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         RSSFeed rssFeeds = new RSSFeed();
         //Article article;
 
-            //old version findRSS
-//        if(!stringHtml.equals("") && !url.equals("")) {
-//            Pattern pattern = Pattern.compile(sRssFeed);
-//            Matcher matcher = pattern.matcher(stringHtml);
-//            while (matcher.find()) {
-//                for (int i = 0; i < 7; i+=2) {
-//                    String name = matcher.group(i + 1).replace("\"","");
-//                    String value = matcher.group(i + 2).replace("\"","");
-//                    map.put(name, value);
-//                }
-//
-//                if (map.get("rel").equals("alternate")) {
-//                    if(map.get("type").equals("application/atom+xml") || map.get("type").equals("application/rss+xml")){
-//                        Article article = new Article();
-//                        if(map.get("href").substring(0,1).equals("/")) {article.setDescription(url + map.get("href"));}
-//                        else {article.setDescription(map.get("href"));}
-//                        article.setTitle(map.get("title"));
-//                        articles.add(article);
-//                    }
-//                }
-//                map.clear();
-//            }
-//
-//            if(!articles.isEmpty()) {
-//                pattern = Pattern.compile(smallIcon);
-//                matcher = pattern.matcher(stringHtml);
-//                if(matcher.find()) {
-//
-//                    for (int i = 0; i < 3; i+=2) {
-//                        String name = matcher.group(i + 1);
-//                        String value = matcher.group(i + 2);
-//                        map.put(name, value);
-//                    }
-//
-//                    if (map.get("rel").equals("apple-touch-icon") || map.get("rel").equals("icon") || map.get("rel").equals("shortcut icon")) {
-//
-//                        String tmp = (map.get("href").substring(0,1).equals("/")) ?
-//                                url + map.get("href") :
-//                                map.get("href");
-//
-//                        for(Article article : articles) {
-//                            article.setLink(tmp);
-//                        }
-//                    }
-//                }
-//            }
-//        }
-
         if(!stringHtml.equals("") && !url.equals("")) {
             Pattern pattern = Pattern.compile(findRssFirst);
             Pattern pattern2 = Pattern.compile(findRssSecond);
@@ -514,14 +485,27 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                         }
                     });
             }
-       
+            assert user != null;
+            if(profile == null) {
+                if(user.getPhotoUrl() != null) {
+                    profile = new ProfileDrawerItem().withName(user.getDisplayName()).withEmail(user.getEmail()).withIcon(user.getPhotoUrl()).withIdentifier(100000);
+                } else {
+                    Uri uIcon = Uri.parse("android.resource://com.imra.mynews/" + R.drawable.ic_user_svg);
+                    profile = new ProfileDrawerItem().withName(user.getDisplayName()).withEmail(user.getEmail()).withIcon(uIcon).withIdentifier(100000);
+                }
+            }
+    }
+
+    private int plusInt () {
+        return firestoneMapSize += 1;
     }
     
     private void loadDataForDrawer2 (Map<String, Object> firestoneData) {
-    
+            int firSize = firestoneData.size();
+
             if(!firestoneData.isEmpty()) {
                 for(Map.Entry e : firestoneData.entrySet()) {
-                    if(!e.getKey().equals("")) {
+                    if(!e.getKey().toString().equals("")) {
                         if(mAD.getRssFeed(e.getKey().toString()) == null) {
                            Observable<RSSFeed> observable = myNewsService.getRSSFeed(e.getKey().toString());
                             Disposable disposable = observable
@@ -529,10 +513,17 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
                                 .observeOn(AndroidSchedulers.mainThread())
                                 .subscribe((RSSFeed rssFeed) -> {
                                     saveRssToDB(rssFeed, e.getKey().toString(), e.getValue().toString());
+                                    if(plusInt() == firSize) {
+                                        getInFirestone();
+                                    }
                                 }, error -> {
                                     onLoadingFailed(error, e.getKey().toString());
                                 });
                             unsubscribeOnDestroy(disposable); 
+                        } else {
+                            if(plusInt() == firSize) {
+                                getInFirestone();
+                            }
                         }
                     }
                 }
@@ -572,6 +563,10 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
         docRefUserChannels.update(FieldPath.of(key), FieldValue.delete()).addOnCompleteListener(task -> Log.e("Сэйв_удален", "DocumentSnapshot successfully deleted!"));
     }
 
+    public final IProfile getProfile () {
+        return profile;
+    }
+
     private void onLoadingFinish(boolean isPageLoading, boolean isRefreshing) {
         mIsInLoading = false;
         mIsInLoading2 = false;
@@ -599,6 +594,9 @@ public class RepositoriesPresenter extends BasePresenter<RepositoriesView>{
 
         if(error.getClass() == UnknownHostException.class) {
             fixError = "Cannot connect to:\n\"" + url + "\"\n\n" + "Check the correctness of the entered url and internet access";
+        }
+        if(error.getClass() == NullPointerException.class) {
+            fixError = "Address not found\nCheck the correctness of the entered url";
         }
         getViewState().showError(fixError);
     }

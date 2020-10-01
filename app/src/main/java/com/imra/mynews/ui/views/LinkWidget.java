@@ -19,6 +19,7 @@ import android.text.style.URLSpan;
 import android.util.AttributeSet;
 import android.view.View;
 
+import com.imra.mynews.R;
 import com.imra.mynews.mvp.models.Article;
 import com.imra.mynews.mvp.presenters.RepositoryPresenter;
 import com.imra.mynews.mvp.views.RepositoryView;
@@ -84,7 +85,7 @@ public class LinkWidget extends AppCompatTextView implements RepositoryView {
 
     @Override
     public void showRepository(int position, Article article) {
-        setText(clickableSpan(mArticle.getLink(), Color.BLACK));
+        setText(clickableSpan(mArticle.getLink(), getResources().getColor(R.color.col)));
         setMovementMethod(LinkMovementMethod.getInstance());
     }
 
@@ -109,7 +110,7 @@ public class LinkWidget extends AppCompatTextView implements RepositoryView {
     @NonNull
     public SpannableString clickableSpan (@NonNull String link, @ColorInt int color) {
 
-        String changeLink = "<a href=\""+link+"\">Read more &rarr;</a>";
+        String changeLink = "<a href=\""+link+"\">Read more</a>";
         CharSequence sequence = Html.fromHtml(changeLink);
         SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
         URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);

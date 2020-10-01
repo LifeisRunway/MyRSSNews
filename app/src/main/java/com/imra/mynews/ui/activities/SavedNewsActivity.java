@@ -6,6 +6,7 @@ import androidx.appcompat.widget.Toolbar;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -54,6 +55,8 @@ public class SavedNewsActivity extends MvpAppCompatActivity implements Repositor
     ProgressBar mRepositoriesProgressBar;
     @BindView(R.id.activity_home_list_view_repositories2)
     ListView mListView;
+    @BindView(R.id.activity_home_image_view_no_repositories2)
+    ImageView mNoRepositoriesImageView;
     @BindView(R.id.activity_home_text_view_no_repositories2)
     TextView mNoRepositoriesTextView;
     @BindView(R.id.toolbar2)
@@ -73,6 +76,7 @@ public class SavedNewsActivity extends MvpAppCompatActivity implements Repositor
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_saved_news);
 
@@ -177,6 +181,7 @@ public class SavedNewsActivity extends MvpAppCompatActivity implements Repositor
     @Override
     public void showListProgress() {
         mListView.setVisibility(View.GONE);
+        mNoRepositoriesImageView.setVisibility(View.GONE);
         mNoRepositoriesTextView.setVisibility(View.GONE);
         mRepositoriesProgressBar.setVisibility(View.VISIBLE);
     }
@@ -205,7 +210,15 @@ public class SavedNewsActivity extends MvpAppCompatActivity implements Repositor
 
     @Override
     public void setRepositories(RSSFeed repositories) {
-        mListView.setEmptyView(mNoRepositoriesTextView);
+        if(repositories.getArticleList().isEmpty()) {
+            mNoRepositoriesImageView.setVisibility(View.VISIBLE);
+            mNoRepositoriesTextView.setVisibility(View.VISIBLE);
+            mListView.setVisibility(View.GONE);
+        } else {
+            mNoRepositoriesImageView.setVisibility(View.GONE);
+            mNoRepositoriesTextView.setVisibility(View.GONE);
+            mListView.setVisibility(View.VISIBLE);
+        }
         mReposAdapter.setRepositories(repositories);
     }
 
@@ -216,7 +229,15 @@ public class SavedNewsActivity extends MvpAppCompatActivity implements Repositor
 
     @Override
     public void addRepositories(RSSFeed repositories) {
-        mListView.setEmptyView(mNoRepositoriesTextView);
+        if(repositories.getArticleList().isEmpty()) {
+            mNoRepositoriesImageView.setVisibility(View.VISIBLE);
+            mNoRepositoriesTextView.setVisibility(View.VISIBLE);
+            mListView.setVisibility(View.GONE);
+        } else {
+            mNoRepositoriesImageView.setVisibility(View.GONE);
+            mNoRepositoriesTextView.setVisibility(View.GONE);
+            mListView.setVisibility(View.VISIBLE);
+        }
         mReposAdapter.addRepositories(repositories);
     }
 

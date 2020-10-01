@@ -44,6 +44,7 @@ public class SettingsActivity extends MvpAppCompatActivity implements MainInterf
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        setTheme(R.style.AppTheme);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
         unbinder = ButterKnife.bind(this);

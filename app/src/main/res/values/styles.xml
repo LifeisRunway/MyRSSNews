@@ -6,7 +6,7 @@
         <item name="colorPrimary">@color/colorAppMyNews</item>
         <item name="colorPrimaryDark">@color/colorAppMyNews2</item>
         <item name="colorAccent">@color/colorPrimaryDark</item>
-        <item name="android:windowBackground">@color/colorAppMyNews3</item>
+        <item name="android:windowBackground">@color/col</item>
     </style>
 
     <style name="Toolbar.TitleText" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
@@ -14,5 +14,8 @@
         <item name="android:layout_gravity">left</item>
     </style>
 
+    <style name="AppTheme.Launcher">
+        <item name="android:windowBackground">@drawable/launch_screen</item>
+    </style>
 
 </resources>
