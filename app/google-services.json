@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "866149618881-e883uvf9h60n9tqee1lh1b6cp16iii3i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.imra.mynews",
+            "certificate_hash": "e66884da31e43065d9e682645059d26846daf085"
+          }
+        },
+        {
           "client_id": "866149618881-hnhtd9l7gf7a1ru1rl1pv1dn1fhgsa2p.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {

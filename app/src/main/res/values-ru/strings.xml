@@ -1,0 +1,34 @@
+<resources>
+    <string name="app_name">MyRSSNews</string>
+    <string name="no_news">Нет сохраненных новостей</string>
+    <string name="no_rss">Нет RSS-лент</string>
+    <string name="how_to_find">Введите адрес в виде \"example.com\" \nи нажмите \"Find\"</string>
+    <string name="todo">TODO</string>
+    <string name="settings">Настройки</string>
+    <string name="drawer_item_settings">Настройки</string>
+    <string name="drawer_item_search_rss">Поиск RSS-лент</string>
+    <string name="drawer_item_saved_articles">Сохраненные новости</string>
+    <string name="drawer_item_help">Помощь</string>
+    <string name="drawer_item_open_source">Исходный код</string>
+    <string name="drawer_item_about">О приложении</string>
+    <string name="myrssnews">MyRSSNews</string>
+    <string name="lifeisrunway_github">Я на &lt;a href="https://github.com/LifeisRunway">GitHub&lt;/a></string>
+    <string name="lifeisrunway_email">Мой &lt;a href="mailto:lifeisrunway027@gmail.com">email&lt;/a></string>
+    <string name="lifeisrunway">LifeIsRunway</string>
+    <string name="Contacts">Контакты</string>
+    <string name="Find_rss">Поиск RSS-лент</string>
+    <string name="saved_rss">Сохраненные новости</string>
+    <string name="colorful_rssfeed_mod_beta">Цветные RSS-ленты (в разработке)</string>
+    <string name="forgot_password"><u>Забыли пароль ?</u></string>
+    <string name="delete_list">Удалить список?</string>
+    <string name="delete">Удалить?</string>
+    <string name="RSS">RSS-ленты</string>
+    <string name="exit_account">Выйти из аккаунта</string>
+    <string name="Logout">Выход</string>
+    <string name="Are_you_sure">Вы уверены?</string>
+    <string name="list_news">Список новостей</string>
+    <string name="read_more">Читать далее</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
+    <string name="signup"><u>SignUp</u></string>
+</resources>

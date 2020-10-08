@@ -23,10 +23,6 @@ import retrofit2.http.Url;
 
 public interface MyNewsApi {
 
-//    @GET("rss")
-//    Observable<RSSFeed> getRSSFeed();
-
-
     @GET @Xml
     Observable<RSSFeed> getRSSFeed(@Url String mUrl);
 

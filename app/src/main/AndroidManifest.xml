@@ -17,7 +17,8 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.Launcher"
-        tools:targetApi="m">
+        tools:targetApi="m"
+        tools:ignore="HardcodedDebugMode">
         <activity android:name=".ui.activities.LoginActivity"
             android:windowSoftInputMode="adjustPan">
             <intent-filter>
@@ -53,6 +54,8 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/colorAppMyNews" />
+
+
 
     </application>
 

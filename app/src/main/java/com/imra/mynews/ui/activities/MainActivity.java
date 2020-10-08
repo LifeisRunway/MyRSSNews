@@ -456,12 +456,12 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
             if(expDrawItem != null && !expDrawItem.getSubItems().isEmpty()) {
                 expDrawItem.getSubItems().clear();
             } else {
-                expDrawItem = new ExpandableBadgeDrawerItem().withName("News list").withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_rss_feed).color(colorDrawerItems)).withTag("-").withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorPrimaryDark)).withBadge("!").withSubItems().withTag("новости").withIsExpanded(false);
+                expDrawItem = new ExpandableBadgeDrawerItem().withName(getResources().getString(R.string.list_news)).withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_rss_feed).color(colorDrawerItems)).withTag("-").withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorPrimaryDark)).withBadge("!").withSubItems().withTag("новости").withIsExpanded(false);
             }
         } else {
-            expDrawItem =  new ExpandableBadgeDrawerItem().withName("News list").withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_rss_feed).color(colorDrawerItems)).withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorPrimaryDark)).withTag("новости").withBadge("!").withSubItems(
+            expDrawItem =  new ExpandableBadgeDrawerItem().withName(getResources().getString(R.string.list_news)).withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_rss_feed).color(colorDrawerItems)).withIdentifier(50003).withSelectable(false).withBadgeStyle(new BadgeStyle().withTextColorRes(R.color.colorText).withColorRes(R.color.colorPrimaryDark)).withTag("новости").withBadge("!").withSubItems(
                     new SecondaryDrawerItem()
-                            .withName("No news channels")
+                            .withName(getResources().getString(R.string.no_rss))
                             .withTextColor(colorDrawerItems)
                             .withLevel(2)
                             .withTag("-")
@@ -487,19 +487,19 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                     .addProfiles(
                             profile,
                             //don't ask but google uses 14dp for the add account icon in gmail but 20dp for the normal icons (like manage account)
-                            new ProfileSettingDrawerItem().withName("Exit Account").withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_exit_to_app).color(colorDrawerItems)).withIdentifier(100002)
+                            new ProfileSettingDrawerItem().withName(getResources().getString(R.string.exit_account)).withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_exit_to_app).color(colorDrawerItems)).withIdentifier(100002)
                     ).withOnAccountHeaderListener((view, profile1, current) -> {
                         if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == 100002) {
                             mErrorDialog = new AlertDialog.Builder(this)
-                                    .setTitle("Logout")
-                                    .setMessage("You are sure?")
-                                    .setPositiveButton("Yes", (dialog, which) -> {
+                                    .setTitle(getResources().getString(R.string.Logout))
+                                    .setMessage(getResources().getString(R.string.Are_you_sure))
+                                    .setPositiveButton(getResources().getString(R.string.yes), (dialog, which) -> {
                                         FirebaseAuth.getInstance().signOut();
                                         signInClient.signOut();
                                         startActivity(new Intent(this, LoginActivity.class));
                                         finishAffinity();
                                     })
-                                    .setNegativeButton("No", (dialog, which) -> {
+                                    .setNegativeButton(getResources().getString(R.string.no), (dialog, which) -> {
                                         dialog.dismiss();
                                     })
                                     .show();
@@ -517,19 +517,19 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                     .addProfiles(
                             profile,
                             //don't ask but google uses 14dp for the add account icon in gmail but 20dp for the normal icons (like manage account)
-                            new ProfileSettingDrawerItem().withName("Exit Account").withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_exit_to_app).color(colorDrawerItems)).withIdentifier(100002)
+                            new ProfileSettingDrawerItem().withName(getResources().getString(R.string.exit_account)).withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_exit_to_app).color(colorDrawerItems)).withIdentifier(100002)
                     ).withOnAccountHeaderListener((view, profile1, current) -> {
                         if (profile1 instanceof IDrawerItem && profile1.getIdentifier() == 100002) {
                             mErrorDialog = new AlertDialog.Builder(this)
-                                    .setTitle("Logout")
-                                    .setMessage("You are sure?")
-                                    .setPositiveButton("Yes", (dialog, which) -> {
+                                    .setTitle(getResources().getString(R.string.Logout))
+                                    .setMessage(getResources().getString(R.string.Are_you_sure))
+                                    .setPositiveButton(getResources().getString(R.string.yes), (dialog, which) -> {
                                         FirebaseAuth.getInstance().signOut();
                                         signInClient.signOut();
                                         startActivity(new Intent(this, LoginActivity.class));
                                         finishAffinity();
                                     })
-                                    .setNegativeButton("No", (dialog, which) -> {
+                                    .setNegativeButton(getResources().getString(R.string.no), (dialog, which) -> {
                                         dialog.dismiss();
                                     })
                                     .show();
@@ -552,11 +552,11 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                 .withSliderBackgroundColorRes(R.color.col)
                 .addDrawerItems(
                         new CustomDividerDrawerItem().withEnabled(false),
-                        new PrimaryDrawerItem().withName(R.string.drawer_item_settings).withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_settings).color(colorDrawerItems)).withIdentifier(50000).withSelectable(false),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_search_rss).withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_find_in_page).color(colorDrawerItems)).withIdentifier(50001).withSelectable(false),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_saved_articles).withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_save).color(colorDrawerItems)).withIdentifier(50002).withSelectable(false),
+                        new PrimaryDrawerItem().withName(R.string.drawer_item_settings).withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_settings).color(colorDrawerItems)).withIdentifier(50000).withSelectable(false),
                         new PrimaryDrawerItem().withName(R.string.drawer_item_about).withTextColor(colorDrawerItems).withIcon(new IconicsDrawable(this, GoogleMaterial.Icon.gmd_info).color(colorDrawerItems)).withIdentifier(50004).withSelectable(false),
-                        new SectionDrawerItem().withName("RSS").withTextColor(colorDrawerItems),
+                        new SectionDrawerItem().withName(getResources().getString(R.string.RSS)).withTextColor(colorDrawerItems),
                         expDrawItem
                 )
                 .withOnDrawerItemClickListener((View view, int position, IDrawerItem drawerItem) -> {
@@ -605,8 +605,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
                             mErrorDialog = new AlertDialog.Builder(this)
                                     .setTitle(drawerItem.getTag().toString()  + " " + drawerItem.getIdentifier())
-                                    .setMessage("Удалить?")
-                                    .setPositiveButton("Да", (dialog, which) -> {
+                                    .setMessage(getResources().getString(R.string.delete))
+                                    .setPositiveButton(getResources().getString(R.string.yes), (dialog, which) -> {
                                         int [] testing = mDrawer.getExpandableExtension().getExpandedItems();
                                         if(oldUrl.equals(drawerItem.getTag().toString())) {
                                             if(!expDrawItem.getSubItems().isEmpty()) {
@@ -645,7 +645,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                         dialog.dismiss();
                                         mRepositoriesPresenter.loadRepositories(true, oldUrl, "", isConnected());
                                     })
-                                    .setNegativeButton("Нет", (dialog, which) -> {
+                                    .setNegativeButton(getResources().getString(R.string.no), (dialog, which) -> {
                                         dialog.dismiss();
                                     })
                                     .show();
@@ -654,8 +654,8 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
                             mErrorDialog = new AlertDialog.Builder(this)
                                     .setTitle(drawerItem.getTag().toString() + " " + drawerItem.getIdentifier())
-                                    .setMessage("Удалить список?")
-                                    .setPositiveButton("Да", (dialog, which) -> {
+                                    .setMessage(getResources().getString(R.string.delete_list))
+                                    .setPositiveButton(getResources().getString(R.string.yes), (dialog, which) -> {
                                         int [] testing = mDrawer.getExpandableExtension().getExpandedItems();
                                         mDrawer.getExpandableExtension().collapse();
                                         List <String> list = new ArrayList<>();
@@ -697,7 +697,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
                                         dialog.dismiss();
                                         mRepositoriesPresenter.loadRepositories(true, oldUrl, "", isConnected());
                                     })
-                                    .setNegativeButton("Нет", (dialog, which) -> {
+                                    .setNegativeButton(getResources().getString(R.string.no), (dialog, which) -> {
                                         dialog.dismiss();
                                     })
                                     .show();
@@ -736,7 +736,7 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         oldUrl = "";
         if(expDrawItem.getSubItems().isEmpty()) {
             expDrawItem.getSubItems().add( new SecondaryDrawerItem()
-                    .withName("No news channels")
+                    .withName(getResources().getString(R.string.no_rss))
                     .withTextColor(colorDrawerItems)
                     .withLevel(2)
                     .withTag("-")
@@ -952,8 +952,9 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(resultCode == RESULT_OK) {
-            if(requestCode == REQUEST_CODE_SEARCH_ACTIVITY) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            if (requestCode == REQUEST_CODE_SEARCH_ACTIVITY) {
                 String url = data.getStringExtra("url");
                 String iconUrl = data.getStringExtra("iconUrl");
                 mRepositoriesPresenter.loadRepositories(true, url, iconUrl, isConnected());

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#008577</color>
+    <color name="colorPrimaryDark">#00574B</color>
+    <color name="colorAccent">#D81B60</color>
+    <color name="colorFon">#8FA1CE</color>
+    <color name="colorText">#FFFFFF</color>
+    <color name="colorAppMyNews">#6DD7C1</color>
+    <color name="colorAppMyNews2">#2F9E92</color>
+    <color name="colorAppMyNews3">#9CF3E1</color>
+    <color name="col">#B2E6DE</color>
+</resources>

@@ -18,8 +18,8 @@ android {
         applicationId "com.imra.mynews"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 3
-        versionName "1.02"
+        versionCode 4
+        versionName "1.04"
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
@@ -38,6 +38,7 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 }
+
 def retrofit = '2.3.0'
 def dagger = '2.11'
 def butterKnife = "10.2.1"
@@ -135,7 +136,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-auth:18.1.0'
     implementation 'com.google.firebase:firebase-auth:19.4.0'
     implementation 'com.google.firebase:firebase-firestore:21.6.0'
-    implementation 'com.google.firebase:firebase-crashlytics:17.2.1'
+    implementation 'com.google.firebase:firebase-crashlytics:17.2.2'
     implementation 'com.google.firebase:firebase-messaging:20.2.4'
     //implementation 'com.google.firebase:firebase-database:19.3.1'
 

@@ -39,6 +39,7 @@ public class LinkWidget extends AppCompatTextView implements RepositoryView {
     private MvpDelegate mMvpDelegate;
     private Article mArticle;
     private int mPos;
+    private String readMore = getResources().getString(R.string.read_more);
 
     @InjectPresenter
     RepositoryPresenter mRepositoryPresenter;
@@ -110,7 +111,7 @@ public class LinkWidget extends AppCompatTextView implements RepositoryView {
     @NonNull
     public SpannableString clickableSpan (@NonNull String link, @ColorInt int color) {
 
-        String changeLink = "<a href=\""+link+"\">Read more</a>";
+        String changeLink = "<a href=\""+link+"\">"+readMore+"</a>";
         CharSequence sequence = Html.fromHtml(changeLink);
         SpannableStringBuilder strBuilder = new SpannableStringBuilder(sequence);
         URLSpan[] urls = strBuilder.getSpans(0, sequence.length(), URLSpan.class);
@@ -127,7 +128,7 @@ public class LinkWidget extends AppCompatTextView implements RepositoryView {
                 public void updateDrawState(@NonNull TextPaint ds) {
                     super.updateDrawState(ds);
                     ds.setColor(color);
-                    ds.setUnderlineText(true);
+                    //ds.setUnderlineText(true);
                 }
             };
             strBuilder.setSpan(clickable, start, end, flags);
