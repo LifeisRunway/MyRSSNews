@@ -32,7 +32,6 @@ public class MyNewsApp extends Application {
         return mAppComp;
     }
 
-
     @VisibleForTesting
     public static void setAppComponent(@NonNull AppComponent appComponent) {
         mAppComp = appComponent;

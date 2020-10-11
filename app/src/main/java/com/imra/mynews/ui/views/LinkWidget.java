@@ -128,7 +128,7 @@ public class LinkWidget extends AppCompatTextView implements RepositoryView {
                 public void updateDrawState(@NonNull TextPaint ds) {
                     super.updateDrawState(ds);
                     ds.setColor(color);
-                    //ds.setUnderlineText(true);
+                    ds.setUnderlineText(false);
                 }
             };
             strBuilder.setSpan(clickable, start, end, flags);

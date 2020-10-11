@@ -68,6 +68,7 @@ public class RetrofitModule {
         return httpClient;
     }
 
+
 //    @Provides
 //    @Singleton
 //    public HttpLoggingInterceptor provideHttpLoggingInterceptor () {

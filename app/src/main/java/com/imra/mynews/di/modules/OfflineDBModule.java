@@ -2,12 +2,9 @@ package com.imra.mynews.di.modules;
 
 import androidx.room.Room;
 import android.content.Context;
-
 import com.imra.mynews.di.common.ArticleDao;
 import com.imra.mynews.di.common.OfflineDB;
-
 import javax.inject.Singleton;
-
 import dagger.Module;
 import dagger.Provides;
 
@@ -32,15 +29,5 @@ public class OfflineDBModule {
     public ArticleDao provideArticleDAO (OfflineDB offlineDB) {
         return offlineDB.articleDao();
     }
-
-//    @Provides
-//    @Singleton
-//    public Integer provideLocalDB (ArticleDao articleDao) {
-//        RSSFeed mLocalDB = new RSSFeed();
-//        mLocalDB.setChannelTitle(OfflineDB.LOCAL_DB_NAME);
-//        mLocalDB.setRssFeedId(1);
-//        articleDao.insertRssFeed(mLocalDB); //set localDB RssFeed
-//        return mLocalDB.getRssFeedId();
-//    }
 
 }

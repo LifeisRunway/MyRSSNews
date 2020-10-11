@@ -1,10 +1,7 @@
 package com.imra.mynews.di.modules;
 
-import androidx.room.Room;
 import android.content.Context;
-
 import javax.inject.Singleton;
-
 import dagger.Module;
 import dagger.Provides;
 
@@ -26,11 +23,7 @@ public class ContextModule {
 
     @Provides
     @Singleton
-    //@MyAppScope
     public Context provideContext() {
         return mContext;
     }
-
-
-
 }

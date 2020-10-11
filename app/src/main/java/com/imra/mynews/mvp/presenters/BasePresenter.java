@@ -20,7 +20,8 @@ public class BasePresenter<View extends MvpView> extends MvpPresenter<View> {
         compositeDisposable.add(disposable);
     }
 
-    @Override public void onDestroy() {
+    @Override
+    public void onDestroy() {
         super.onDestroy();
         compositeDisposable.clear();
     }

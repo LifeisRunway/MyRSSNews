@@ -149,7 +149,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
     private GoogleSignInClient signInClient;
     private static final int REQUEST_CODE_SEARCH_ACTIVITY = 1;
     private FirebaseAnalytics mFirebaseAnalytics;
-    private Map<String, Object> firestoneData;
 
     @ColorInt
     int color;
@@ -166,8 +165,6 @@ public class MainActivity extends MvpAppCompatActivity implements MainInterface,
         setContentView(R.layout.activity_main);
         mBundle = savedInstanceState;
         mContext = this;
-//        view = new View(this);
-//        view.setBackgroundColor(getResources().getColor(R.color.colorPrimaryDark));
 
         color = getResources().getColor(R.color.colorAppMyNews2);
         colorDrawerItems = getResources().getColor(R.color.colorPrimaryDark);
