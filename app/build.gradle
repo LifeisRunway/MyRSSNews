@@ -4,14 +4,6 @@ apply plugin: 'com.google.firebase.crashlytics'
 
 android {
 
-    signingConfigs {
-        release {
-            storeFile file('E:\\sign_keys!\\myrssnews.jks')
-            keyAlias 'lifeisrunway'
-            keyPassword 'GURRENLAGANN027'
-            storePassword 'Nik270991'
-        }
-    }
     compileSdkVersion 29
 
     defaultConfig {
