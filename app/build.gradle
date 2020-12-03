@@ -115,9 +115,6 @@ dependencies {
     //https://github.com/mikepenz/ItemAnimators
     implementation 'com.mikepenz:itemanimators:1.1.0'
 
-    //youtube icon watermark
-    //implementation 'com.huangyz0918:androidwm:0.2.3'
-
     //Room
     implementation 'androidx.room:room-runtime:2.2.5'
     annotationProcessor 'androidx.room:room-compiler:2.2.5'
